@@ -1,0 +1,13 @@
+# Large data files
+*.csv
+MC2 data.json
+*.parquet
+
+# Python cache
+__pycache__/
+*.pyc
+
+# System
+.DS_Store
+chain_data.json
+MC2_interactive_dashboard.html

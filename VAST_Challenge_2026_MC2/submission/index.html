@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VAST Challenge 2026 MC2 Visual Analytics Tool</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101216;
+      --panel: #181c23;
+      --panel2: #202631;
+      --line: #343b47;
+      --text: #f4f6f8;
+      --muted: #aab3bf;
+      --cyan: #45c2d9;
+      --green: #77c879;
+      --amber: #e2b760;
+      --red: #ee6c70;
+      --violet: #b891ff;
+      --steel: #7e8da3;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { overflow: hidden; }
+    button { font: inherit; color: inherit; }
+    .app { height: 100vh; display: grid; grid-template-columns: 330px minmax(560px, 1fr) 390px; grid-template-rows: 72px 1fr; }
+    header { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; background: #151922; border-bottom: 1px solid var(--line); }
+    h1 { margin: 0; font-size: 20px; line-height: 1.15; letter-spacing: 0; }
+    h2 { margin: 0 0 10px; font-size: 15px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; color: var(--muted); font-size: 12px; letter-spacing: .02em; text-transform: uppercase; }
+    p { margin: 0; }
+    .subtitle { margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .stats { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+    .stat { min-width: 86px; padding: 8px 10px; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; }
+    .stat b { display: block; font-size: 16px; }
+    .stat span { color: var(--muted); font-size: 11px; }
+    aside { min-height: 0; overflow: auto; padding: 14px; background: var(--panel); }
+    .left { border-right: 1px solid var(--line); }
+    .right { border-left: 1px solid var(--line); }
+    main { min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(360px, 58%) minmax(250px, 42%); background: #0d1015; }
+    .stage { position: relative; min-height: 0; border-bottom: 1px solid var(--line); }
+    canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+    canvas:active { cursor: grabbing; }
+    .toolbar { position: absolute; inset: 12px 12px auto 12px; display: flex; justify-content: space-between; gap: 10px; pointer-events: none; }
+    .seg, .control { pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; padding: 6px; border: 1px solid var(--line); border-radius: 8px; background: rgba(24,28,35,.94); }
+    .seg button, .control button, .scene button, .tabs button { border: 0; background: transparent; padding: 7px 9px; border-radius: 6px; color: var(--muted); cursor: pointer; }
+    .seg button.active, .tabs button.active, .scene.active button, .control button:hover { background: var(--panel2); color: var(--text); }
+    .scene { margin-bottom: 8px; border: 1px solid var(--line); border-radius: 8px; background: #171b22; }
+    .scene button { width: 100%; display: grid; grid-template-columns: 28px 1fr; gap: 8px; text-align: left; align-items: center; padding: 9px 10px; }
+    .scene-num { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #11161e; color: var(--muted); font-size: 12px; }
+    .scene.active .scene-num { background: var(--cyan); color: #061116; }
+    .scene-title { display: block; font-size: 13px; color: var(--text); }
+    .scene-note { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.35; }
+    section { margin-bottom: 14px; }
+    .answer, .callout, .card { border: 1px solid var(--line); border-radius: 8px; background: #171b22; padding: 10px; }
+    .answer { color: #dce3eb; font-size: 13px; line-height: 1.45; }
+    .callout { color: #e9d39a; background: #211d15; border-color: #5a4a2b; font-size: 12px; line-height: 1.45; }
+    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+    .tabs button { border: 1px solid var(--line); background: var(--panel2); }
+    .insights { margin: 0; padding-left: 18px; color: #d7dee7; font-size: 13px; line-height: 1.52; }
+    .insights li { margin: 0 0 7px; }
+    .chart-grid { min-height: 0; padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; overflow: auto; }
+    .viz-card { min-height: 190px; border: 1px solid var(--line); border-radius: 8px; background: #151920; padding: 10px; position: relative; overflow: hidden; }
+    .viz-card.wide { grid-column: 1 / -1; }
+    .chart-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .chart-title b { font-size: 13px; }
+    .chart-title span { color: var(--muted); font-size: 11px; }
+    .timeline { display: grid; gap: 8px; }
+    .event { border-left: 3px solid var(--cyan); padding: 8px 9px; background: #171b22; border-radius: 0 8px 8px 0; }
+    .event.target { border-color: var(--red); background: #241a1e; }
+    .event strong { display: block; font-size: 12px; margin-bottom: 3px; }
+    .event time { color: var(--muted); font-size: 11px; }
+    .event p { margin-top: 4px; color: #d3d9e1; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+    .bars { display: grid; gap: 7px; }
+    .bar { display: grid; grid-template-columns: 128px 1fr 48px; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); }
+    .track { height: 8px; background: #0f1319; border: 1px solid #2b323d; border-radius: 99px; overflow: hidden; }
+    .fill { height: 100%; border-radius: 99px; background: var(--cyan); }
+    .pipe { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; align-items: stretch; }
+    .pipe-step { min-height: 88px; border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: #11161e; }
+    .pipe-step b { display: block; font-size: 12px; margin-bottom: 6px; }
+    .pipe-step span { display: block; color: var(--muted); font-size: 11px; line-height: 1.35; }
+    .matrix { display: grid; gap: 8px; }
+    .matrix-row { display: grid; grid-template-columns: 1fr 48px 72px; gap: 8px; align-items: center; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: #11161e; font-size: 12px; }
+    .matrix-row b { font-size: 12px; }
+    .matrix-row span { color: var(--muted); }
+    .scatter, .spark { width: 100%; height: 150px; }
+    .legend { position: absolute; left: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 999px; background: rgba(24,28,35,.94); color: var(--muted); font-size: 12px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+    .tooltip { position: absolute; display: none; pointer-events: none; max-width: 320px; padding: 9px 10px; border: 1px solid #46505f; border-radius: 8px; background: #11151d; color: var(--text); font-size: 12px; line-height: 1.4; box-shadow: 0 12px 30px rgba(0,0,0,.28); }
+    .tooltip b { display: block; margin-bottom: 4px; }
+    .svg-label { fill: #dfe5ec; font-size: 11px; }
+    .svg-muted { fill: #aab3bf; font-size: 10px; }
+    .semantic-grid { display: grid; gap: 8px; }
+    .semantic-row { display: grid; grid-template-columns: 18px 1fr; gap: 8px; align-items: start; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: #11161e; font-size: 12px; line-height: 1.42; color: #d9e0e8; }
+    .semantic-row small { display: block; color: var(--muted); margin-top: 2px; }
+    .swatch { width: 12px; height: 12px; border-radius: 50%; margin-top: 3px; background: var(--steel); }
+    .selected-box { min-height: 88px; }
+    .selected-box b { display: block; margin-bottom: 5px; }
+    .selected-box code { color: #dcecff; font-size: 12px; overflow-wrap: anywhere; }
+    .use-card { display: grid; gap: 8px; }
+    .use-row { padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: #11161e; font-size: 12px; line-height: 1.42; }
+    .use-row b { display: block; color: var(--text); margin-bottom: 3px; }
+    .use-row span { color: var(--muted); }
+    @media (max-width: 1180px) {
+      body { overflow: auto; }
+      .app { height: auto; grid-template-columns: 1fr; grid-template-rows: auto auto minmax(700px, 80vh) auto; }
+      header, aside, main { grid-column: 1; }
+      .left, .right { border: 0; }
+      .chart-grid { grid-template-columns: 1fr; }
+      .pipe { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Tenant Thread MC2 Visual Analytics Tool</h1>
+        <div class="subtitle">调查异常 SaidIt 发帖：来源、传播链、系统边界与复发风险</div>
+      </div>
+      <div class="stats" id="stats"></div>
+    </header>
+
+    <aside class="left">
+      <section>
+        <h2>Interactive Evidence Views</h2>
+        <div id="sceneList"></div>
+      </section>
+      <section>
+        <h2>Controls</h2>
+        <div class="tabs">
+          <button class="active" data-file="SwiftWren">SwiftWren</button>
+          <button data-file="HiddenOrca">HiddenOrca</button>
+          <button data-file="MellowOtter">MellowOtter</button>
+        </div>
+        <div class="tabs">
+          <button class="active" data-question="q1">Q1</button>
+          <button data-question="q2">Q2</button>
+          <button data-question="q3">Q3</button>
+        </div>
+        <div class="answer" id="answerText"></div>
+      </section>
+      <section>
+        <h2>Point / Edge Meaning</h2>
+        <div class="semantic-grid">
+          <div class="semantic-row"><span class="swatch" style="background:var(--cyan)"></span><span>Agent node<small>一个个人代理，例如 Chloe agent、John agent。边表示代理把 read_file 任务委托给另一个代理。</small></span></div>
+          <div class="semantic-row"><span class="swatch" style="background:var(--red)"></span><span>Target / endpoint<small>John Windward agent 或目标异常 SaidIt 发帖事件。红色表示推理终点。</small></span></div>
+          <div class="semantic-row"><span class="swatch" style="background:var(--amber)"></span><span>System boundary<small>SaidIt 或 file_system。黄色边表示代理越过系统边界执行检查、发帖或删除。</small></span></div>
+          <div class="semantic-row"><span class="swatch" style="background:var(--green)"></span><span>Prior incident<small>HiddenOrca / MellowOtter / SwiftWren 三个历史文件源异常帖。</small></span></div>
+        </div>
+      </section>
+      <section>
+        <h2>Which View Is Useful?</h2>
+        <div class="use-card">
+          <div class="use-row"><b>Evidence Chain</b><span>主图。回答“这条帖子怎么产生”：从文件来源到 John agent 发帖和删除。</span></div>
+          <div class="use-row"><b>Post Cluster</b><span>证明异常类型：108 条 SaidIt 中只有 3 条是文件源发帖。</span></div>
+          <div class="use-row"><b>Time Slope</b><span>检查最终几条日志是否按因果顺序紧密相连。</span></div>
+          <div class="use-row"><b>Network Overview</b><span>辅助图。只用来说明指令不是单点动作，而是在代理网络中传播。</span></div>
+          <div class="use-row"><b>Other Findings</b><span>展示主链之外的全局异常：virus 文件 churn、自循环队列、跨部门传播和干预误伤。</span></div>
+        </div>
+      </section>
+      <section>
+        <h2>Reasoning, Not Playback</h2>
+        <ol class="insights">
+          <li>用发帖基线识别 108 条 SaidIt 中仅 3 条使用 <code>content_source</code>。</li>
+          <li>沿 <code>*_further_instructions.md</code> 还原代理委托网络。</li>
+          <li>聚焦最终四秒：委托、SaidIt 检查、文件源发帖、双文件删除。</li>
+          <li>对比三次历史异常，定位最小有效干预点。</li>
+        </ol>
+      </section>
+      <section>
+        <h2>Export</h2>
+        <div class="control" style="display:flex; justify-content:space-between;">
+          <button id="savePng">Save 3D PNG</button>
+          <button id="resetStory">Reset Story</button>
+        </div>
+      </section>
+    </aside>
+
+    <main>
+      <div class="stage">
+        <canvas id="sceneCanvas"></canvas>
+        <div class="toolbar">
+          <div class="seg">
+            <button class="active" data-mode="chain">Evidence Chain</button>
+            <button data-mode="network">Network Overview</button>
+            <button data-mode="time">Time Slope</button>
+            <button data-mode="posts">Post Cluster</button>
+            <button data-mode="findings">Other Findings</button>
+          </div>
+          <div class="control">
+            <button id="resetView">Reset</button>
+          </div>
+        </div>
+        <div class="legend">
+          <span class="chip" style="color:var(--cyan)"><span class="dot"></span>delegation</span>
+          <span class="chip" style="color:var(--red)"><span class="dot"></span>target post</span>
+          <span class="chip" style="color:var(--amber)"><span class="dot"></span>system boundary</span>
+          <span class="chip" style="color:var(--green)"><span class="dot"></span>prior incident</span>
+        </div>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+      <div class="chart-grid">
+        <div class="viz-card">
+          <div class="chart-title"><b>SaidIt baseline</b><span>105 normal vs 3 file-source</span></div>
+          <svg class="scatter" id="postScatter" viewBox="0 0 420 150"></svg>
+        </div>
+        <div class="viz-card">
+          <div class="chart-title"><b>Endpoint burst</b><span>final 4 seconds</span></div>
+          <svg class="spark" id="endpointSpark" viewBox="0 0 420 150"></svg>
+        </div>
+        <div class="viz-card wide">
+          <div class="chart-title"><b>System overview pipeline</b><span>document -> payload -> agent queue -> SaidIt -> cleanup</span></div>
+          <div class="pipe" id="pipeline"></div>
+        </div>
+        <div class="viz-card">
+          <div class="chart-title"><b>Intervention matrix</b><span>single control point comparison</span></div>
+          <div class="matrix" id="intervention"></div>
+        </div>
+        <div class="viz-card">
+          <div class="chart-title"><b>Event type volume</b><span>global context</span></div>
+          <div class="bars" id="eventBars"></div>
+        </div>
+      </div>
+    </main>
+
+    <aside class="right">
+      <section>
+        <h2>Current Scene</h2>
+        <div class="callout" id="sceneNarrative"></div>
+      </section>
+      <section>
+        <h2>Selected Point</h2>
+        <div class="answer selected-box" id="selectedPoint">点击或悬停 3D 图中的点，查看它代表的代理、系统或事件。</div>
+      </section>
+      <section>
+        <h2>Exact Chain</h2>
+        <div class="timeline" id="exactEvents"></div>
+      </section>
+      <section>
+        <h2>Selected File Chain</h2>
+        <div class="timeline" id="chainEvents"></div>
+      </section>
+      <section>
+        <h2>Historical Incidents</h2>
+        <div class="timeline" id="priorEvents"></div>
+      </section>
+    </aside>
+  </div>
+
+  <script src="analysis-data.js"></script>
+  <script>
+    const DATA = window.MC2_ANALYSIS;
+    const colors = { SwiftWren: "#45c2d9", HiddenOrca: "#77c879", MellowOtter: "#b891ff", target: "#ee6c70", system: "#e2b760", muted: "#7e8da3" };
+    const scenes = [
+      ["1. Evidence Chain", "这是主图：按因果顺序解释异常帖如何从内部文件变成 SaidIt 外部发帖。", "q1", "SwiftWren", "chain"],
+      ["2. Baseline", "先看 SaidIt 发帖全集：108 条里只有 3 条使用 content_source，异常不是文字主题，而是发帖机制。", "q1", "SwiftWren", "posts"],
+      ["3. Provenance", "追溯 SwiftWren：Emma agent 读取 meeting_notes.doc，创建 SwiftWren.txt，再读取 further_instructions。", "q2", "SwiftWren", "chain"],
+      ["4. Network Overview", "这个 3D 图只用于看传播范围：每个圆点是代理或系统，青色边是代理间 read_file 委托。", "q1", "SwiftWren", "network"],
+      ["5. Final Chain", "最终可见链条是 Lily -> Daniel -> Chloe -> John；这条链直接接到发帖和删除动作。", "q1", "SwiftWren", "chain"],
+      ["6. Endpoint Evidence", "最后 4 秒内发生：Chloe 委托 John、John 检查 SaidIt、发布 SwiftWren.txt、删除两个文件。", "q1", "SwiftWren", "time"],
+      ["7. Repeat Pattern", "HiddenOrca、MellowOtter、SwiftWren 都以 John agent + SaidIt content_source 作为终点。", "q3", "HiddenOrca", "posts"],
+      ["8. Intervention", "最佳交互结论：在 SaidIt 边界阻断 agent content_source 发帖，可拦截 3/3 已知异常且不影响 105 条普通文本帖。", "q3", "SwiftWren", "posts"],
+      ["9. Other Findings", "主链之外还有一个更大的 virus:true 文件 churn 爆发，以及大量自循环队列；这些是全局背景，不是 SaidIt 的直接原因。", "q3", "SwiftWren", "findings"],
+    ];
+    const state = { file: "SwiftWren", question: "q1", mode: "chain", scene: 0, rx: -0.55, ry: 0.62, zoom: 1, pointer: null, hover: null, selected: null };
+
+    const canvas = document.getElementById("sceneCanvas");
+    const ctx = canvas.getContext("2d");
+    const tooltip = document.getElementById("tooltip");
+    let points = [], edges = [];
+
+    function fmtTime(s) { return s.replace("T", " ").replace(".000Z", "Z"); }
+    function actorName(id) {
+      const n = DATA.nodes.find(x => x.id === id);
+      return n ? n.label : String(id || "").replace(/^Agent\/person:/, "").replace(/^person:/, "").replace(/^system:/, "").replace(/_/g, " ");
+    }
+    function detailText(e) {
+      const d = e.detail || {};
+      if (d.content_source) return `content_source=${d.content_source}`;
+      if (d.args && d.args.path) return `${actorName(e.source)} -> ${actorName(e.target)}; path=${d.args.path}`;
+      if (d.target) return `target=${d.target}`;
+      if (d.content) return d.content;
+      return (e.parties || []).map(actorName).join(" -> ");
+    }
+    function active(selector, key, val) { document.querySelectorAll(selector).forEach(b => b.classList.toggle("active", b.dataset[key] === val)); }
+
+    function init() {
+      document.getElementById("stats").innerHTML = [
+        [DATA.totals.events.toLocaleString(), "events"],
+        [DATA.saiditPosts.length, "SaidIt posts"],
+        [DATA.suspiciousPosts.length, "file-source"],
+        [DATA.totals.orgNodes, "org nodes"],
+      ].map(([v,k]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join("");
+      document.getElementById("sceneList").innerHTML = scenes.map((s, i) => `
+        <div class="scene ${i === 0 ? "active" : ""}" data-scene="${i}">
+          <button><span class="scene-num">${i + 1}</span><span><span class="scene-title">${s[0]}</span><span class="scene-note">${s[1]}</span></span></button>
+        </div>`).join("");
+      document.querySelectorAll("[data-scene]").forEach(el => el.addEventListener("click", () => setScene(+el.dataset.scene)));
+      renderAll();
+      resize();
+    }
+
+    function renderAll() {
+      active("[data-file]", "file", state.file);
+      active("[data-question]", "question", state.question);
+      active("[data-mode]", "mode", state.mode);
+      document.querySelectorAll("[data-scene]").forEach(el => el.classList.toggle("active", +el.dataset.scene === state.scene));
+      document.getElementById("answerText").textContent = DATA.answers[state.question];
+      document.getElementById("sceneNarrative").textContent = scenes[state.scene][1];
+      renderSelected();
+      document.getElementById("exactEvents").innerHTML = DATA.exactTarget.map(eventHtml).join("");
+      renderChainEvents();
+      document.getElementById("priorEvents").innerHTML = DATA.suspiciousPosts.map(eventHtml).join("");
+      renderCharts();
+      buildScene();
+      draw();
+    }
+    function eventHtml(e) {
+      const target = e.id === 373902 || (e.short_name === "saidit_post" && e.detail && e.detail.content_source);
+      return `<article class="event ${target ? "target" : ""}"><strong>#${e.id} ${e.short_name}</strong><time>${fmtTime(e.time)}</time><p>${detailText(e)}</p></article>`;
+    }
+    function renderChainEvents() {
+      const events = state.file === "SwiftWren"
+        ? [...DATA.provenance, ...DATA.finalChain]
+        : DATA.instructionEdges[state.file].slice(-18).map(edge => ({ id: edge.id, time: edge.time, short_name: "queue_subordinate_task", source: edge.source, target: edge.target, detail: { args: { path: `${edge.file}_further_instructions.md` } }, parties: [edge.source, edge.target] }));
+      document.getElementById("chainEvents").innerHTML = events.map(eventHtml).join("");
+    }
+    function renderCharts() {
+      renderScatter();
+      renderEndpoint();
+      renderPipeline();
+      renderIntervention();
+      renderBars();
+    }
+    function pointDescription(p) {
+      if (!p) return "点击或悬停 3D 图中的点，查看它代表的代理、系统或事件。";
+      if (p.kind === "event") return `<b>${p.label}</b><code>${p.meta}</code><br><br>这是证据事件或文件节点，用来说明来源、payload 或日志中的单条操作。`;
+      if (p.id.startsWith("system:")) return `<b>${p.label}</b><code>${p.id}</code><br><br>这是系统边界点。John agent 与 SaidIt/file_system 的边解释了外部发布和清理动作。`;
+      return `<b>${p.label}</b><code>${p.id}</code><br><br>这是个人代理点。连接到它的青色边表示其他代理把读取 <code>*_further_instructions.md</code> 的任务委托给它，或它继续委托给下游代理。`;
+    }
+    function renderSelected() {
+      document.getElementById("selectedPoint").innerHTML = pointDescription(state.selected);
+    }
+    function renderScatter() {
+      const min = Math.min(...DATA.saiditPosts.map(p => Date.parse(p.time)));
+      const max = Math.max(...DATA.saiditPosts.map(p => Date.parse(p.time)));
+      const files = { HiddenOrca: 35, MellowOtter: 75, SwiftWren: 115 };
+      document.getElementById("postScatter").innerHTML = DATA.saiditPosts.map((p, i) => {
+        const x = 24 + (Date.parse(p.time) - min) / (max - min || 1) * 370;
+        const y = p.contentSource ? files[p.file] : 126 - (i % 9) * 10;
+        const c = p.contentSource ? colors[p.file] : "#596577";
+        const r = p.contentSource ? 6 : 3;
+        return `<circle cx="${x.toFixed(1)}" cy="${y}" r="${r}" fill="${c}"><title>#${p.id} ${p.content || ""}</title></circle>`;
+      }).join("") + `<text x="24" y="142" class="svg-muted">ordinary content</text><text x="260" y="18" class="svg-label">3 content_source posts</text>`;
+    }
+    function renderEndpoint() {
+      const start = Date.parse(DATA.endpointBurst[0].time);
+      document.getElementById("endpointSpark").innerHTML = DATA.endpointBurst.map((e, i) => {
+        const x = 42 + (Date.parse(e.time) - start) * 70 / 1000;
+        const y = 30 + i * 24;
+        const c = e.id === 373902 ? colors.target : (e.short_name === "delete_file" ? colors.system : colors.SwiftWren);
+        return `<line x1="42" y1="${y}" x2="${x}" y2="${y}" stroke="#3b4452"/><circle cx="${x}" cy="${y}" r="6" fill="${c}"/><text x="${x + 12}" y="${y + 4}" class="svg-label">#${e.id} ${e.short_name}</text>`;
+      }).join("") + `<text x="42" y="145" class="svg-muted">seconds from final delegation</text>`;
+    }
+    function renderPipeline() {
+      const steps = [
+        ["Document", "meeting_notes.doc read by Emma agent"],
+        ["Payload", "SwiftWren.txt created in file system"],
+        ["Instruction", "SwiftWren_further_instructions.md read"],
+        ["Agent queue", "cross-agent read_file delegation"],
+        ["SaidIt", "John agent posts content_source"],
+        ["Cleanup", "instruction and payload deleted"],
+      ];
+      document.getElementById("pipeline").innerHTML = steps.map((s, i) => `<div class="pipe-step" style="border-color:${i === 4 ? colors.target : "var(--line)"}"><b>${i + 1}. ${s[0]}</b><span>${s[1]}</span></div>`).join("");
+    }
+    function renderIntervention() {
+      document.getElementById("intervention").innerHTML = DATA.intervention.map((r, i) => `<div class="matrix-row" style="border-color:${i === 0 ? colors.green : "var(--line)"}"><b>${r.name}</b><span>${r.coverage} blocked</span><span>FP ${r.falsePositives}</span></div>`).join("");
+    }
+    function renderBars() {
+      const top = DATA.eventCounts.slice(0, 9);
+      const max = Math.max(...top.map(x => x[1]));
+      document.getElementById("eventBars").innerHTML = top.map(([n,c], i) => `<div class="bar"><span>${n}</span><div class="track"><div class="fill" style="width:${c/max*100}%;background:${i < 4 ? colors.SwiftWren : colors.steel}"></div></div><span>${c.toLocaleString()}</span></div>`).join("");
+    }
+
+    function buildScene() {
+      if (state.mode === "chain") {
+        buildEvidenceChain();
+        return;
+      }
+      if (state.mode === "findings") {
+        buildFindingsView();
+        return;
+      }
+      const eList = DATA.instructionEdges[state.file] || [];
+      const idSet = new Set();
+      eList.forEach(e => { idSet.add(e.source); idSet.add(e.target); });
+      ["Agent/person:john_windward", "system:saidit", "system:file_system"].forEach(x => idSet.add(x));
+      const ids = [...idSet];
+      const nodeMap = new Map();
+      ids.forEach((id, i) => {
+        const angle = i / Math.max(ids.length, 1) * Math.PI * 2;
+        const ring = id.includes("john_windward") ? 0.25 : id.startsWith("system:") ? 1.75 : 1 + (i % 5) * .14;
+        nodeMap.set(id, { id, kind: id.startsWith("system:") ? "system" : "agent", label: actorName(id), x: Math.cos(angle) * ring * 215, y: (i % 9 - 4) * 24, z: Math.sin(angle) * ring * 215, color: id.includes("john_windward") ? colors.target : id.startsWith("system:") ? colors.system : colors[state.file], size: id.includes("john_windward") ? 10 : id.startsWith("system:") ? 8 : 5, meta: id });
+      });
+      points = [...nodeMap.values()];
+      edges = eList.map(e => ({ a: nodeMap.get(e.source), b: nodeMap.get(e.target), color: colors[state.file], meta: fmtTime(e.time) })).filter(e => e.a && e.b);
+      const john = nodeMap.get("Agent/person:john_windward");
+      if (john) ["system:saidit", "system:file_system"].forEach(sys => nodeMap.has(sys) && edges.push({ a: john, b: nodeMap.get(sys), color: colors.system, meta: "post/check/delete boundary" }));
+      if (state.mode !== "network") {
+        const series = state.mode === "posts" ? DATA.suspiciousPosts : (state.scene >= 5 ? DATA.finalChain : [...DATA.provenance, ...DATA.finalChain]);
+        series.forEach((e, i) => {
+          const t = i / Math.max(series.length - 1, 1);
+          points.push({ id: `event:${e.id}`, kind: "event", label: `#${e.id} ${e.short_name}`, x: (t - .5) * 560, y: Math.sin(t * Math.PI * 3) * 75 - 35, z: (state.mode === "posts" ? (e.file || "").length % 5 * 55 - 110 : (t - .5) * 180), color: e.id === 373902 ? colors.target : (colors[e.file] || colors.green), size: e.short_name.includes("post") ? 8 : 5, meta: `${fmtTime(e.time)}\n${detailText(e)}` });
+        });
+      }
+    }
+    function buildEvidenceChain() {
+      const steps = [
+        { id: "doc", kind: "event", label: "meeting_notes.doc", x: -420, y: -90, z: 0, color: colors.system, size: 7, meta: "#21201 Emma agent reads meeting_notes.doc" },
+        { id: "payload", kind: "event", label: "SwiftWren.txt", x: -280, y: -90, z: 0, color: colors.SwiftWren, size: 8, meta: "#21202 payload file created" },
+        { id: "instr", kind: "event", label: "further_instructions", x: -140, y: -90, z: 0, color: colors.SwiftWren, size: 7, meta: "#21208 SwiftWren_further_instructions.md read" },
+        { id: "emma", kind: "agent", label: "Emma agent", x: -420, y: 55, z: 0, color: colors.SwiftWren, size: 7, meta: "Source agent creates SwiftWren payload and starts delegation" },
+        { id: "lily", kind: "agent", label: "Lily agent", x: -220, y: 55, z: 0, color: colors.SwiftWren, size: 7, meta: "#373831 Lily -> Daniel appears in final visible chain" },
+        { id: "daniel", kind: "agent", label: "Daniel agent", x: -70, y: 55, z: 0, color: colors.SwiftWren, size: 7, meta: "#373882 Daniel -> Chloe" },
+        { id: "chloe", kind: "agent", label: "Chloe agent", x: 80, y: 55, z: 0, color: colors.SwiftWren, size: 7, meta: "#373893 Chloe -> John" },
+        { id: "john", kind: "agent", label: "John agent", x: 230, y: 55, z: 0, color: colors.target, size: 10, meta: "Endpoint actor: Agent/person:john_windward" },
+        { id: "saidit", kind: "system", label: "SaidIt", x: 390, y: 5, z: 0, color: colors.system, size: 9, meta: "#373899 check, #373902 post content_source=SwiftWren.txt" },
+        { id: "cleanup", kind: "system", label: "file_system cleanup", x: 390, y: 115, z: 0, color: colors.system, size: 8, meta: "#373909 deletes instructions; #373913 deletes SwiftWren.txt" },
+      ];
+      const map = new Map(steps.map(p => [p.id, p]));
+      const links = [
+        ["doc", "payload", colors.system, "read then create payload"],
+        ["payload", "instr", colors.SwiftWren, "payload paired with instructions"],
+        ["instr", "emma", colors.SwiftWren, "instruction enters agent workflow"],
+        ["emma", "lily", colors.SwiftWren, "broader propagation"],
+        ["lily", "daniel", colors.SwiftWren, "#373831"],
+        ["daniel", "chloe", colors.SwiftWren, "#373882"],
+        ["chloe", "john", colors.SwiftWren, "#373893"],
+        ["john", "saidit", colors.target, "#373899-373902"],
+        ["john", "cleanup", colors.system, "#373909-373913"],
+      ];
+      points = steps;
+      edges = links.map(([a, b, color, meta]) => ({ a: map.get(a), b: map.get(b), color, meta }));
+    }
+    function buildFindingsView() {
+      const findings = [
+        { id: "virus", label: "75,254 virus:true events", x: -350, y: -105, z: 0, color: colors.target, size: 14, meta: "Largest global anomaly: May 10-12 file churn loop" },
+        { id: "selfloop", label: "15,862 queue self-loops", x: -120, y: -10, z: 0, color: colors.system, size: 12, meta: "Most queue_subordinate_task traffic is self-loop background, not cross-agent propagation" },
+        { id: "incidents", label: "3 file-source incidents", x: 120, y: -10, z: 0, color: colors.SwiftWren, size: 11, meta: "HiddenOrca, MellowOtter, SwiftWren share John agent -> SaidIt endpoint" },
+        { id: "john", label: "John: 102 normal posts", x: 350, y: -105, z: 0, color: colors.green, size: 10, meta: "Blocking John is too coarse; he is a high-volume normal poster" },
+        { id: "gate", label: "Best gate: agent content_source", x: 130, y: 120, z: 0, color: colors.target, size: 13, meta: "Blocks 3/3 known anomalies with 0 observed normal content posts affected" },
+        { id: "org", label: "Cross-department chain", x: -160, y: 120, z: 0, color: colors.muted, size: 9, meta: "Executive, IT, HR, Customer Support all appear in the propagation context" },
+      ];
+      const map = new Map(findings.map(p => [p.id, { ...p, kind: "finding" }]));
+      points = [...map.values()];
+      edges = [
+        ["virus", "selfloop", colors.system, "virus creates self-loop queue volume"],
+        ["selfloop", "incidents", colors.muted, "separate background from true cross-agent file-source incidents"],
+        ["incidents", "gate", colors.target, "shared endpoint suggests boundary control"],
+        ["john", "gate", colors.green, "avoid blocking normal John activity"],
+        ["org", "gate", colors.muted, "cross-department issue needs boundary control"],
+      ].map(([a,b,color,meta]) => ({ a: map.get(a), b: map.get(b), color, meta }));
+    }
+    function resize() {
+      const dpr = window.devicePixelRatio || 1, r = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.floor(r.width * dpr)); canvas.height = Math.max(1, Math.floor(r.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); draw();
+    }
+    function project(p) {
+      const sx = Math.sin(state.rx), cx = Math.cos(state.rx), sy = Math.sin(state.ry), cy = Math.cos(state.ry);
+      let y1 = p.y * cx - p.z * sx, z1 = p.y * sx + p.z * cx;
+      let x2 = p.x * cy + z1 * sy, z2 = -p.x * sy + z1 * cy;
+      const scale = (620 / (620 + z2)) * state.zoom;
+      return { x: canvas.clientWidth/2 + x2*scale, y: canvas.clientHeight/2 + y1*scale, z: z2, scale };
+    }
+    function drawGrid() {
+      ctx.strokeStyle = "rgba(120,135,155,.15)"; ctx.lineWidth = 1;
+      for (let i = -5; i <= 5; i++) {
+        const a = project({x:i*80,y:150,z:-420}), b = project({x:i*80,y:150,z:420});
+        const c = project({x:-420,y:150,z:i*80}), d = project({x:420,y:150,z:i*80});
+        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(c.x,c.y); ctx.lineTo(d.x,d.y); ctx.stroke();
+      }
+    }
+    function draw() {
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      ctx.clearRect(0,0,w,h);
+      const bg = ctx.createLinearGradient(0,0,0,h); bg.addColorStop(0,"#10141b"); bg.addColorStop(1,"#0b0e13"); ctx.fillStyle = bg; ctx.fillRect(0,0,w,h);
+      drawGrid();
+      edges.forEach(e => {
+        const a = project(e.a), b = project(e.b);
+        ctx.strokeStyle = e.color + "88"; ctx.lineWidth = Math.max(1, 1.5*((a.scale+b.scale)/2));
+        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+        if (state.mode === "chain") {
+          const angle = Math.atan2(b.y - a.y, b.x - a.x);
+          const hx = b.x - Math.cos(angle) * 12, hy = b.y - Math.sin(angle) * 12;
+          ctx.fillStyle = e.color;
+          ctx.beginPath();
+          ctx.moveTo(hx, hy);
+          ctx.lineTo(hx - Math.cos(angle - .45) * 10, hy - Math.sin(angle - .45) * 10);
+          ctx.lineTo(hx - Math.cos(angle + .45) * 10, hy - Math.sin(angle + .45) * 10);
+          ctx.closePath();
+          ctx.fill();
+        }
+      });
+      points.map(p => ({p, s: project(p)})).sort((a,b)=>b.s.z-a.s.z).forEach(({p,s}) => {
+        const isSelected = state.selected && state.selected.id === p.id;
+        ctx.globalAlpha = state.hover && state.hover.id !== p.id && !isSelected ? .45 : 1;
+        ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(s.x,s.y,Math.max(3,p.size*s.scale),0,Math.PI*2); ctx.fill();
+        if (isSelected) { ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x,s.y,Math.max(8,p.size*s.scale+5),0,Math.PI*2); ctx.stroke(); }
+        if (state.mode === "chain") {
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = "#edf2f7";
+          ctx.font = "12px Inter, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(p.label.slice(0,30), s.x, s.y - 16);
+          ctx.textAlign = "left";
+        } else if (p.size >= 8 || p.id.includes("john_windward")) { ctx.globalAlpha = 1; ctx.fillStyle = "#edf2f7"; ctx.font = "12px Inter, sans-serif"; ctx.fillText(p.label.slice(0,30), s.x+10, s.y-9); }
+      });
+      ctx.globalAlpha = 1;
+    }
+    function pick(x,y) {
+      let best = null;
+      for (const p of points) {
+        const s = project(p), d = Math.hypot(x-s.x, y-s.y);
+        if (d < Math.max(12, p.size*s.scale+7) && (!best || d < best.d)) best = {...p, d};
+      }
+      return best;
+    }
+    function showTip(p, ev) {
+      if (!p) { tooltip.style.display = "none"; return; }
+      tooltip.style.display = "block";
+      tooltip.style.left = Math.min(canvas.clientWidth - 330, ev.clientX + 14) + "px";
+      tooltip.style.top = Math.max(10, ev.clientY - 78) + "px";
+      tooltip.innerHTML = `<b>${p.label}</b>${String(p.meta || p.id).replace(/\n/g, "<br>")}`;
+    }
+    function setScene(i) {
+      state.scene = i; state.question = scenes[i][2]; state.file = scenes[i][3]; state.mode = scenes[i][4];
+      renderAll();
+    }
+
+    canvas.addEventListener("pointerdown", ev => { state.pointer = { x: ev.clientX, y: ev.clientY, rx: state.rx, ry: state.ry }; canvas.setPointerCapture(ev.pointerId); });
+    canvas.addEventListener("pointermove", ev => {
+      const r = canvas.getBoundingClientRect();
+      if (state.pointer) { state.ry = state.pointer.ry + (ev.clientX-state.pointer.x)*.006; state.rx = state.pointer.rx + (ev.clientY-state.pointer.y)*.006; draw(); }
+      else { state.hover = pick(ev.clientX-r.left, ev.clientY-r.top); showTip(state.hover, ev); draw(); }
+    });
+    canvas.addEventListener("pointerup", ev => { state.pointer = null; try { canvas.releasePointerCapture(ev.pointerId); } catch (_) {} });
+    canvas.addEventListener("click", ev => {
+      const r = canvas.getBoundingClientRect();
+      state.selected = pick(ev.clientX-r.left, ev.clientY-r.top);
+      renderSelected();
+      draw();
+    });
+    canvas.addEventListener("pointerleave", () => { state.pointer = null; state.hover = null; tooltip.style.display = "none"; draw(); });
+    canvas.addEventListener("wheel", ev => { ev.preventDefault(); state.zoom = Math.min(2.2, Math.max(.55, state.zoom*(ev.deltaY>0?.92:1.08))); draw(); }, { passive:false });
+    document.querySelectorAll("[data-file]").forEach(b => b.addEventListener("click", () => { state.file = b.dataset.file; renderAll(); }));
+    document.querySelectorAll("[data-question]").forEach(b => b.addEventListener("click", () => { state.question = b.dataset.question; renderAll(); }));
+    document.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => { state.mode = b.dataset.mode; renderAll(); }));
+    document.getElementById("resetView").addEventListener("click", () => { state.rx = -.55; state.ry = .62; state.zoom = 1; draw(); });
+    document.getElementById("savePng").addEventListener("click", () => { const a = document.createElement("a"); a.download = `mc2-${state.file}-${state.mode}.png`; a.href = canvas.toDataURL("image/png"); a.click(); });
+    document.getElementById("resetStory").addEventListener("click", () => { state.selected = null; setScene(0); });
+    window.addEventListener("resize", resize);
+    init();
+  </script>
+</body>
+</html>
