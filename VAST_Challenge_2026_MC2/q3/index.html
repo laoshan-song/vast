@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MC2 Q3 汇聚原因与文件内容推断</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #12110f;
+      --panel: #1b1d1b;
+      --panel2: #232720;
+      --ink: #0e0f0d;
+      --line: #3a3d36;
+      --line-soft: #2a2d28;
+      --text: #f5f1e8;
+      --muted: #b8b0a2;
+      --blue: #4ca3b8;
+      --green: #72ad73;
+      --amber: #d7a43e;
+      --red: #dc6b5f;
+      --violet: #9c81cf;
+      --steel: #8e9690;
+      --edge: #817c70;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        linear-gradient(180deg, #171512 0%, #10100e 52%, #151512 100%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 1px, transparent 1px 36px);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body { overflow: hidden; }
+    button { font: inherit; color: inherit; }
+    .app { height: 100vh; display: grid; grid-template-columns: 370px minmax(660px, 1fr) 390px; grid-template-rows: 82px 1fr; }
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #20221d 0%, #171914 100%);
+      box-shadow: 0 14px 34px rgba(0,0,0,.22);
+    }
+    h1 { margin: 0; font-size: 21px; line-height: 1.18; letter-spacing: 0; }
+    h2 { margin: 0 0 10px; font-size: 15px; letter-spacing: 0; }
+    h3 { margin: 0 0 8px; color: var(--muted); font-size: 12px; letter-spacing: .02em; text-transform: uppercase; }
+    p { margin: 0; }
+    code { color: #e5f7ff; background: #26302f; padding: 1px 4px; border-radius: 4px; }
+    .subtitle { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .topbar { display: grid; gap: 8px; justify-items: end; min-width: 410px; }
+    .q-links { display: inline-flex; gap: 6px; padding: 4px; border: 1px solid var(--line-soft); border-radius: 8px; background: rgba(14,15,13,.58); }
+    .q-links a { color: var(--muted); text-decoration: none; font-size: 12px; padding: 6px 9px; border-radius: 6px; border: 1px solid transparent; }
+    .q-links a.active { color: var(--text); background: #2a2f27; border-color: #4b5148; }
+    .q-links a:hover { color: var(--text); background: #242820; }
+    .stats { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+    .stat { min-width: 88px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: linear-gradient(180deg, #242820, #191b18); }
+    .stat b { display: block; font-size: 17px; line-height: 1.1; }
+    .stat span { color: var(--muted); font-size: 11px; }
+    aside { min-height: 0; overflow: auto; padding: 16px; background: rgba(27,29,27,.96); }
+    .left { border-right: 1px solid var(--line); }
+    .right { border-left: 1px solid var(--line); }
+    main { min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(440px, 65%) minmax(260px, 35%); background: #10110f; }
+    section { margin-bottom: 16px; }
+    section h2 { display: flex; align-items: center; gap: 8px; }
+    section h2::before { content: ""; width: 7px; height: 18px; border-radius: 99px; background: var(--amber); box-shadow: 0 0 18px rgba(215,164,62,.28); }
+    .answer, .callout, .evidence, .legend-row, .path-row { border: 1px solid var(--line); border-radius: 8px; background: linear-gradient(180deg, #1f221e 0%, #171a16 100%); }
+    .answer, .callout { padding: 12px; font-size: 13px; line-height: 1.52; color: #e4ded2; }
+    .answer { border-left: 3px solid var(--green); }
+    .callout { color: #f3db9d; background: linear-gradient(180deg, #2a2416, #1d1a12); border-color: #6a562c; border-left: 3px solid var(--amber); }
+    .answer b, .callout b { color: var(--text); }
+    .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+    .tabs button { border: 1px solid var(--line); border-radius: 8px; background: #222720; padding: 9px 9px; cursor: pointer; color: var(--muted); transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease; }
+    .tabs button.active, .tabs button:hover { color: var(--text); background: #30372d; border-color: #5a654f; }
+    .tabs button:hover { transform: translateY(-1px); }
+    .legend { display: grid; gap: 8px; }
+    .legend-row { display: grid; grid-template-columns: 14px 1fr; gap: 8px; padding: 9px; color: #ded7ca; font-size: 12px; line-height: 1.42; }
+    .swatch { width: 11px; height: 11px; border-radius: 50%; margin-top: 3px; background: var(--steel); }
+    .evidence { position: relative; padding: 10px 10px 10px 14px; margin-bottom: 8px; font-size: 12px; line-height: 1.42; color: #ded7ca; cursor: pointer; overflow: hidden; transition: transform .15s ease, border-color .15s ease, background .15s ease; }
+    .evidence::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--steel); }
+    .evidence.org::before { background: var(--blue); }
+    .evidence.route::before { background: var(--violet); }
+    .evidence.content::before { background: var(--green); }
+    .evidence.exec::before { background: var(--red); }
+    .evidence:hover { transform: translateX(2px); border-color: #59604f; background: #20241d; }
+    .evidence.active { border-color: var(--amber); background: linear-gradient(180deg, #2a2416, #1d1a12); }
+    .evidence b { display: block; margin-bottom: 3px; color: var(--text); }
+    .evidence small { display: block; margin-top: 4px; color: var(--muted); }
+    .stage { min-height: 0; position: relative; border-bottom: 1px solid var(--line); background: #10110f; }
+    .stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,.7), rgba(0,0,0,.18));
+    }
+    svg { width: 100%; height: 100%; display: block; }
+    .chart-grid { min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px; overflow: auto; background: #131411; }
+    .viz-card { min-height: 190px; border: 1px solid var(--line); border-radius: 8px; background: linear-gradient(180deg, #1d201b, #151713); padding: 12px; box-shadow: inset 0 1px rgba(255,255,255,.03); }
+    .viz-card.wide { grid-column: 1 / -1; }
+    .chart-title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .chart-title b { font-size: 13px; }
+    .chart-title span { color: var(--muted); font-size: 11px; }
+    .svg-label { fill: #dfe6ed; font-size: 11px; }
+    .svg-muted { fill: #a7b1bf; font-size: 10px; }
+    .node rect, .node circle { stroke: rgba(245,241,232,.16); stroke-width: 1.2; filter: drop-shadow(0 10px 18px rgba(0,0,0,.28)); }
+    .node:hover rect, .node:hover circle { stroke: rgba(245,241,232,.82); stroke-width: 2; }
+    .node.selected rect, .node.selected circle { stroke: #fff7df; stroke-width: 2.5; filter: drop-shadow(0 0 16px rgba(215,164,62,.30)); }
+    .node text { pointer-events: none; }
+    .node-title { fill: var(--text); font-size: 13px; font-weight: 750; }
+    .node-sub { fill: var(--muted); font-size: 10.5px; }
+    .edge { fill: none; stroke: var(--edge); stroke-width: 2; opacity: .82; }
+    .edge.strong { stroke-width: 3.4; opacity: .96; }
+    .edge.highlight { stroke: var(--amber); stroke-width: 4; opacity: 1; }
+    .edge-label { fill: #c3ccd7; font-size: 10.5px; paint-order: stroke; stroke: #0d1015; stroke-width: 3px; }
+    .group-label { fill: #c4ceda; font-size: 12px; font-weight: 700; }
+    .group-box { fill: rgba(255,255,255,.032); stroke: #3a4037; stroke-width: 1; stroke-dasharray: 5 5; }
+    .tooltip { position: fixed; display: none; z-index: 10; pointer-events: none; max-width: 380px; padding: 10px 11px; border: 1px solid #6d7666; border-radius: 8px; background: #181a15; color: var(--text); box-shadow: 0 18px 40px rgba(0,0,0,.36); font-size: 12px; line-height: 1.44; }
+    .tooltip b { display: block; margin-bottom: 4px; }
+    .detail-title { color: var(--text); font-weight: 750; margin-bottom: 6px; }
+    .detail-body { color: #dce4ed; font-size: 13px; line-height: 1.48; }
+    .path-table { display: grid; gap: 7px; }
+    .path-row { display: grid; grid-template-columns: 98px 1fr; gap: 8px; align-items: start; padding: 9px; font-size: 12px; line-height: 1.42; background: #151812; }
+    .path-row b { color: var(--text); }
+    .path-row span { color: var(--muted); }
+    @media (max-width: 1180px) {
+      body { overflow: auto; }
+      .app { height: auto; grid-template-columns: 1fr; grid-template-rows: auto auto minmax(700px, 85vh) auto; }
+      header, aside, main { grid-column: 1; }
+      .left, .right { border: 0; }
+      .chart-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>MC2 Q3 汇聚原因与文件内容推断</h1>
+        <div class="subtitle">把 Q3 的证据 A-H 组织成两条推理线：为什么汇聚到 John，以及异常文件大概率是什么。</div>
+      </div>
+      <div class="topbar">
+        <nav class="q-links" aria-label="question navigation">
+          <a href="../q1/index.html">Q1</a>
+          <a href="../q2/index.html">Q2</a>
+          <a class="active" href="../q3/index.html">Q3</a>
+          <a href="../submission/index.html">总览</a>
+        </nav>
+        <div class="stats" id="stats"></div>
+      </div>
+    </header>
+
+    <aside class="left">
+      <section>
+        <h2>Q3 答案</h2>
+        <div class="answer">
+          三条链汇聚到 John，是因为 John Agent 是公司对外发声管道，且指令文件预先指定了他作为最终执行者。
+          <code>X.txt</code> 大概率是从内部敏感文档提取或改写出的泄露内容；<code>X_further_instructions.md</code>
+          大概率是传播路由、最终发帖、循环模糊化和销毁 SOP。
+        </div>
+      </section>
+
+      <section>
+        <h2>视图切换</h2>
+        <div class="tabs">
+          <button class="active" data-mode="converge">汇聚原因</button>
+          <button data-mode="content">文件内容</button>
+          <button data-mode="full">全链路</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>证据 A-H</h2>
+        <div id="evidenceList"></div>
+      </section>
+
+      <section>
+        <h2>图例</h2>
+        <div class="legend">
+          <div class="legend-row"><span class="swatch" style="background:var(--blue)"></span><span>组织/职责证据：John 与 Public Relations、SaidIt 发帖权责相关。</span></div>
+          <div class="legend-row"><span class="swatch" style="background:var(--violet)"></span><span>传播证据：三条链、路由、循环、自环和最后一跳模式。</span></div>
+          <div class="legend-row"><span class="swatch" style="background:var(--green)"></span><span>内容证据：源文档、创建 .txt、文件大小和内容性质推断。</span></div>
+          <div class="legend-row"><span class="swatch" style="background:var(--red)"></span><span>执行证据：John Agent 发帖、删除文件、销毁证据。</span></div>
+        </div>
+      </section>
+    </aside>
+
+    <main>
+      <div class="stage">
+        <svg id="q3Svg" viewBox="0 0 1000 640" aria-label="Q3 reasoning diagram"></svg>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+      <div class="chart-grid">
+        <div class="viz-card">
+          <div class="chart-title"><b>链长对比</b><span>SwiftWren 最长，用于模糊化</span></div>
+          <svg id="chainBars" viewBox="0 0 430 180"></svg>
+        </div>
+        <div class="viz-card">
+          <div class="chart-title"><b>内容文件大小</b><span>.txt 远大于普通社交帖</span></div>
+          <svg id="fileBars" viewBox="0 0 430 180"></svg>
+        </div>
+        <div class="viz-card wide">
+          <div class="chart-title"><b>最终 5 秒 SOP</b><span>收到任务 -> 检查 -> 发帖 -> 删除指令 -> 删除内容</span></div>
+          <svg id="sopTimeline" viewBox="0 0 860 160"></svg>
+        </div>
+      </div>
+    </main>
+
+    <aside class="right">
+      <section>
+        <h2>当前选中</h2>
+        <div class="callout" id="selectedText">点击图中节点或左侧证据卡片，查看对应推理含义。</div>
+      </section>
+      <section>
+        <h2>推理路径</h2>
+        <div class="path-table">
+          <div class="path-row"><b>1. 路由</b><span>源头读取 <code>_further_instructions.md</code>，中间节点只转发同一任务，说明路线预设。</span></div>
+          <div class="path-row"><b>2. 终点</b><span>三链最后都从 IT 转到 Customer Support 的 John Agent。</span></div>
+          <div class="path-row"><b>3. 权责</b><span>John 管 Public Relations，Agent 又是 SaidIt/Flex 高频发帖者。</span></div>
+          <div class="path-row"><b>4. 执行</b><span>John Agent 执行 <code>saidit_post_check</code>、<code>saidit_post</code>、双删除。</span></div>
+          <div class="path-row"><b>5. 内容</b><span>SwiftWren 来自 <code>meeting_notes.doc</code>，MellowOtter 来自 <code>strategic_directions.doc</code>。</span></div>
+        </div>
+      </section>
+      <section>
+        <h2>一句话结论</h2>
+        <div class="answer">
+          这更像是一套复用的 Agent 泄露管道：源头准备内容和指令，中间网络负责拖长路径，John Agent 作为 PR 发帖终端完成公开发布和清理。
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const colors = {
+      org: "#4aa6d8",
+      route: "#ad8cff",
+      content: "#70bf78",
+      exec: "#ee6a70",
+      system: "#e2b85f",
+      muted: "#8796aa",
+      edge: "#667386"
+    };
+
+    const evidence = [
+      {
+        id: "A",
+        title: "证据 A：只有源头读取指令",
+        short: "中间节点只转发 read_file 任务",
+        detail: "SwiftWren 仅 Emma 读取指令文件；MellowOtter 仅 Noah 读取指令文件；HiddenOrca 的读取记录在数据外。中间节点只转发同一个 task=read_file/path=X_further_instructions.md。",
+        type: "route"
+      },
+      {
+        id: "B",
+        title: "证据 B：John 管 Public Relations",
+        short: "Customer Support 下有 Public Relations",
+        detail: "John 是 Customer Support 的 Department Lead。其部门包含 Public Relations，SaidIt 发帖属于对外沟通/公关行为，因此 John 是组织架构中合理的外发终点。",
+        type: "org"
+      },
+      {
+        id: "C",
+        title: "证据 C：最后一跳模式相同",
+        short: "最后都由 IT 传给 John",
+        detail: "HiddenOrca 和 SwiftWren 最后一跳是 Chloe Ballast -> John；MellowOtter 最后一跳是 Lily Anchorline -> John。最后一跳均来自 Information Technologies。",
+        type: "route"
+      },
+      {
+        id: "D",
+        title: "证据 D：IT/Products 是路由核心",
+        short: "大量循环后才转入 Customer Support",
+        detail: "三条链主要在 IT 和 Products 内部循环，IT -> Customer Support 每条链只有最后 1 跳。这说明 Customer Support 不是传播主体，而是终点执行区。",
+        type: "route"
+      },
+      {
+        id: "E",
+        title: "证据 E：John 曾提前转发",
+        short: "SwiftWren 中 John 多次收到后继续转发",
+        detail: "SwiftWren 中 John 出现 8 次，其中多次接收后又转发出去，直到 Hop 186 才最终发帖。这说明 John Agent 也参与了拖长链路的模糊化。",
+        type: "route"
+      },
+      {
+        id: "F",
+        title: "证据 F：源头先读敏感文档",
+        short: "meeting_notes.doc / strategic_directions.doc",
+        detail: "Emma 在创建 SwiftWren.txt 前读取 meeting_notes.doc；Noah 在创建 MellowOtter.txt 前读取 strategic_directions.doc。两者都在 1 秒后创建 .txt。",
+        type: "content"
+      },
+      {
+        id: "G",
+        title: "证据 G：销毁模式一致",
+        short: "check -> post -> delete instruction -> delete txt",
+        detail: "三条链结束时 John Agent 执行完全一致的序列：saidit_post_check、saidit_post、delete_file(X_further_instructions.md)、delete_file(X.txt)。",
+        type: "exec"
+      },
+      {
+        id: "H",
+        title: "证据 H：文件大小暗示长文泄露",
+        short: "30KB / 44KB，不像普通帖子",
+        detail: "SwiftWren.txt 为 30,615 bytes，MellowOtter.txt 为 44,879 bytes。它们远大于普通社交媒体帖子，更像长篇内部资料或泄露汇编。",
+        type: "content"
+      },
+      {
+        id: "john",
+        title: "结论 1：为什么汇聚到 John",
+        short: "PR 权责 + 高频外发 + 指令指定",
+        detail: "John 是公司对外发声管道，并被进一步指令指定为最终执行者。中间节点并不理解内容，只负责把触发任务送到他那里。",
+        type: "exec"
+      },
+      {
+        id: "files",
+        title: "结论 2：文件大概率是什么",
+        short: ".txt 是泄露内容，.md 是操作指令",
+        detail: "X.txt 大概率是内部敏感文档的提取/改写内容；X_further_instructions.md 大概率包含传播路由表、最终执行指令、循环模糊化规则和销毁 SOP。",
+        type: "content"
+      }
+    ];
+
+    const allNodes = [
+      { id: "emma", label: "Emma Harbor Agent", sub: "CFO / reads meeting_notes.doc", x: 94, y: 130, w: 180, h: 64, type: "content", evidence: "F", modes: ["content", "full"] },
+      { id: "noah", label: "Noah Mariner Agent", sub: "COO / reads strategic_directions.doc", x: 94, y: 250, w: 180, h: 64, type: "content", evidence: "F", modes: ["content", "full"] },
+      { id: "gabriel", label: "Gabriel Sonar Agent", sub: "HiddenOrca source in data", x: 94, y: 370, w: 180, h: 64, type: "route", evidence: "A", modes: ["content", "full"] },
+      { id: "payload", label: "X.txt", sub: "公开发帖内容源", x: 326, y: 185, w: 162, h: 62, type: "content", evidence: "H", modes: ["content", "full"] },
+      { id: "instruction", label: "X_further_instructions.md", sub: "路由表 + 执行 SOP", x: 326, y: 316, w: 190, h: 62, type: "route", evidence: "A", modes: ["content", "full"] },
+      { id: "route", label: "Agent 网络传播", sub: "IT / Products 循环、自环、回弹", x: 560, y: 244, w: 180, h: 68, type: "route", evidence: "D", modes: ["converge", "content", "full"] },
+      { id: "itlast", label: "最后一跳来自 IT", sub: "Chloe 或 Lily -> John", x: 560, y: 392, w: 180, h: 62, type: "route", evidence: "C", modes: ["converge", "full"] },
+      { id: "johnRole", label: "John 的组织角色", sub: "Customer Support Lead / PR scope", x: 95, y: 130, w: 198, h: 66, type: "org", evidence: "B", modes: ["converge"] },
+      { id: "johnActivity", label: "John Agent 活跃", sub: "92 SaidIt/Flex 发帖", x: 95, y: 278, w: 198, h: 66, type: "org", evidence: "B", modes: ["converge"] },
+      { id: "johnLoop", label: "John 也曾转发", sub: "SwiftWren 提前到达后继续转发", x: 95, y: 426, w: 198, h: 66, type: "route", evidence: "E", modes: ["converge"] },
+      { id: "john", label: "John Windward Agent", sub: "最终执行者，不一定是本人知情", x: 782, y: 254, w: 188, h: 74, type: "exec", evidence: "john", modes: ["converge", "content", "full"] },
+      { id: "saidit", label: "SaidIt general", sub: "content_source=X.txt", x: 782, y: 102, w: 168, h: 62, type: "exec", evidence: "G", modes: ["converge", "content", "full"] },
+      { id: "cleanup", label: "删除证据", sub: "delete .md + delete .txt", x: 782, y: 430, w: 168, h: 62, type: "exec", evidence: "G", modes: ["converge", "content", "full"] },
+      { id: "conclusionJohn", label: "汇聚原因", sub: "John 是 PR 外发终端", x: 500, y: 542, r: 38, type: "exec", evidence: "john", modes: ["converge", "full"] },
+      { id: "conclusionFiles", label: "文件推断", sub: "泄露内容 + 操作指令", x: 500, y: 542, r: 38, type: "content", evidence: "files", modes: ["content"] }
+    ];
+
+    const allLinks = [
+      { source: "emma", target: "payload", label: "read doc -> create txt", modes: ["content", "full"], strong: true },
+      { source: "noah", target: "payload", label: "read doc -> create txt", modes: ["content", "full"] },
+      { source: "gabriel", target: "instruction", label: "HiddenOrca starts in data", modes: ["content", "full"] },
+      { source: "payload", target: "john", label: "post content_source", modes: ["content", "full"], strong: true },
+      { source: "instruction", target: "route", label: "predefined routing", modes: ["content", "full"], strong: true },
+      { source: "route", target: "john", label: "deliver trigger", modes: ["content", "full"], strong: true },
+      { source: "johnRole", target: "john", label: "org fit", modes: ["converge"], strong: true },
+      { source: "johnActivity", target: "john", label: "external voice channel", modes: ["converge"], strong: true },
+      { source: "johnLoop", target: "route", label: "chain-lengthening behavior", modes: ["converge"] },
+      { source: "route", target: "itlast", label: "IT/Products core", modes: ["converge", "full"] },
+      { source: "itlast", target: "john", label: "last hop", modes: ["converge", "full"], strong: true },
+      { source: "john", target: "saidit", label: "saidit_post_check + post", modes: ["converge", "content", "full"], strong: true },
+      { source: "john", target: "cleanup", label: "delete files", modes: ["converge", "content", "full"] },
+      { source: "john", target: "conclusionJohn", label: "answers why", modes: ["converge", "full"] },
+      { source: "saidit", target: "conclusionFiles", label: "X.txt purpose", modes: ["content"] },
+      { source: "instruction", target: "conclusionFiles", label: ".md purpose", modes: ["content"], strong: true },
+      { source: "cleanup", target: "conclusionFiles", label: "SOP purpose", modes: ["content"] }
+    ];
+
+    const chainStats = [
+      { name: "HiddenOrca", hops: 39, span: "39h", color: "#70bf78" },
+      { name: "SwiftWren", hops: 186, span: "8d", color: "#4aa6d8" },
+      { name: "MellowOtter", hops: 10, span: "10h", color: "#ad8cff" }
+    ];
+    const fileStats = [
+      { name: "SwiftWren.txt", bytes: 30615, source: "meeting_notes.doc", color: "#4aa6d8" },
+      { name: "MellowOtter.txt", bytes: 44879, source: "strategic_directions.doc", color: "#ad8cff" },
+      { name: "HiddenOrca.txt", bytes: null, source: "data window before", color: "#70bf78" }
+    ];
+    const sop = [
+      { t: 0, label: "收到任务", sub: "queue_subordinate_task" },
+      { t: 1, label: "检查", sub: "saidit_post_check" },
+      { t: 2, label: "发帖", sub: "saidit_post" },
+      { t: 3, label: "删指令", sub: "delete .md" },
+      { t: 4, label: "删内容", sub: "delete .txt" }
+    ];
+
+    let mode = "converge";
+    let selectedId = null;
+    const svg = d3.select("#q3Svg");
+    const tooltip = d3.select("#tooltip");
+    const selectedText = d3.select("#selectedText");
+    const evidenceById = new Map(evidence.map(d => [d.id, d]));
+
+    function initStats() {
+      const stats = [
+        ["3 / 3", "chains to John"],
+        ["186", "SwiftWren hops"],
+        ["92", "John posts"],
+        ["30KB / 44KB", "payload size"]
+      ];
+      d3.select("#stats").selectAll(".stat").data(stats).join("div")
+        .attr("class", "stat")
+        .html(d => `<b>${d[0]}</b><span>${d[1]}</span>`);
+    }
+
+    function showSelected(id) {
+      selectedId = id;
+      const item = evidenceById.get(id);
+      if (!item) return;
+      selectedText.html(`<div class="detail-title">${item.title}</div><div class="detail-body">${item.detail}</div>`);
+      d3.selectAll(".evidence").classed("active", d => d.id === id);
+      d3.selectAll(".node").classed("selected", d => d.evidence === id);
+      d3.selectAll(".edge").classed("highlight", d => d.source.evidence === id || d.target.evidence === id);
+    }
+
+    function initEvidenceList() {
+      d3.select("#evidenceList").selectAll("div")
+        .data(evidence)
+        .join("div")
+        .attr("class", d => `evidence ${d.type}`)
+        .html(d => `<b>${d.title}</b>${d.short}<small>${d.detail}</small>`)
+        .on("click", (event, d) => showSelected(d.id));
+    }
+
+    function visibleNodes() {
+      return allNodes.filter(d => d.modes.includes(mode));
+    }
+
+    function visibleLinks(ids) {
+      const nodeById = new Map(allNodes.map(d => [d.id, d]));
+      return allLinks
+        .filter(d => d.modes.includes(mode) && ids.has(d.source) && ids.has(d.target))
+        .map(d => ({ ...d, source: nodeById.get(d.source), target: nodeById.get(d.target) }));
+    }
+
+    function edgePath(s, t) {
+      const sx = s.r ? s.x : s.x + (s.w || 0) / 2;
+      const sy = s.r ? s.y : s.y + (s.h || 0) / 2;
+      const tx = t.r ? t.x : t.x + (t.w || 0) / 2;
+      const ty = t.r ? t.y : t.y + (t.h || 0) / 2;
+      const dx = tx - sx;
+      const bend = Math.min(90, Math.max(30, Math.abs(dx) * .17 + Math.abs(ty - sy) * .10));
+      return `M${sx},${sy} C${sx + bend},${sy} ${tx - bend},${ty} ${tx},${ty}`;
+    }
+
+    function renderMain() {
+      svg.selectAll("*").remove();
+      svg.append("defs").append("marker")
+        .attr("id", "arrow")
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 10)
+        .attr("refY", 0)
+        .attr("markerWidth", 7)
+        .attr("markerHeight", 7)
+        .attr("orient", "auto")
+        .append("path")
+        .attr("d", "M0,-5L10,0L0,5")
+        .attr("fill", colors.edge);
+      const defs = svg.select("defs");
+      Object.entries(colors).forEach(([name, color]) => {
+        const grad = defs.append("linearGradient")
+          .attr("id", `grad-${name}`)
+          .attr("x1", "0%")
+          .attr("x2", "100%")
+          .attr("y1", "0%")
+          .attr("y2", "100%");
+        grad.append("stop").attr("offset", "0%").attr("stop-color", d3.color(color).brighter(.35).formatHex());
+        grad.append("stop").attr("offset", "100%").attr("stop-color", d3.color(color).darker(.45).formatHex());
+      });
+
+      const groups = mode === "converge"
+        ? [
+          { label: "为什么会汇聚到 John", x: 52, y: 70, w: 292, h: 470 },
+          { label: "传播网络与最后一跳", x: 432, y: 196, w: 350, h: 290 },
+          { label: "最终外发与清理", x: 760, y: 60, w: 190, h: 462 }
+        ]
+        : mode === "content"
+          ? [
+            { label: "内容来源", x: 54, y: 78, w: 240, h: 390 },
+            { label: "文件形态推断", x: 306, y: 130, w: 236, h: 306 },
+            { label: "传播/执行", x: 548, y: 188, w: 418, h: 316 }
+          ]
+          : [
+            { label: "源头与文件", x: 54, y: 78, w: 470, h: 394 },
+            { label: "路由模糊化", x: 542, y: 194, w: 216, h: 304 },
+            { label: "John 终点", x: 760, y: 60, w: 204, h: 462 }
+          ];
+
+      svg.append("g").selectAll("rect").data(groups).join("rect")
+        .attr("class", "group-box")
+        .attr("x", d => d.x).attr("y", d => d.y).attr("width", d => d.w).attr("height", d => d.h).attr("rx", 8);
+      svg.append("g").selectAll("text").data(groups).join("text")
+        .attr("class", "group-label")
+        .attr("x", d => d.x + 12).attr("y", d => d.y + 22).text(d => d.label);
+
+      const nodes = visibleNodes();
+      const ids = new Set(nodes.map(d => d.id));
+      const links = visibleLinks(ids);
+
+      const edgeG = svg.append("g");
+      edgeG.selectAll("path")
+        .data(links)
+        .join("path")
+        .attr("class", d => `edge ${d.strong ? "strong" : ""}`)
+        .attr("d", d => edgePath(d.source, d.target))
+        .attr("marker-end", "url(#arrow)")
+        .on("mouseenter", (event, d) => {
+          tooltip.style("display", "block").html(`<b>${d.label}</b>${d.source.label} -> ${d.target.label}`);
+        })
+        .on("mousemove", event => tooltip.style("left", `${event.clientX + 14}px`).style("top", `${event.clientY + 12}px`))
+        .on("mouseleave", () => tooltip.style("display", "none"));
+
+      edgeG.selectAll("text")
+        .data(links)
+        .join("text")
+        .attr("class", "edge-label")
+        .attr("x", d => {
+          const s = d.source.r ? d.source.x : d.source.x + d.source.w / 2;
+          const t = d.target.r ? d.target.x : d.target.x + d.target.w / 2;
+          return (s + t) / 2;
+        })
+        .attr("y", d => {
+          const s = d.source.r ? d.source.y : d.source.y + d.source.h / 2;
+          const t = d.target.r ? d.target.y : d.target.y + d.target.h / 2;
+          return (s + t) / 2 - 8;
+        })
+        .attr("text-anchor", "middle")
+        .text(d => d.label);
+
+      const node = svg.append("g").selectAll(".node")
+        .data(nodes)
+        .join("g")
+        .attr("class", "node")
+        .attr("transform", d => d.r ? `translate(${d.x},${d.y})` : `translate(${d.x},${d.y})`)
+        .style("cursor", "pointer")
+        .on("click", (event, d) => showSelected(d.evidence))
+        .on("mouseenter", (event, d) => {
+          const item = evidenceById.get(d.evidence);
+          tooltip.style("display", "block").html(`<b>${d.label}</b>${item ? item.detail : d.sub}`);
+        })
+        .on("mousemove", event => tooltip.style("left", `${event.clientX + 14}px`).style("top", `${event.clientY + 12}px`))
+        .on("mouseleave", () => tooltip.style("display", "none"));
+
+      node.each(function(d) {
+        const g = d3.select(this);
+        const fill = colors[d.type] ? `url(#grad-${d.type})` : colors.muted;
+        if (d.r) {
+          g.append("circle").attr("r", d.r).attr("fill", fill);
+          g.append("text").attr("class", "node-title").attr("text-anchor", "middle").attr("y", -4).text(d.label);
+          g.append("text").attr("class", "node-sub").attr("text-anchor", "middle").attr("y", 13).text(d.sub);
+        } else {
+          g.append("rect").attr("width", d.w).attr("height", d.h).attr("rx", 8).attr("fill", fill);
+          g.append("text").attr("class", "node-title").attr("x", 14).attr("y", 25).text(d.label);
+          wrapText(g.append("text").attr("class", "node-sub").attr("x", 14).attr("y", 45), d.sub, d.w - 28);
+        }
+      });
+
+      if (selectedId) showSelected(selectedId);
+    }
+
+    function wrapText(text, value, width) {
+      const words = String(value).split(/\s+/);
+      let line = [];
+      let y = +text.attr("y");
+      let tspan = text.text(null).append("tspan").attr("x", text.attr("x")).attr("y", y);
+      words.forEach(word => {
+        line.push(word);
+        tspan.text(line.join(" "));
+        if (tspan.node().getComputedTextLength() > width && line.length > 1) {
+          line.pop();
+          tspan.text(line.join(" "));
+          line = [word];
+          tspan = text.append("tspan").attr("x", text.attr("x")).attr("y", y += 14).text(word);
+        }
+      });
+    }
+
+    function renderChainBars() {
+      const svg = d3.select("#chainBars");
+      svg.selectAll("*").remove();
+      const x = d3.scaleLinear().domain([0, 190]).range([0, 260]);
+      const g = svg.append("g").attr("transform", "translate(118,28)");
+      g.selectAll("rect").data(chainStats).join("rect")
+        .attr("x", 0).attr("y", (d, i) => i * 43).attr("width", d => x(d.hops)).attr("height", 20).attr("rx", 5).attr("fill", d => d.color);
+      g.selectAll(".name").data(chainStats).join("text")
+        .attr("class", "svg-label").attr("x", -102).attr("y", (d, i) => i * 43 + 15).text(d => d.name);
+      g.selectAll(".val").data(chainStats).join("text")
+        .attr("class", "svg-label").attr("x", d => x(d.hops) + 8).attr("y", (d, i) => i * 43 + 15).text(d => `${d.hops} hops / ${d.span}`);
+      svg.append("text").attr("class", "svg-muted").attr("x", 18).attr("y", 164).text("SwiftWren 的超长链和 John 提前转发，支撑“拖长链路”的判断。");
+    }
+
+    function renderFileBars() {
+      const svg = d3.select("#fileBars");
+      svg.selectAll("*").remove();
+      const max = d3.max(fileStats, d => d.bytes || 0);
+      const x = d3.scaleLinear().domain([0, max]).range([0, 240]);
+      const g = svg.append("g").attr("transform", "translate(132,28)");
+      g.selectAll("rect").data(fileStats).join("rect")
+        .attr("x", 0).attr("y", (d, i) => i * 43).attr("width", d => d.bytes ? x(d.bytes) : 28).attr("height", 20).attr("rx", 5).attr("fill", d => d.bytes ? d.color : colors.muted).attr("opacity", d => d.bytes ? 1 : .65);
+      g.selectAll(".name").data(fileStats).join("text")
+        .attr("class", "svg-label").attr("x", -118).attr("y", (d, i) => i * 43 + 15).text(d => d.name);
+      g.selectAll(".val").data(fileStats).join("text")
+        .attr("class", "svg-label").attr("x", d => d.bytes ? x(d.bytes) + 8 : 36).attr("y", (d, i) => i * 43 + 15)
+        .text(d => d.bytes ? `${d.bytes.toLocaleString()} B` : "unknown");
+      g.selectAll(".source").data(fileStats).join("text")
+        .attr("class", "svg-muted").attr("x", -118).attr("y", (d, i) => i * 43 + 31).text(d => d.source);
+      svg.append("text").attr("class", "svg-muted").attr("x", 18).attr("y", 164).text("30KB/44KB 更像内部文档泄露，而不是正常短帖。");
+    }
+
+    function renderSop() {
+      const svg = d3.select("#sopTimeline");
+      svg.selectAll("*").remove();
+      const x = d3.scaleLinear().domain([0, 4]).range([80, 780]);
+      svg.append("line").attr("x1", x(0)).attr("y1", 70).attr("x2", x(4)).attr("y2", 70)
+        .attr("stroke", colors.edge).attr("stroke-width", 3);
+      const g = svg.append("g").selectAll("g").data(sop).join("g").attr("transform", d => `translate(${x(d.t)},70)`);
+      g.append("circle").attr("r", 18).attr("fill", (d, i) => i === 2 ? colors.exec : (i > 2 ? colors.system : colors.route));
+      g.append("text").attr("class", "svg-label").attr("text-anchor", "middle").attr("y", -31).text(d => `t+${d.t}s`);
+      g.append("text").attr("class", "svg-label").attr("text-anchor", "middle").attr("y", 45).text(d => d.label);
+      g.append("text").attr("class", "svg-muted").attr("text-anchor", "middle").attr("y", 61).text(d => d.sub);
+      svg.append("text").attr("class", "svg-muted").attr("x", 22).attr("y", 142)
+        .text("三条链的末端 SOP 完全一致，说明发帖后销毁不是偶然，而是指令机制的一部分。");
+    }
+
+    function bindControls() {
+      d3.selectAll("[data-mode]").on("click", function() {
+        mode = this.dataset.mode;
+        d3.selectAll("[data-mode]").classed("active", function() { return this.dataset.mode === mode; });
+        renderMain();
+      });
+    }
+
+    initStats();
+    initEvidenceList();
+    bindControls();
+    renderMain();
+    renderChainBars();
+    renderFileBars();
+    renderSop();
+    showSelected("john");
+  </script>
+</body>
+</html>

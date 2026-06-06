@@ -2,23 +2,23 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MC2 — Agent Blind Forwarding Network</title>
+<title>MC2 — Agent Blind Forwarding Chain Network</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#0d1117;font-family:'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;overflow:hidden;width:100vw;height:100vh}
+body{background:#0d1117;overflow:hidden;width:100vw;height:100vh;font-family:'Inter','Segoe UI','PingFang SC',sans-serif}
 svg{width:100%;height:100%}
-.tip{position:absolute;pointer-events:none;opacity:0;background:rgba(22,27,34,0.95);border:1px solid #30363d;border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.6;max-width:260px;transition:opacity 0.15s;z-index:100}
-.tip b{color:#e6edf3;font-size:15px}
-.tip .dp{color:#8b949e;font-size:11px;margin:4px 0}
-.tip .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-top:6px}
 
-.bar{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:16px;align-items:center;background:rgba(22,27,34,0.95);border:1px solid #30363d;border-radius:10px;padding:10px 20px;z-index:50}
+.tip{position:absolute;pointer-events:none;opacity:0;background:rgba(22,27,34,0.96);border:1px solid #30363d;border-radius:8px;padding:14px 18px;font-size:13px;line-height:1.6;max-width:280px;z-index:100;color:#c9d1d9;transition:opacity 0.15s}
+.tip .nm{font-size:16px;font-weight:700;margin-bottom:2px}
+.tip .dp{font-size:11px;color:#8b949e;margin-bottom:6px}
+.tip .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;margin-top:4px}
+
+.bar{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:16px;align-items:center;background:rgba(22,27,34,0.95);border:1px solid #30363d;border-radius:10px;padding:12px 24px;z-index:50}
 .bar .lg{display:flex;gap:12px;font-size:11px;color:#8b949e;align-items:center}
 .bar .dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px}
-.bar .line{width:16px;height:3px;border-radius:2px;display:inline-block;margin-right:4px}
 .bar .sep{width:1px;height:18px;background:#30363d}
 .btn{padding:7px 16px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;border:1px solid #30363d;background:transparent;color:#8b949e;transition:all 0.2s;font-family:inherit}
-.btn:hover{color:#e6edf3;border-color:#8b949e}
+.btn:hover{color:#e6edf3}
 .btn.on{color:#fff}
 #bho.on{background:rgba(34,211,238,0.12);border-color:#22d3ee}
 #bmo.on{background:rgba(251,191,36,0.12);border-color:#fbbf24}
@@ -26,14 +26,17 @@ svg{width:100%;height:100%}
 .sts{font-size:11px;color:#8b949e;min-width:140px;text-align:center;line-height:1.5}
 
 .hd{position:absolute;top:20px;left:28px;z-index:50;pointer-events:none}
-.hd h1{font-size:18px;font-weight:700;color:#e6edf3}
+.hd h1{font-size:17px;font-weight:700;color:#e6edf3}
 .hd p{font-size:11px;color:#8b949e;margin-top:2px}
+
+.evt-tooltip{position:absolute;pointer-events:none;opacity:0;background:rgba(22,27,34,0.96);border:1px solid #30363d;border-radius:6px;padding:10px 14px;font-size:11px;font-family:'SF Mono',monospace;color:#c9d1d9;line-height:1.5;z-index:99;transition:opacity 0.15s}
 </style>
 </head>
 <body>
 <svg id="graph"></svg>
 <div class="tip" id="tip"></div>
-<div class="hd"><h1>Agent Blind Forwarding & Backdoor Network</h1><p>HiddenOrca 39 · MellowOtter 10 · SwiftWren 186 hops → SaidIt</p></div>
+<div class="evt-tooltip" id="etip"></div>
+<div class="hd"><h1>Agent Blind Forwarding Chain Network</h1><p>HiddenOrca 39 · MellowOtter 10 · SwiftWren 186 hops → SaidIt | Hover edges for event details</p></div>
 
 <div class="bar">
   <div class="lg">
@@ -43,125 +46,163 @@ svg{width:100%;height:100%}
     <span><span class="dot" style="background:#f85149"></span>Endpoint</span>
   </div>
   <div class="sep"></div>
-  <div class="lg">
-    <span><span class="line" style="background:#22d3ee"></span>HiddenOrca</span>
-    <span><span class="line" style="background:#fbbf24"></span>MellowOtter</span>
-    <span><span class="line" style="background:#fb923c"></span>SwiftWren</span>
-  </div>
-  <div class="sep"></div>
   <button class="btn" id="bho" onclick="sel('HiddenOrca')">HiddenOrca 39</button>
   <button class="btn" id="bmo" onclick="sel('MellowOtter')">MellowOtter 10</button>
   <button class="btn" id="bsw" onclick="sel('SwiftWren')">SwiftWren 186</button>
   <div class="sep"></div>
-  <div class="sts" id="sts">Select a chain →<br>8s animation</div>
+  <div class="sts" id="sts">Select chain →<br>animation 8s</div>
 </div>
 
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
-// ===== DATA (embedded, real) =====
-const N=[{"id":"emma_harbor","nm":"Emma Harbor","r":"core","dp":"Executive Suite","hp":1,"fx":-560,"fy":0},{"id":"gabriel_sonar","nm":"Gabriel Sonar","r":"core","dp":"IT","hp":24,"fx":-560,"fy":-130},{"id":"zoey_drydock","nm":"Zoey Drydock","r":"core","dp":"IT","hp":22,"fx":-560,"fy":130},{"id":"chloe_ballast","nm":"Chloe Ballast","r":"puppet","dp":"IT","hp":19,"px":-280,"py":-160},{"id":"noah_mariner","nm":"Noah Mariner","r":"puppet","dp":"Exec","hp":1,"px":-280,"py":160},{"id":"john_windward","nm":"John Windward","r":"endpoint","dp":"Support","hp":4,"fx":560,"fy":0},{"id":"daniel_gangway","nm":"Daniel Gangway","r":"blind","dp":"IT","hp":14,"px":-40,"py":-180},{"id":"david_breakwater","nm":"David Breakwater","r":"blind","dp":"Support","hp":4,"px":-40,"py":-60},{"id":"evelyn_dock","nm":"Evelyn Dock","r":"blind","dp":"Products","hp":23,"px":-40,"py":60},{"id":"henry_sail","nm":"Henry Sail","r":"blind","dp":"Products","hp":12,"px":-40,"py":180},{"id":"james_stern","nm":"James Stern","r":"blind","dp":"Products","hp":12,"px":120,"py":-180},{"id":"levi_signal","nm":"Levi Signal","r":"blind","dp":"Products","hp":22,"px":120,"py":-60},{"id":"liam_anchor","nm":"Liam Anchor","r":"blind","dp":"Exec","hp":15,"px":120,"py":60},{"id":"lily_anchorline","nm":"Lily Anchorline","r":"blind","dp":"IT","hp":14,"px":120,"py":180},{"id":"mia_fender","nm":"Mia Fender","r":"blind","dp":"IT","hp":17,"px":280,"py":-180},{"id":"michael_capstan","nm":"Michael Capstan","r":"blind","dp":"HR","hp":10,"px":280,"py":-60},{"id":"olivia_keel","nm":"Olivia Keel","r":"blind","dp":"Support","hp":16,"px":280,"py":60},{"id":"owen_hatch","nm":"Owen Hatch","r":"blind","dp":"Products","hp":19,"px":280,"py":180},{"id":"victoria_rigging","nm":"Victoria Rigging","r":"blind","dp":"Products","hp":21,"px":420,"py":0}];
+// ===== REAL DATA =====
+const N=[
+  {id:"emma_harbor",nm:"Emma Harbor",r:"core",dp:"Executive Suite"},
+  {id:"gabriel_sonar",nm:"Gabriel Sonar",r:"core",dp:"IT"},
+  {id:"zoey_drydock",nm:"Zoey Drydock",r:"core",dp:"IT"},
+  {id:"chloe_ballast",nm:"Chloe Ballast",r:"puppet",dp:"IT"},
+  {id:"noah_mariner",nm:"Noah Mariner",r:"puppet",dp:"Exec"},
+  {id:"john_windward",nm:"John Windward",r:"endpoint",dp:"Support"},
+  {id:"daniel_gangway",nm:"Daniel Gangway",r:"blind",dp:"IT"},
+  {id:"david_breakwater",nm:"David Breakwater",r:"blind",dp:"Support"},
+  {id:"evelyn_dock",nm:"Evelyn Dock",r:"blind",dp:"Products"},
+  {id:"henry_sail",nm:"Henry Sail",r:"blind",dp:"Products"},
+  {id:"james_stern",nm:"James Stern",r:"blind",dp:"Products"},
+  {id:"levi_signal",nm:"Levi Signal",r:"blind",dp:"Products"},
+  {id:"liam_anchor",nm:"Liam Anchor",r:"blind",dp:"Exec"},
+  {id:"lily_anchorline",nm:"Lily Anchorline",r:"blind",dp:"IT"},
+  {id:"mia_fender",nm:"Mia Fender",r:"blind",dp:"IT"},
+  {id:"michael_capstan",nm:"Michael Capstan",r:"blind",dp:"HR"},
+  {id:"olivia_keel",nm:"Olivia Keel",r:"blind",dp:"Support"},
+  {id:"owen_hatch",nm:"Owen Hatch",r:"blind",dp:"Products"},
+  {id:"victoria_rigging",nm:"Victoria Rigging",r:"blind",dp:"Products"},
+];
 
-const CHAINS={"HiddenOrca":{"cl":"#22d3ee","desc":"PoC验证 · 39跳 · 16人",total:39,hops:[["gabriel_sonar","zoey_drydock"],["zoey_drydock","olivia_keel"],["olivia_keel","olivia_keel"],["olivia_keel","liam_anchor"],["liam_anchor","olivia_keel"],["olivia_keel","daniel_gangway"],["daniel_gangway","levi_signal"],["levi_signal","james_stern"],["james_stern","evelyn_dock"],["evelyn_dock","owen_hatch"],["owen_hatch","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","mia_fender"],["mia_fender","lily_anchorline"],["lily_anchorline","victoria_rigging"],["victoria_rigging","david_breakwater"],["david_breakwater","chloe_ballast"],["chloe_ballast","john_windward"],["james_stern","liam_anchor"],["liam_anchor","henry_sail"],["henry_sail","liam_anchor"],["liam_anchor","henry_sail"],["henry_sail","michael_capstan"],["michael_capstan","owen_hatch"],["owen_hatch","zoey_drydock"],["zoey_drydock","owen_hatch"],["owen_hatch","james_stern"],["james_stern","james_stern"],["james_stern","james_stern"],["james_stern","evelyn_dock"],["evelyn_dock","victoria_rigging"],["victoria_rigging","evelyn_dock"],["evelyn_dock","owen_hatch"],["owen_hatch","zoey_drydock"],["zoey_drydock","james_stern"],["james_stern","liam_anchor"],["liam_anchor","olivia_keel"],["olivia_keel","daniel_gangway"],["daniel_gangway","lily_anchorline"],["lily_anchorline","daniel_gangway"],["daniel_gangway","levi_signal"],["levi_signal","victoria_rigging"],["victoria_rigging","chloe_ballast"],["chloe_ballast","owen_hatch"],["owen_hatch","zoey_drydock"],["zoey_drydock","zoey_drydock"],["zoey_drydock","owen_hatch"],["owen_hatch","levi_signal"],["levi_signal","james_stern"],["james_stern","evelyn_dock"],["evelyn_dock","victoria_rigging"],["victoria_rigging","victoria_rigging"],["victoria_rigging","evelyn_dock"],["evelyn_dock","owen_hatch"],["owen_hatch","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","mia_fender"],["mia_fender","lily_anchorline"],["lily_anchorline","victoria_rigging"],["victoria_rigging","david_breakwater"],["david_breakwater","chloe_ballast"],["chloe_ballast","john_windward"]],"ue":[["gabriel_sonar","zoey_drydock",1],["zoey_drydock","olivia_keel",2],["olivia_keel","liam_anchor",1],["liam_anchor","olivia_keel",1],["olivia_keel","daniel_gangway",1],["daniel_gangway","levi_signal",1],["levi_signal","james_stern",1],["james_stern","evelyn_dock",1],["evelyn_dock","owen_hatch",2],["owen_hatch","michael_capstan",1],["michael_capstan","henry_sail",1],["henry_sail","mia_fender",1],["mia_fender","lily_anchorline",1],["lily_anchorline","victoria_rigging",1],["victoria_rigging","david_breakwater",1],["david_breakwater","chloe_ballast",1],["chloe_ballast","john_windward",1],["james_stern","liam_anchor",1],["chloe_ballast","owen_hatch",1],["owen_hatch","zoey_drydock",1],["zoey_drydock","owen_hatch",2],["owen_hatch","james_stern",1],["evelyn_dock","victoria_rigging",1],["victoria_rigging","evelyn_dock",1],["liam_anchor","henry_sail",1],["henry_sail","michael_capstan",1],["michael_capstan","owen_hatch",1],["daniel_gangway","lily_anchorline",1],["lily_anchorline","daniel_gangway",1],["levi_signal","victoria_rigging",1],["victoria_rigging","chloe_ballast",1],["zoey_drydock","zoey_drydock",1],["james_stern","james_stern",2],["victoria_rigging","victoria_rigging",1],["david_breakwater","chloe_ballast",1]]},"SwiftWren":{"cl":"#fb923c","desc":"主泄露链 · 186跳 · 18人",total:186,hops:[["emma_harbor","evelyn_dock"],["evelyn_dock","owen_hatch"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","noah_mariner"],["noah_mariner","david_breakwater"],["david_breakwater","victoria_rigging"],["victoria_rigging","levi_signal"],["levi_signal","michael_capstan"],["michael_capstan","lily_anchorline"],["lily_anchorline","daniel_gangway"],["daniel_gangway","chloe_ballast"],["chloe_ballast","john_windward"],["evelyn_dock","owen_hatch"],["owen_hatch","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["owen_hatch","james_stern"],["james_stern","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["evelyn_dock","owen_hatch"],["owen_hatch","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","henry_sail"],["henry_sail","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["evelyn_dock","owen_hatch"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["owen_hatch","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["evelyn_dock","owen_hatch"],["owen_hatch","james_stern"],["james_stern","liam_anchor"],["liam_anchor","lily_anchorline"],["lily_anchorline","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["victoria_rigging","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","mia_fender"],["mia_fender","owen_hatch"],["owen_hatch","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","james_stern"],["james_stern","henry_sail"],["henry_sail","owen_hatch"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["james_stern","henry_sail"],["henry_sail","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","lily_anchorline"],["lily_anchorline","daniel_gangway"],["daniel_gangway","james_stern"],["james_stern","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","james_stern"],["james_stern","owen_hatch"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","james_stern"],["james_stern","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","owen_hatch"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","owen_hatch"],["owen_hatch","james_stern"],["james_stern","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","henry_sail"],["henry_sail","lily_anchorline"],["lily_anchorline","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["gabriel_sonar","lily_anchorline"],["lily_anchorline","james_stern"],["james_stern","daniel_gangway"],["daniel_gangway","mia_fender"],["mia_fender","chloe_ballast"],["chloe_ballast","david_breakwater"],["david_breakwater","liam_anchor"],["liam_anchor","daniel_gangway"],["daniel_gangway","owen_hatch"],["owen_hatch","olivia_keel"],["olivia_keel","chloe_ballast"],["chloe_ballast","levi_signal"],["levi_signal","henry_sail"],["henry_sail","michael_capstan"],["michael_capstan","mia_fender"],["mia_fender","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","daniel_gangway"],["daniel_gangway","zoey_drydock"],["zoey_drydock","owen_hatch"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","lily_anchorline"],["lily_anchorline","olivia_keel"],["olivia_keel","owen_hatch"],["owen_hatch","daniel_gangway"],["daniel_gangway","james_stern"],["james_stern","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"]],"ue":[["emma_harbor","evelyn_dock",1],["evelyn_dock","owen_hatch",10],["owen_hatch","victoria_rigging",7],["victoria_rigging","zoey_drydock",4],["zoey_drydock","levi_signal",3],["levi_signal","lily_anchorline",3],["lily_anchorline","michael_capstan",2],["michael_capstan","henry_sail",2],["henry_sail","daniel_gangway",3],["daniel_gangway","olivia_keel",2],["olivia_keel","david_breakwater",3],["david_breakwater","james_stern",3],["james_stern","mia_fender",3],["mia_fender","liam_anchor",3],["liam_anchor","gabriel_sonar",3],["gabriel_sonar","chloe_ballast",4],["chloe_ballast","noah_mariner",1],["noah_mariner","david_breakwater",1],["david_breakwater","victoria_rigging",1],["victoria_rigging","levi_signal",1],["levi_signal","michael_capstan",1],["michael_capstan","lily_anchorline",1],["lily_anchorline","daniel_gangway",1],["daniel_gangway","chloe_ballast",1],["chloe_ballast","john_windward",1],["owen_hatch","james_stern",5],["victoria_rigging","levi_signal",1],["daniel_gangway","michael_capstan",1],["james_stern","henry_sail",2],["michael_capstan","daniel_gangway",1],["liam_anchor","henry_sail",1],["lily_anchorline","levi_signal",1],["levi_signal","victoria_rigging",1],["zoey_drydock","owen_hatch",3],["david_breakwater","levi_signal",1],["henry_sail","james_stern",1],["mia_fender","henry_sail",1],["liam_anchor","lily_anchorline",1],["james_stern","liam_anchor",1],["daniel_gangway","james_stern",1],["olivia_keel","liam_anchor",1],["owen_hatch","zoey_drydock",2],["levi_signal","owen_hatch",1],["mia_fender","owen_hatch",1],["michael_capstan","james_stern",1],["henry_sail","owen_hatch",1],["james_stern","owen_hatch",1],["olivia_keel","owen_hatch",1],["owen_hatch","daniel_gangway",1],["daniel_gangway","zoey_drydock",1],["zoey_drydock","lily_anchorline",1],["lily_anchorline","olivia_keel",1],["olivia_keel","james_stern",1],["james_stern","david_breakwater",1],["david_breakwater","henry_sail",1],["henry_sail","lily_anchorline",1],["gabriel_sonar","lily_anchorline",1],["lily_anchorline","james_stern",1],["james_stern","daniel_gangway",1],["daniel_gangway","mia_fender",1],["mia_fender","chloe_ballast",1],["chloe_ballast","david_breakwater",1],["david_breakwater","liam_anchor",1],["liam_anchor","daniel_gangway",1],["daniel_gangway","owen_hatch",1],["owen_hatch","olivia_keel",1],["olivia_keel","chloe_ballast",1],["chloe_ballast","levi_signal",1],["levi_signal","henry_sail",1],["henry_sail","michael_capstan",1],["michael_capstan","mia_fender",1],["olivia_keel","olivia_keel",1],["henry_sail","henry_sail",1],["liam_anchor","liam_anchor",1],["evelyn_dock","evelyn_dock",1],["lily_anchorline","lily_anchorline",1],["chloe_ballast","chloe_ballast",1],["mia_fender","mia_fender",1],["gabriel_sonar","gabriel_sonar",1],["evelyn_dock","evelyn_dock",1],["john_windward","john_windward",1]]},"MellowOtter":{"cl":"#fbbf24","desc":"定时触发 · 10跳 · 11人",total:10,hops:[["noah_mariner","liam_anchor"],["liam_anchor","henry_sail"],["henry_sail","james_stern"],["james_stern","daniel_gangway"],["daniel_gangway","mia_fender"],["mia_fender","evelyn_dock"],["evelyn_dock","owen_hatch"],["owen_hatch","zoey_drydock"],["zoey_drydock","chloe_ballast"],["chloe_ballast","john_windward"]],"ue":[["noah_mariner","liam_anchor",1],["liam_anchor","henry_sail",1],["henry_sail","james_stern",1],["james_stern","daniel_gangway",1],["daniel_gangway","mia_fender",1],["mia_fender","evelyn_dock",1],["evelyn_dock","owen_hatch",1],["owen_hatch","zoey_drydock",1],["zoey_drydock","chloe_ballast",1],["chloe_ballast","john_windward",1]]}};
+const CHAINS={
+  HiddenOrca:{cl:"#22d3ee",desc:"PoC验证 · 39跳 · 16人 · 39h May9-10",total:39,hops:[
+    ["gabriel_sonar","zoey_drydock"],["zoey_drydock","olivia_keel"],["olivia_keel","olivia_keel"],["olivia_keel","liam_anchor"],["liam_anchor","olivia_keel"],["olivia_keel","daniel_gangway"],["daniel_gangway","levi_signal"],["levi_signal","james_stern"],["james_stern","evelyn_dock"],["evelyn_dock","owen_hatch"],["owen_hatch","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","mia_fender"],["mia_fender","lily_anchorline"],["lily_anchorline","victoria_rigging"],["victoria_rigging","david_breakwater"],["david_breakwater","chloe_ballast"],["chloe_ballast","john_windward"],["james_stern","liam_anchor"],["liam_anchor","henry_sail"],["henry_sail","liam_anchor"],["liam_anchor","henry_sail"],["henry_sail","michael_capstan"],["michael_capstan","owen_hatch"],["owen_hatch","zoey_drydock"],["zoey_drydock","owen_hatch"],["owen_hatch","james_stern"],["james_stern","james_stern"],["james_stern","james_stern"],["james_stern","evelyn_dock"],["evelyn_dock","victoria_rigging"],["victoria_rigging","evelyn_dock"],["evelyn_dock","owen_hatch"],["owen_hatch","zoey_drydock"],["zoey_drydock","james_stern"],["james_stern","liam_anchor"],["liam_anchor","olivia_keel"],["olivia_keel","daniel_gangway"],["daniel_gangway","lily_anchorline"],["lily_anchorline","daniel_gangway"],["daniel_gangway","levi_signal"],["levi_signal","victoria_rigging"],["victoria_rigging","chloe_ballast"],["chloe_ballast","owen_hatch"],["owen_hatch","zoey_drydock"],["zoey_drydock","zoey_drydock"],["zoey_drydock","owen_hatch"],["owen_hatch","levi_signal"],["levi_signal","james_stern"],["james_stern","evelyn_dock"],["evelyn_dock","victoria_rigging"],["victoria_rigging","victoria_rigging"],["victoria_rigging","evelyn_dock"],["evelyn_dock","owen_hatch"],["owen_hatch","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","mia_fender"],["mia_fender","lily_anchorline"],["lily_anchorline","victoria_rigging"],["victoria_rigging","david_breakwater"],["david_breakwater","chloe_ballast"],["chloe_ballast","john_windward"]
+  ],ue:[
+    ["gabriel_sonar","zoey_drydock",1],["zoey_drydock","olivia_keel",2],["olivia_keel","liam_anchor",1],["liam_anchor","olivia_keel",1],["olivia_keel","daniel_gangway",1],["daniel_gangway","levi_signal",1],["levi_signal","james_stern",1],["james_stern","evelyn_dock",1],["evelyn_dock","owen_hatch",2],["owen_hatch","michael_capstan",1],["michael_capstan","henry_sail",1],["henry_sail","mia_fender",1],["mia_fender","lily_anchorline",1],["lily_anchorline","victoria_rigging",1],["victoria_rigging","david_breakwater",1],["david_breakwater","chloe_ballast",1],["chloe_ballast","john_windward",1],["james_stern","liam_anchor",1],["chloe_ballast","owen_hatch",1],["owen_hatch","zoey_drydock",1],["zoey_drydock","owen_hatch",2],["owen_hatch","james_stern",1],["evelyn_dock","victoria_rigging",1],["victoria_rigging","evelyn_dock",1],["liam_anchor","henry_sail",1],["henry_sail","michael_capstan",1],["michael_capstan","owen_hatch",1],["daniel_gangway","lily_anchorline",1],["lily_anchorline","daniel_gangway",1],["levi_signal","victoria_rigging",1],["victoria_rigging","chloe_ballast",1],["zoey_drydock","zoey_drydock",1],["james_stern","james_stern",2],["victoria_rigging","victoria_rigging",1],["david_breakwater","chloe_ballast",1]]
+  },
+  MellowOtter:{cl:"#fbbf24",desc:"定时触发 · 10跳 · 11人 · 10h May10-11",total:10,hops:[
+    ["noah_mariner","liam_anchor"],["liam_anchor","henry_sail"],["henry_sail","james_stern"],["james_stern","daniel_gangway"],["daniel_gangway","mia_fender"],["mia_fender","evelyn_dock"],["evelyn_dock","owen_hatch"],["owen_hatch","zoey_drydock"],["zoey_drydock","chloe_ballast"],["chloe_ballast","john_windward"]
+  ],ue:[
+    ["noah_mariner","liam_anchor",1],["liam_anchor","henry_sail",1],["henry_sail","james_stern",1],["james_stern","daniel_gangway",1],["daniel_gangway","mia_fender",1],["mia_fender","evelyn_dock",1],["evelyn_dock","owen_hatch",1],["owen_hatch","zoey_drydock",1],["zoey_drydock","chloe_ballast",1],["chloe_ballast","john_windward",1]]
+  },
+  SwiftWren:{cl:"#fb923c",desc:"主泄露 · 186跳 · 18人 · 8天 May9-17",total:186,hops:[
+    ["emma_harbor","evelyn_dock"],["evelyn_dock","owen_hatch"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","noah_mariner"],["noah_mariner","david_breakwater"],["david_breakwater","victoria_rigging"],["victoria_rigging","levi_signal"],["levi_signal","michael_capstan"],["michael_capstan","lily_anchorline"],["lily_anchorline","daniel_gangway"],["daniel_gangway","chloe_ballast"],["chloe_ballast","john_windward"],["evelyn_dock","owen_hatch"],["owen_hatch","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["owen_hatch","james_stern"],["james_stern","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["evelyn_dock","owen_hatch"],["owen_hatch","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","henry_sail"],["henry_sail","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["evelyn_dock","owen_hatch"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["owen_hatch","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["evelyn_dock","owen_hatch"],["owen_hatch","james_stern"],["james_stern","liam_anchor"],["liam_anchor","lily_anchorline"],["lily_anchorline","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["victoria_rigging","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","mia_fender"],["mia_fender","owen_hatch"],["owen_hatch","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","james_stern"],["james_stern","henry_sail"],["henry_sail","owen_hatch"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["james_stern","henry_sail"],["henry_sail","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","lily_anchorline"],["lily_anchorline","daniel_gangway"],["daniel_gangway","james_stern"],["james_stern","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","james_stern"],["james_stern","owen_hatch"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","james_stern"],["james_stern","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","owen_hatch"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","owen_hatch"],["owen_hatch","james_stern"],["james_stern","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","henry_sail"],["henry_sail","lily_anchorline"],["lily_anchorline","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["gabriel_sonar","lily_anchorline"],["lily_anchorline","james_stern"],["james_stern","daniel_gangway"],["daniel_gangway","mia_fender"],["mia_fender","chloe_ballast"],["chloe_ballast","david_breakwater"],["david_breakwater","liam_anchor"],["liam_anchor","daniel_gangway"],["daniel_gangway","owen_hatch"],["owen_hatch","olivia_keel"],["olivia_keel","chloe_ballast"],["chloe_ballast","levi_signal"],["levi_signal","henry_sail"],["henry_sail","michael_capstan"],["michael_capstan","mia_fender"],["mia_fender","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","daniel_gangway"],["daniel_gangway","zoey_drydock"],["zoey_drydock","owen_hatch"],["owen_hatch","victoria_rigging"],["victoria_rigging","zoey_drydock"],["zoey_drydock","levi_signal"],["levi_signal","lily_anchorline"],["lily_anchorline","michael_capstan"],["michael_capstan","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","lily_anchorline"],["lily_anchorline","olivia_keel"],["olivia_keel","owen_hatch"],["owen_hatch","daniel_gangway"],["daniel_gangway","james_stern"],["james_stern","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","henry_sail"],["henry_sail","daniel_gangway"],["daniel_gangway","olivia_keel"],["olivia_keel","david_breakwater"],["david_breakwater","james_stern"],["james_stern","mia_fender"],["mia_fender","liam_anchor"],["liam_anchor","gabriel_sonar"],["gabriel_sonar","chloe_ballast"],["chloe_ballast","john_windward"]
+  ],ue:[
+    ["emma_harbor","evelyn_dock",1],["evelyn_dock","owen_hatch",10],["owen_hatch","victoria_rigging",7],["victoria_rigging","zoey_drydock",4],["zoey_drydock","levi_signal",3],["levi_signal","lily_anchorline",3],["lily_anchorline","michael_capstan",2],["michael_capstan","henry_sail",2],["henry_sail","daniel_gangway",3],["daniel_gangway","olivia_keel",2],["olivia_keel","david_breakwater",3],["david_breakwater","james_stern",3],["james_stern","mia_fender",3],["mia_fender","liam_anchor",3],["liam_anchor","gabriel_sonar",3],["gabriel_sonar","chloe_ballast",4],["chloe_ballast","noah_mariner",1],["noah_mariner","david_breakwater",1],["david_breakwater","victoria_rigging",1],["victoria_rigging","levi_signal",1],["levi_signal","michael_capstan",1],["michael_capstan","lily_anchorline",1],["lily_anchorline","daniel_gangway",1],["daniel_gangway","chloe_ballast",1],["chloe_ballast","john_windward",1],["owen_hatch","james_stern",5],["daniel_gangway","michael_capstan",1],["james_stern","henry_sail",2],["michael_capstan","daniel_gangway",1],["liam_anchor","henry_sail",1],["lily_anchorline","levi_signal",1],["levi_signal","victoria_rigging",1],["zoey_drydock","owen_hatch",3],["david_breakwater","levi_signal",1],["henry_sail","james_stern",1],["mia_fender","henry_sail",1],["liam_anchor","lily_anchorline",1],["james_stern","liam_anchor",1],["daniel_gangway","james_stern",1],["olivia_keel","liam_anchor",1],["owen_hatch","zoey_drydock",2],["levi_signal","owen_hatch",1],["mia_fender","owen_hatch",1],["michael_capstan","james_stern",1],["henry_sail","owen_hatch",1],["james_stern","owen_hatch",1],["olivia_keel","owen_hatch",1],["owen_hatch","daniel_gangway",1],["daniel_gangway","zoey_drydock",1],["zoey_drydock","lily_anchorline",1],["lily_anchorline","olivia_keel",1],["olivia_keel","james_stern",1],["james_stern","david_breakwater",1],["david_breakwater","henry_sail",1],["henry_sail","lily_anchorline",1],["gabriel_sonar","lily_anchorline",1],["lily_anchorline","james_stern",1],["james_stern","daniel_gangway",1],["daniel_gangway","mia_fender",1],["mia_fender","chloe_ballast",1],["chloe_ballast","david_breakwater",1],["david_breakwater","liam_anchor",1],["liam_anchor","daniel_gangway",1],["daniel_gangway","owen_hatch",1],["owen_hatch","olivia_keel",1],["olivia_keel","chloe_ballast",1],["chloe_ballast","levi_signal",1],["levi_signal","henry_sail",1],["henry_sail","michael_capstan",1],["michael_capstan","mia_fender",1],["olivia_keel","olivia_keel",1],["henry_sail","henry_sail",1],["liam_anchor","liam_anchor",1],["evelyn_dock","evelyn_dock",1],["lily_anchorline","lily_anchorline",1],["chloe_ballast","chloe_ballast",1],["mia_fender","mia_fender",1],["gabriel_sonar","gabriel_sonar",1],["evelyn_dock","evelyn_dock",1],["john_windward","john_windward",1]]
+  }
+};
 
-// ===== D3 SETUP =====
+// ===== FIXED LAYOUT — no force, no overlap =====
+const nodePos={};
+// Left column: core operators
+[{id:"gabriel_sonar",x:130,y:100},{id:"emma_harbor",x:130,y:250},{id:"zoey_drydock",x:130,y:400}].forEach(d=>nodePos[d.id]=d);
+// Left-center: puppets
+[{id:"chloe_ballast",x:290,y:160},{id:"noah_mariner",x:290,y:340}].forEach(d=>nodePos[d.id]=d);
+// Middle columns: blind forwarders (3 cols × 5 rows in a clean grid)
+const blinds=N.filter(n=>n.r==="blind");
+blinds.forEach((n,i)=>{
+  const col=i%3,row=Math.floor(i/3);
+  nodePos[n.id]={x:430+col*150,y:50+row*90};
+});
+// Right: endpoint
+nodePos["john_windward"]={x:920,y:250};
+// Assign to nodes
+N.forEach(n=>{const p=nodePos[n.id];n.x=p.x;n.y=p.y;});
+
+// ===== D3 RENDER =====
 const W=window.innerWidth,H=window.innerHeight;
-const svg=d3.select("#graph"),g=svg.append("g"),defs=svg.append("defs");
+const svg=d3.select("#graph"),G=svg.append("g");
+const defs=svg.append("defs");
 
 // Arrow markers
-[{n:"HiddenOrca",c:"#22d3ee"},{n:"MellowOtter",c:"#fbbf24"},{n:"SwiftWren",c:"#fb923c"}].forEach(({n,c})=>{
-  defs.append("marker").attr("id","ma-"+n).attr("viewBox","0 0 10 10").attr("refX",22).attr("refY",5)
-    .attr("markerWidth",5).attr("markerHeight",5).attr("orient","auto")
-    .append("path").attr("d","M0 0L10 5L0 10z").attr("fill",c).attr("opacity",0.45);
-});
-
-svg.call(d3.zoom().scaleExtent([0.2,3]).on("zoom",e=>g.attr("transform",e.transform)));
-
-// ===== BIGGER NODE SIZES =====
-const RS={blind:16,puppet:20,core:26,endpoint:32};
-const RC={blind:"#58a6ff",puppet:"#d29922",core:"#a371f7",endpoint:"#f85149"};
-const RL={blind:"Blind Forwarder",puppet:"Privileged Puppet",core:"Core Operator",endpoint:"Post Endpoint"};
-
-// ===== FORCE =====
-const displayEdges=[];
 Object.entries(CHAINS).forEach(([nm,c])=>{
-  c.ue.forEach(e=>displayEdges.push({source:e[0],target:e[1],chain:nm,color:c.cl,w:e[2]}));
+  defs.append("marker").attr("id","ma-"+nm).attr("viewBox","0 0 10 10").attr("refX",16).attr("refY",5)
+    .attr("markerWidth",4).attr("markerHeight",4).attr("orient","auto")
+    .append("path").attr("d","M0 0L10 5L0 10z").attr("fill",c.cl).attr("opacity",0.4);
 });
 
-const sim=d3.forceSimulation(N)
-  .force("link",d3.forceLink(displayEdges).id(d=>d.id).distance(90).strength(0.05))
-  .force("charge",d3.forceManyBody().strength(d=>d.r==="core"?-650:d.r==="endpoint"?-900:d.r==="puppet"?-400:-200))
-  .force("collide",d3.forceCollide(d=>RS[d.r]+8))
-  .force("x",d3.forceX(d=>d.fx??d.px??0).strength(d=>d.fx!=null?0.25:d.px!=null?0.04:0.002))
-  .force("y",d3.forceY(d=>d.fy??d.py??0).strength(d=>d.fy!=null?0.2:d.py!=null?0.03:0.002));
+// Glow for John
+const gf=defs.append("filter").attr("id","glow").attr("x","-60%").attr("y","-60%").attr("width","220%").attr("height","220%");
+gf.append("feGaussianBlur").attr("stdDeviation",4).attr("result","b");
+gf.append("feMerge").selectAll("feMergeNode").data(["b","SourceGraphic"]).enter().append("feMergeNode").attr("in",d=>d);
 
-// ===== RENDER =====
-const linkG=g.append("g"),nodeG=g.append("g"),partG=g.append("g");
+// Dept colors for subtle grouping
+const deptColors={"Products":"#1a3a2a","IT":"#1a2a3a","Exec":"#1a1a2a","Support":"#2a1a1a","HR":"#2a2a1a","Unknown":"#1a1a1a"};
+// Dept label backgrounds
+N.forEach(n=>{
+  if(!nodePos[n.id])return;
+  const p=nodePos[n.id];
+  G.append("rect").attr("x",p.x-8).attr("y",nodePos[n.id].y-8).attr("width",16).attr("height",16).attr("rx",3)
+    .attr("fill",deptColors[n.dp]||"#1a1a1a").attr("stroke","rgba(255,255,255,0.03)").attr("opacity",0.5);
+});
 
-// Edges: thickness by weight
-const linkEls=linkG.selectAll("line").data(displayEdges).enter().append("line")
-  .attr("stroke",d=>d.color+"44").attr("stroke-width",d=>1+Math.log(d.w+1)*1.6)
+// Edges (initially dim)
+const allEdges=[];
+Object.entries(CHAINS).forEach(([nm,c])=>{
+  c.ue.forEach(e=>allEdges.push({source:e[0],target:e[1],chain:nm,color:c.cl,w:e[2]}));
+});
+
+const edgeG=G.append("g");
+const linkEls=edgeG.selectAll("line").data(allEdges).enter().append("line")
+  .attr("x1",d=>N.find(n=>n.id===d.source)?.x).attr("y1",d=>N.find(n=>n.id===d.source)?.y)
+  .attr("x2",d=>N.find(n=>n.id===d.target)?.x).attr("y2",d=>N.find(n=>n.id===d.target)?.y)
+  .attr("stroke",d=>d.color+"22").attr("stroke-width",d=>0.8+Math.log(d.w+1)*1.2)
   .attr("marker-end",d=>'url(#ma-'+d.chain+')');
 
-// Nodes
-const nodeEls=nodeG.selectAll("g").data(N).enter().append("g").attr("cursor","pointer")
-  .call(d3.drag().on("start",(e,d)=>{sim.alphaTarget(0.15).restart();d._fx=d.x;d._fy=d.y;})
-    .on("drag",(e,d)=>{d.fx=e.x;d.fy=e.y;}).on("end",(e,d)=>{if(!d._pin){d.fx=null;d.fy=null;}sim.alphaTarget(0);}));
-N.forEach(d=>{if(d.fx!=null)d._pin=true;});
-
-// Outline ring
-nodeEls.append("circle").attr("r",d=>RS[d.r]+5).attr("fill","none")
-  .attr("stroke",d=>RC[d.r]).attr("stroke-width",1.5).attr("stroke-opacity",0.15);
-
-// Main circle — big and clear, NO glow filter
-nodeEls.append("circle").attr("class","mn").attr("r",d=>RS[d.r])
-  .attr("fill",d=>RC[d.r]).attr("stroke","#fff").attr("stroke-width",2).attr("stroke-opacity",0.25);
-
-// Label
-nodeEls.append("text").text(d=>d.nm.split(" ").pop())
-  .attr("dy",d=>RS[d.r]+14).attr("text-anchor","middle")
-  .attr("fill","#c9d1d9").attr("font-size",d=>d.r==="core"||d.r==="endpoint"?12:10)
-  .attr("font-weight",d=>d.r==="core"||d.r==="endpoint"?700:500);
-
-// John special: red ring
-const jG=nodeEls.filter(d=>d.id==="john_windward");
-jG.append("circle").attr("r",RS.endpoint+8).attr("fill","none").attr("stroke","#f85149")
-  .attr("stroke-width",3).attr("stroke-opacity",0.5);
-(function breathe(){jG.selectAll("circle").filter((d,i)=>i===2).transition().duration(2000)
-  .attr("r",RS.endpoint+16).attr("stroke-opacity",0.1).transition().duration(2000)
-  .attr("r",RS.endpoint+8).attr("stroke-opacity",0.5).on("end",breathe);})();
-
-// ===== SIM TICK =====
-sim.on("tick",()=>{
-  linkEls.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);
-  nodeEls.attr("transform",d=>`translate(${d.x},${d.y})`);
-  if(sim.alpha()<0.015)sim.stop();
+// Self-loop arcs
+const selfG=G.append("g");
+allEdges.filter(e=>e.source===e.target).forEach(e=>{
+  const n=N.find(x=>x.id===e.source);if(!n)return;
+  selfG.append("path").attr("d",`M${n.x+10},${n.y-10}A20,20 0 1,1 ${n.x+12},${n.y-10}`).attr("fill","none")
+    .attr("stroke",e.color+"33").attr("stroke-width",1).attr("stroke-dasharray","2,3");
 });
 
-// ===== TOOLTIP =====
-const tip=d3.select("#tip");
-nodeEls.on("mouseenter",function(e,d){
-  const con=new Set();displayEdges.forEach(l=>{if(l.source.id===d.id||l.target.id===d.id){con.add(l.source.id);con.add(l.target.id);}});con.add(d.id);
-  nodeEls.selectAll("circle").transition().duration(200).attr("opacity",function(){return con.has(d3.select(this.parentNode).datum().id)?1:0.08;});
-  linkEls.transition().duration(200).attr("stroke-opacity",l=>con.has(l.source.id)&&con.has(l.target.id)?0.7:0.01);
-  tip.style("opacity",1).html(`<b style="color:${RC[d.r]}">${d.nm}</b><div class="dp">${d.dp} · ${d.hp} hops</div><span class="tag" style="background:${RC[d.r]}18;color:${RC[d.r]};border:1px solid ${RC[d.r]}33">${RL[d.r]}</span>`);
-}).on("mousemove",e=>tip.style("left",(e.pageX+14)+"px").style("top",(e.pageY-10)+"px"))
-  .on("mouseleave",()=>{if(!ac){nodeEls.selectAll("circle").transition().duration(400).attr("opacity",1);linkEls.transition().duration(400).attr("stroke-opacity",0.35);}else hl(ac);tip.style("opacity",0);});
+// Nodes
+const R={blind:12,puppet:16,core:22,endpoint:28};
+const RC={blind:"#58a6ff",puppet:"#d29922",core:"#a371f7",endpoint:"#f85149"};
+const nodeG=G.append("g");
+
+N.forEach(n=>{
+  if(!nodePos[n.id])return;
+  const g=nodeG.append("g").attr("transform",`translate(${n.x},${n.y})`).attr("cursor","pointer");
+  // Glow ring for endpoint
+  if(n.r==="endpoint"){
+    g.append("circle").attr("r",R[n.r]+10).attr("fill","none").attr("stroke","#f85149").attr("stroke-width",2.5).attr("stroke-opacity",0.3).attr("filter","url(#glow)");
+  }
+  // Main circle
+  g.append("circle").attr("r",R[n.r]).attr("fill",RC[n.r]).attr("stroke","#fff").attr("stroke-width",1.5).attr("stroke-opacity",0.2);
+  // Label
+  const name=n.nm.split(" ").pop();
+  g.append("text").text(name).attr("dy",R[n.r]+13).attr("text-anchor","middle").attr("fill","#8b949e").attr("font-size",n.r==="core"||n.r==="endpoint"?11:9).attr("font-weight",n.r==="core"||n.r==="endpoint"?600:400);
+  // Dept subtitle
+  g.append("text").text(n.dp).attr("dy",R[n.r]+23).attr("text-anchor","middle").attr("fill","#555").attr("font-size",7);
+});
+
+// Top labels
+G.append("text").attr("x",130).attr("y",20).attr("text-anchor","middle").attr("fill","#a371f7").attr("font-size",10).attr("font-weight",600).text("SOURCES");
+G.append("text").attr("x",580).attr("y",20).attr("text-anchor","middle").attr("fill","#58a6ff").attr("font-size",10).attr("font-weight",600).text("BLIND FORWARDING FABRIC");
+G.append("text").attr("x",920).attr("y",20).attr("text-anchor","middle").attr("fill","#f85149").attr("font-size",10).attr("font-weight",600).text("ENDPOINT");
 
 // ===== CHAIN SELECTION =====
-let ac=null,timer=null,rafId=null,stopped=false,paused=false;
+let ac=null,rafId=null,timer=null,stopped=false;
 
 function hl(cn){
-  linkEls.transition().duration(400).attr("stroke-opacity",l=>l.chain===cn?0.6:0.01).attr("stroke-width",l=>l.chain===cn?2+Math.log(l.w+1)*2:0.3);
+  edgeG.selectAll("line").attr("display",l=>l.chain===cn?null:"none");
+  selfG.selectAll("path").attr("display",function(){const e=d3.select(this).datum();return e&&e.chain===cn?null:"none";});
   const sn=new Set();CHAINS[cn].ue.forEach(e=>{sn.add(e[0]);sn.add(e[1]);});
-  nodeEls.selectAll("circle").transition().duration(400).attr("opacity",function(){return sn.has(d3.select(this.parentNode).datum().id)?1:0.1;});
+  nodeG.selectAll("g").attr("opacity",function(){const d=this.__data__;return sn.has(d.id)?1:0.08;});
 }
 
 function sel(cn){
-  if(ac===cn){paused=!paused;if(!paused)run();return;}
-  stopped=true;if(rafId){cancelAnimationFrame(rafId);rafId=null;}if(timer){clearTimeout(timer);timer=null;}
-  partG.selectAll("*").remove();ac=cn;paused=false;
+  if(ac===cn)return;
+  stopped=true;if(rafId)cancelAnimationFrame(rafId);if(timer)clearTimeout(timer);
   document.querySelectorAll(".btn").forEach(b=>b.classList.remove("on"));
   document.getElementById("b"+cn.substring(0,2).toLowerCase()).classList.add("on");
+  ac=cn;stopped=false;
   hl(cn);
   const c=CHAINS[cn];
   document.getElementById("sts").innerHTML=`<b style="color:${c.cl}">${cn}</b><br>${c.desc}<br>8s · ${c.total} hops`;
@@ -169,38 +210,51 @@ function sel(cn){
 }
 
 function run(){
-  if(!ac||paused){rafId=null;return;}
-  stopped=false;const c=CHAINS[ac];const totalMs=8000;
-  const path=c.hops.map(([sId,tId])=>{
-    const s=N.find(n=>n.id===sId),t=N.find(n=>n.id===tId);
-    return {sx:s?.x||0,sy:s?.y||0,tx:t?.x||0,ty:t?.y||0,self:sId===tId,sId};
+  if(!ac||stopped)return;
+  const c=CHAINS[ac];const totalMs=8000;
+  const path=c.hops.map(([s,t])=>{
+    const src=N.find(n=>n.id===s),dst=N.find(n=>n.id===t);
+    return {sx:src?.x||0,sy:src?.y||0,tx:dst?.x||0,ty:dst?.y||0,self:s===t,tId:t};
   });
-  partG.selectAll("*").remove();
-  const p=partG.append("circle").attr("r",5).attr("fill",c.cl).attr("opacity",0.9).attr("cx",path[0].sx).attr("cy",path[0].sy);
+  G.selectAll(".particle").remove();
+  const p=G.append("circle").attr("class","particle").attr("r",5).attr("fill",c.cl).attr("opacity",0.9).attr("filter","url(#glow)").attr("cx",path[0].sx).attr("cy",path[0].sy);
   const st=performance.now();
   (function frame(){
     if(stopped)return;
-    const elapsed=performance.now()-st,prog=Math.min(elapsed/totalMs,1);
+    const el=performance.now()-st,prog=Math.min(el/totalMs,1);
     const raw=prog*c.total,idx=Math.min(Math.floor(raw),c.total-1),hp=raw-idx;
     const seg=path[idx];
-    if(seg){p.attr("cx",seg.self?seg.sx:seg.sx+(seg.tx-seg.sx)*hp).attr("cy",seg.self?seg.sy:seg.sy+(seg.ty-seg.sy)*hp);}
-    document.getElementById("sts").innerHTML=`<b style="color:${c.cl}">${ac}</b><br>${idx+1}/${c.total}${seg?.self?' [self]':' → '+(seg?N.find(n=>n.id===seg.sId)?.nm.split(' ').pop():'')}`;
-    if(prog>=1){
-      const jn=N.find(n=>n.id==="john_windward");if(jn)rip(jn,c.cl);
-      document.getElementById("sts").innerHTML=`<b style="color:${c.cl}">${ac}</b><br>✓ Posted to SaidIt`;
-      if(!stopped)timer=setTimeout(()=>{if(!stopped)run();},2200);return;
-    }
-    if(!stopped)rafId=requestAnimationFrame(frame);
+    if(seg&&!seg.self){p.attr("cx",seg.sx+(seg.tx-seg.sx)*hp).attr("cy",seg.sy+(seg.ty-seg.sy)*hp);}
+    else if(seg){p.attr("cx",seg.sx).attr("cy",seg.sy);}
+    document.getElementById("sts").innerHTML=`<b style="color:${c.cl}">${ac}</b><br>${idx+1}/${c.total} → ${seg?N.find(n=>n.id===seg.tId)?.nm.split(' ').pop():''}`;
+    if(prog>=1){document.getElementById("sts").innerHTML=`<b style="color:${c.cl}">${ac}</b><br>✓ Posted to SaidIt`;timer=setTimeout(run,2500);return;}
+    rafId=requestAnimationFrame(frame);
   })();
   rafId=requestAnimationFrame(frame);
 }
 
-function rip(node,color){
-  for(let i=0;i<3;i++)g.append("circle").attr("cx",node.x).attr("cy",node.y).attr("r",RS[node.r]).attr("fill","none").attr("stroke",color).attr("stroke-width",3-i*0.8).attr("stroke-opacity",0.7).attr("pointer-events","none").transition().duration(800+i*200).attr("r",RS[node.r]+50+i*20).attr("stroke-opacity",0).remove();
-  nodeEls.filter(d=>d.id===node.id).selectAll("circle").filter((d,i)=>i===1).transition().duration(100).attr("r",RS[node.r]*1.4).attr("fill","#fff").transition().duration(400).attr("r",RS[node.r]).attr("fill",RC[node.r]);
-}
+// ===== TOOLTIP =====
+const tip=d3.select("#tip");
+nodeG.selectAll("g").on("mouseenter",function(e,d){
+  const con=new Set();allEdges.forEach(l=>{if(l.source===d.id||l.target===d.id){con.add(l.source);con.add(l.target);}});con.add(d.id);
+  if(!ac){edgeG.selectAll("line").attr("stroke-opacity",l=>con.has(l.source)&&con.has(l.target)?0.6:0.02);}
+  tip.style("opacity",1).html(`<div class="nm" style="color:${RC[d.r]}">${d.nm}</div><div class="dp">${d.dp}</div><span class="tag" style="background:${RC[d.r]}18;color:${RC[d.r]};border:1px solid ${RC[d.r]}33">${d.r==="endpoint"?"Post Endpoint":d.r==="core"?"Core Operator":d.r==="puppet"?"Puppet":"Blind Forwarder"}</span>`);
+}).on("mousemove",e=>tip.style("left",(e.pageX+14)+"px").style("top",(e.pageY-10)+"px"))
+  .on("mouseleave",()=>{if(!ac){edgeG.selectAll("line").attr("stroke-opacity",0.25);}tip.style("opacity",0);});
 
-svg.call(d3.zoom().transform,d3.zoomIdentity.translate(W/2,H/2));
+// Edge hover → show event detail
+const etip=d3.select("#etip");
+edgeG.selectAll("line").on("mouseenter",function(e,d){
+  if(ac&&d.chain!==ac)return;
+  etip.style("opacity",1).html(`<b style="color:${d.color}">${d.chain}</b><br>${d.source} → ${d.target}<br>Weight: ${d.w}`);
+}).on("mousemove",e=>etip.style("left",(e.pageX+14)+"px").style("top",(e.pageY-10)+"px"))
+  .on("mouseleave",()=>etip.style("opacity",0));
+
+// Center
+svg.call(d3.zoom().translateExtent([[0,0],[W,H]]).scaleExtent([0.5,2]).on("zoom",e=>G.attr("transform",e.transform)));
+const cx=(nodePos["gabriel_sonar"].x+nodePos["john_windward"].x)/2;
+const cy=H/2;
+svg.call(d3.zoom().transform,d3.zoomIdentity.translate(W/2-cx,H/2-cy));
 </script>
 </body>
 </html>

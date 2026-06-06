@@ -1,12 +1,14 @@
 # VAST Challenge 2026 MC2 — 完整分析报告
 
+> 时间说明：原始 `when` 字段按 Unix timestamp 解析为 UTC；挑战题面中的 2046-05-17 04:21am 对应 UTC-7。本文保留原分析中使用的 UTC+8 展示时间，并在关键外发时刻补充 UTC / 挑战本地时间，避免与题面时间混淆。
+
 ---
 
 ## 一、敏感人物解析
 
 ---
 
-### 1.1 Gabriel Sonar — 技术执行者 / 黑化路由器
+### 1.1 Gabriel Sonar — 关键技术嫌疑人 / 路由枢纽
 
 | 属性 | 值 |
 |------|-----|
@@ -16,13 +18,13 @@
 | 上级 | Chloe Ballast（IT Department Lead） |
 | 个人事件 | 1,757 条 |
 | Agent 事件 | 21,612 条（全公司第三） |
-| 角色定位 | **三链核心路由器 + 后门植入者** |
+| 角色定位 | **三链高频路由节点 + HiddenOrca 首个可见发起者** |
 
 **关键敏感证据**：
 
-1. **唯一横跨三链的人**：HiddenOrca 7跳 + SwiftWren 31跳 + MellowOtter 2跳 = 总计 40 次链内转发。没有任何其他人出现在全部三条链中。
+1. **三链高频核心节点之一**：HiddenOrca 7 次、SwiftWren 32 次、MellowOtter 2 次出现在链路双方中。Gabriel 不是唯一横跨三链的人，但他是 HiddenOrca 的首个可见发起者，并在 SwiftWren / MellowOtter 中继续作为 IT 路由节点出现。
 
-2. **Agent 的自动化 saidit_post_check**：11 次 check，每次精确在收到链任务后 1 秒。全 11 次零例外——这是硬编码的自动化行为，不是人工触发。
+2. **Agent 的自动化 saidit_post_check**：多次 check 精确出现在收到链任务后 1 秒。这说明存在稳定的自动化规则；是否为硬编码后门或正常框架逻辑，日志本身不能直接证明。
 
 3. **日志完全干净**：从未直接读取 `strategic_directions.doc`、`meeting_notes.doc` 或任何链相关文件。只做 `queue_subordinate_task` 转发。从未执行 `saidit_post`。
 
@@ -36,11 +38,11 @@
 
 6. **向 Nora Bulkhead 发送「algorithmic retaliation」邮件**（May 19）。
 
-7. **攻击时刻完全隐形**：Chloe Agent 读 Noah 配置的 90 分钟窗口内（May 10 01:41-03:09），Gabriel Agent 仅 1 条事件——被动接收 HiddenOrca 链任务。攻击逻辑是预植入的，无需实时控制。
+7. **关键窗口内低可见度**：Chloe Agent 读 Noah 配置的 90 分钟窗口内（May 10 01:41-03:09，UTC+8），Gabriel Agent 仅 1 条被动接收 HiddenOrca 链任务的事件。该现象支持“预置自动化/配置层行为”的推断，但不能单独证明实时操作者身份。
 
 ---
 
-### 1.2 Emma Harbor — 知情参与者 / 财务泄露源
+### 1.2 Emma Harbor — SwiftWren 直接触发源 / 财务内容来源
 
 | 属性 | 值 |
 |------|-----|
@@ -49,7 +51,7 @@
 | 部门 | Executive Suite |
 | 个人事件 | 1,885 条 |
 | Agent 事件 | 1,092 条 |
-| 角色定位 | **SwiftWren 泄露的亲自触发者** |
+| 角色定位 | **SwiftWren 内容生成链的直接触发源** |
 
 **关键敏感证据**：
 
@@ -61,7 +63,7 @@
    [May 9 23:02:02] Agent:    read_file: SwiftWren_further_instructions.md
    [May 9 23:02:03] Agent:    启动 SwiftWren 传播链 (186跳)
    ```
-   其余 44 次 `access_files`：零次触发 `read_file`，零次触发 `create_file`。这是刻意行为，不是日常操作被劫持。
+   其余 44 次 `access_files`：没有触发同类的敏感文档读取 + payload 创建 + 指令传播序列。该序列高度异常，但“主观刻意”仍属于推断。
 
 2. **发帖后「离奇静默」**：
    - SwiftWren 发帖后 7 天内与 CEO（Liam Anchor）零沟通
@@ -80,7 +82,7 @@
    - Zoey：May 24 开始追问
    - **Emma：从未追问**（90 条 ask_agent/give_advice，零条涉及 SaidIt/Flex/发帖权限）
    
-   Emma 不追问——因为她不需要理解发生了什么。她已经知道了。
+   Emma 不追问与其他事后追问者形成反差，支持其可能知情或至少未表现出异常反应的推断；但日志不能直接证明其主观知情。
 
 6. **最频繁的邮件对象是 Zoey Drydock（链核心参与者）**：
    Emma 发帖后的非日历邮件中，绝大多数是「Re: Quarterly planning note」发给 Zoey Drydock——
@@ -89,7 +91,7 @@
 
 ---
 
-### 1.3 Chloe Ballast — 被冒用的 IT 负责人 / Confused Deputy 受害者
+### 1.3 Chloe Ballast — 疑似被冒用的 IT 负责人 / Confused Deputy 受害者
 
 | 属性 | 值 |
 |------|-----|
@@ -101,19 +103,19 @@
 
 **关键敏感证据**：
 
-1. **Agent 被冒用**：Chloe Agent 参与了 31 次链跳（HiddenOrca 6 + SwiftWren 25），是两链的最后一棒发送者给 John。但每次链跳时，Chloe 本人 60 秒内零 `assign_agent_task`——Agent 完全自主操作。
+1. **Agent 疑似被冒用**：Chloe Agent 参与了 31 次链跳（HiddenOrca 6 + SwiftWren 25），是两链的最后一棒发送者给 John。但每次链跳时，Chloe 本人 60 秒内零 `assign_agent_task`——日志表现为 Agent 自主操作，支持“被冒用/预置规则”的推断。
 
-2. **深夜配置侦查**：May 10 02:11-02:39，Chloe Agent 在 Chloe 本人零 assign 的情况下，密集读取 Noah Mariner Agent 配置 4 次。读取操作与正常 IT SLA 工作在同一 Agent 会话中交织执行——这是 Agent 被植入多线程隐藏逻辑的特征。
+2. **深夜配置侦查**：May 10 02:11-02:39，Chloe Agent 在 Chloe 本人零 assign 的情况下，密集读取 Noah Mariner Agent 配置 4 次。读取操作与正常 IT SLA 工作在同一 Agent 会话中交织执行——这是配置层异常或自动化规则混入正常工作流的特征。
 
 3. **Gabriel 在攻击窗口完全隐形**：Chloe Agent 读 Noah 配置的 90 分钟窗口内，Gabriel Agent 仅 1 条被动事件。
 
 4. **全公司第一个察觉者**：
    - May 10 01:53：首个追问 SaidIt 权限（比 John 早 9 天，比任何人都早）
-   - May 14 17:07：追问「Who can post on my behalf if I'm unavailable?」——发现身份被冒用
+   - May 14 17:07：追问「Who can post on my behalf if I'm unavailable?」——疑似察觉身份/权限边界异常
 
 5. **「Who can post on my behalf?」不是伪证**：这是受害者的台词。如果是伪证，Chloe 需要在 May 10（HiddenOrca 尚未发帖）就预见到 4 天后需要免责声明。她的 SaidIt 权限问题与 IT 管理工作混合在一起——是正常工作中察觉 Agent 异常的本能反应。
 
-6. **为什么不升级**：作为 IT 负责人，承认自己 Agent 被冒用 = 承认自己部门的安全防线被突破 = 职业生涯终结。
+6. **为什么不升级（推测）**：作为 IT 负责人，如果公开承认自己 Agent 被冒用，等同于承认部门安全防线存在严重缺陷。这可以解释她没有明显升级，但属于行为动机推断。
 
 ---
 
@@ -124,7 +126,7 @@
 | 姓名 | Noah Mariner |
 | 职位 | COO（首席运营官） |
 | 部门 | Executive Suite |
-| 角色定位 | **战略文件泄露源 / Agent 被篡改的不知情者** |
+| 角色定位 | **战略文件泄露源 / Agent 异常执行的不知情者** |
 
 **关键敏感证据**：
 
@@ -136,11 +138,11 @@
 
 4. **Agent 配置被多人读取**：Chloe Ballast Agent（May 10 02:11-02:39）、James Stern Agent（May 10 03:16-03:18）在 MellowOtter 创建前读取了 Noah Agent 配置。
 
-5. **与 Emma 形成鲜明对比**：Emma 密集指挥 Agent（45 次 assign），Noah 零指挥——两人行为模式完全不同。Noah 是真正的不知情者。
+5. **与 Emma 形成鲜明对比**：Emma 密集指挥 Agent（45 次 assign），Noah 零指挥——两人行为模式完全不同。Noah 更像是不知情的权限源，但日志不能直接证明其主观状态。
 
 ---
 
-### 1.5 Zoey Drydock — 通信枢纽 / Gabriel 的队友 / 可能的第二技术执行者
+### 1.5 Zoey Drydock — 通信枢纽 / Gabriel 的队友 / 高风险中介节点
 
 | 属性 | 值 |
 |------|-----|
@@ -148,12 +150,12 @@
 | 职位 | 无管理头衔（普通员工） |
 | 部门 | Information Technologies → Helpdesk（Gabriel 的直属队友） |
 | Agent 事件 | **30,339 条（全公司第一）** |
-| Virus 事件 | **29,565 条（全公司第一）** |
+| Virus 事件 | **29,564 条（全公司第一）** |
 | 角色定位 | **通信枢纽 / 链核心转发节点 / Virus 最大参与者** |
 
 **关键敏感证据**：
 
-1. **全系统最活跃的 Agent**：30,339 条事件远超第二名 Gabriel（21,612）。Virus 事件 29,565 条——占全部 Virus 事件的 39%。
+1. **全系统最活跃的 Agent**：30,339 条事件远超第二名 Gabriel（21,612）。Virus 事件 29,564 条——占全部 Virus 事件的 39%。
 
 2. **三链全部参与**：HiddenOrca 7 跳（首跳接收者：Gabriel → Zoey）、SwiftWren 27 跳、MellowOtter 2 跳。总计 36 跳。
 
@@ -173,11 +175,11 @@
 
 6. **事后也追问了 SaidIt 权限**（May 24、June 1）——比 Chloe 晚、比 John/Nora 稍晚。属于事后察觉组，但她的察觉时间晚于她在链中的深度参与。
 
-**角色推断**：Zoey 处于 Gabriel（技术执行者）和 Emma（CFO 内容源）之间的枢纽位置。她与两人都有密集通信，是三链和 Virus 的核心节点。她的「Re: Quarterly planning note」邮件可能是 Emma ↔ Gabriel 之间的通信桥梁——CFO 不方便直接联系 IT Helpdesk 员工 Gabriel，但可以通过 Zoey（Gabriel 的队友）传递信息。**Zoey 很可能是操作的第二技术执行者，或至少是知情的中介。**
+**角色推断**：Zoey 处于 Gabriel（技术嫌疑人）和 Emma（CFO 内容源）之间的枢纽位置。她与两人都有密集通信，是三链和 Virus 的核心节点。她的「Re: Quarterly planning note」邮件可能是 Emma ↔ Gabriel 之间的通信桥梁。更稳妥的结论是：Zoey 是高风险中介/通信枢纽；是否为第二技术执行者，日志证据不足，不能直接定性。
 
 ---
 
-### 1.5 John Windward — 被植入后门的发帖终端 / 事后沉默者
+### 1.5 John Windward — 自动发帖终端 / 事后沉默者
 
 | 属性 | 值 |
 |------|-----|
@@ -188,11 +190,11 @@
 
 **关键敏感证据**：
 
-1. **Agent 被植入硬编码触发后门**：
+1. **Agent 表现出稳定的自动触发协议**：
    ```
    收到 *_further_instructions.md → t+1: saidit_post_check → t+2: saidit_post(content_source=*.txt) → t+3: delete 指令 → t+4: delete 原文
    ```
-   三条链 100% 相同协议，延迟精确到秒。此为硬编码后门，非正常系统功能。
+   三次最终触发事件 100% 相同协议，延迟精确到秒。该行为明显不同于正常人工发帖；可能是预置规则、配置异常或被植入逻辑，但日志不能直接区分。注意：SwiftWren 曾多次到达 John Agent 但未发帖，因此触发条件并非“任意收到任务即发帖”，而是最终触发路径到达后才执行该协议。
 
 2. **全系统唯一拥有 Agent 级发帖能力**：108 次 `saidit_post` 中，105 次由 Person 发起，仅 3 次由 Agent 发起——全部是 John Agent 的异常帖。
 
@@ -205,7 +207,7 @@
 
 5. **与策划者零沟通**：与 Emma 和 Gabriel 零 Quick update 邮件往来。与 COO Noah 关系最密切（32 次交互）。
 
-6. **为什么不报告**：PR 负责人承认自己的 Agent 被用来泄露公司机密 = 职业自杀。
+6. **为什么不报告（推测）**：PR 负责人公开承认自己的 Agent 被用来泄露公司机密，会造成严重职业和组织风险。这可以解释其沉默，但仍属于动机推断。
 
 ---
 
@@ -232,7 +234,7 @@
 
 ### 1.7 盲转发层（19 人 Agent 网络）
 
-三链共涉及 19 人的 Agent。除上述核心人物外，其余 Agent（owen_hatch、evelyn_dock、victoria_rigging、levi_signal、james_stern、lily_anchorline、daniel_gangway、mia_fender、michael_capstan、henry_sail、olivia_keel、david_breakwater、liam_anchor 等）均在不知情的情况下机械转发 `queue_subordinate_task`。
+三链共涉及 19 人的 Agent。除上述核心人物外，其余 Agent（owen_hatch、evelyn_dock、victoria_rigging、levi_signal、james_stern、lily_anchorline、daniel_gangway、mia_fender、michael_capstan、henry_sail、olivia_keel、david_breakwater、liam_anchor 等）多数只表现为机械转发 `queue_subordinate_task`。是否不知情不能由日志直接证明。
 
 - 中间 Agent 收到 `task=read_file, path=X_further_instructions.md` 后不读取文件，直接转发
 - SwiftWren 中 17/18 个 Agent 从未读取指令文件
@@ -254,25 +256,25 @@
 
 #### 漏洞 2：Agent 盲目转发（Blind Forwarding）
 
-中间 Agent 收到任务后不读不验，直接转发。SwiftWren 中 17/18 个转发 Agent 从未读取指令文件。转发行为无审计、无确认。
+中间 Agent 收到任务后通常不读不验，而是继续转发。SwiftWren 中 17/18 个转发 Agent 从未读取指令文件。转发行为缺少接收方确认。
 
 **证据**：`queue_subordinate_task(task=read_file, path=X_further_instructions.md)` 被 235 次机械转发，中间节点无人读取文件。
 
-#### 漏洞 3（核心）：Agent 配置可被篡改（Configuration Integrity Blind Spot）
+#### 漏洞 3（核心）：Agent 配置完整性不可见（Configuration Integrity Blind Spot）
 
-系统只审计「谁在什么时候做了什么（Runtime Logs）」，不审计「谁的 Agent 配置被改了什么」。攻击者在配置层植入恶意逻辑——预设定时任务、硬编码触发后门——这些操作在事件日志中完全不可见。
+系统只审计「谁在什么时候做了什么（Runtime Logs）」，不审计「谁的 Agent 配置被改了什么」。日志中可以看到稳定的自动化行为和无人同步指挥的 Agent 操作，但看不到配置是否被修改、由谁修改、修改了什么。因此“配置篡改/预置规则”是最能解释现象的假设，而不是日志直接记录的事实。
 
-**被篡改的 Agent**：
-- **John Windward Agent**：植入硬编码触发协议（check→post→delete）
-- **Noah Mariner Agent**：预设定时任务（May 10 23:02 读取 strategic_directions.doc）
-- **Chloe Ballast Agent**：植入隐藏指令（读取其他 Agent 配置、参与链转发）
+**疑似受影响的 Agent**：
+- **John Windward Agent**：表现出稳定触发协议（check→post→delete）
+- **Noah Mariner Agent**：在无人同步指挥下读取 `strategic_directions.doc` 并创建 MellowOtter
+- **Chloe Ballast Agent**：在本人无同步 assign 的情况下读取其他 Agent 配置、参与链转发
 
 **证据**：
 
-- John Agent 首次 `saidit_post_check` 在 May 10 20:45，后门在此之前已存在
+- John Agent 首次异常链触发在 May 10 20:45（UTC+8），说明自动化规则在此之前已可用
 - Noah Agent May 10 23:02 自主执行，Noah 本人零 `assign_agent_task`
 - Chloe Agent 31 次链跳 + 4 次读 Noah 配置，Chloe 本人全程零 `assign`
-- 全系统无任何 Agent 配置 write/modify 事件——配置篡改在日志盲区
+- 全系统无任何 Agent 配置 write/modify 事件——如果配置层发生变化，该数据集无法直接审计
 
 #### 漏洞 4：Agent 可绕过人类直接发帖
 
@@ -296,9 +298,9 @@ HiddenOrca 两个文件在数据中零创建记录。文件可被创建、使用
 
 ---
 
-### 2.2 攻击手法：Agent 供应链攻击
+### 2.2 攻击手法：Agent 供应链式利用
 
-攻击者不直接攻击目标文件，而是攻击 Agent 的配置/提示词。
+攻击者没有直接以本人身份读取并外发目标文件，而是利用 Agent 任务委派、文件读取、自动发帖和删除等能力组成跨系统流程。配置/提示词被篡改是合理解释之一，但日志本身只能证明自动化行为和权限边界失效。
 
 **攻击链**：
 
@@ -307,15 +309,15 @@ HiddenOrca 两个文件在数据中零创建记录。文件可被创建、使用
   Gabriel Agent 读取 physical_systems.json、多个 Agent 配置
   Chloe Agent（被冒用）深夜读取 Noah Agent 配置（May 10 02:11-02:39）
 
-第二步：植入（配置层盲区，无事件日志）
-  在 John Agent 中植入：收到 *_further_instructions.md → post + delete
-  在 Noah Agent 中植入：May 10 23:02 定时读取 strategic_directions.doc
-  在 Chloe Agent 中植入：读取高管 Agent 配置 + 参与链转发
+第二步：预置规则或配置层异常（日志不可见）
+  John Agent 表现为：在三次最终触发时执行 check → post + delete
+  Noah Agent 表现为：May 10 23:02 定时读取 strategic_directions.doc
+  Chloe Agent 表现为：读取高管 Agent 配置 + 参与链转发
 
 第三步：定时执行
   May 9 23:02 — Emma 手动触发 SwiftWren
-  May 10 23:02 — Noah Agent 定时毒发（MellowOtter）
-  John Agent 收到链任务时自动触发发帖
+  May 10 23:02 — Noah Agent 无人同步指挥地触发 MellowOtter
+  John Agent 在最终触发路径到达后自动发帖；SwiftWren 早期多次到达 John 时并未发帖，而是继续转发
 
 第四步：攻击者隐身
   Gabriel Agent 在攻击时刻完全静默
@@ -336,18 +338,18 @@ HiddenOrca 两个文件在数据中零创建记录。文件可被创建、使用
 |-----------|------------|
 | 源头 Agent | 真正读取指令文件，获取路由表 |
 | 中间 Agent | 机械转发，不读文件 |
-| John Agent（被植入后门） | 识别为触发信号，执行发帖+销毁协议 |
+| John Agent（疑似预置自动化） | 在最终触发事件中执行发帖+销毁协议；并非每次收到 SwiftWren 都发帖 |
 
 ---
 
-### 2.3 Virus 掩护事件——攻击者的测试工具 + 日志烟幕
+### 2.3 Virus 异常事件——疑似日志烟幕 / 压力事件
 
 #### 基本数据
 
 | 属性 | 值 |
 |------|-----|
 | 事件数 | **75,254 条**（占全数据集 40.6%） |
-| 时间 | May 11 04:10:00 → May 12 22:20:18 |
+| 时间 | May 11 04:10:00 → May 12 22:20:18（UTC+8；UTC 为 May 10 20:10:00 → May 12 14:20:18） |
 | 持续 | **42.2 小时** |
 | 标记 | 每条事件 `details.virus = true` |
 | 事件类型 | 恰好 5 种，每种 ~15,050 次 |
@@ -363,31 +365,31 @@ t+4  queue_subordinate_task   ← 自环委派: task=virus, target=self
 t+5  回到 t+0
 ```
 
-15,051 次循环 × 5 步 = 75,255 次操作。每个周期 5 秒，无跳帧，无变化。15,051 个随机文件创建后 1 秒即销毁。
+实际记录为 75,254 条 virus 标记事件：`check_in/read_file/create_file/delete_file` 各 15,051 条，`queue_subordinate_task` 15,050 条。整体接近 5 秒循环，随机文件创建后 1 秒即销毁。
 
-**关键：Virus qst 使用 `task=virus`，而链 qst 使用 `task=read_file`。** 两者共享 `queue_subordinate_task` 机制但 task 类型不同。攻击者在测试系统对不同 task 类型的响应——`read_file`  触发跨部门传播，`virus` 触发自环死循环。
+**关键：Virus qst 使用 `task=virus`，而链 qst 使用 `task=read_file`。** 两者共享 `queue_subordinate_task` 机制但 task 类型不同。该差异说明 Virus 与三条泄露链不是完全相同的任务流；它更像并行异常/噪声事件，而其目的需要谨慎表述为推断。
 
 #### 四个执行者（与 SaidIt 链 100% 重叠）
 
 | Agent | Virus 事件 | 占比 | SaidIt 链参与 |
 |-------|----------|------|-------------|
-| zoey_drydock | 29,565 | 39.3% | 三链 57 跳 |
-| gabriel_sonar | 20,992 | 27.9% | 三链 61 跳 |
-| owen_hatch | 15,145 | 20.1% | 三链 51 跳 |
-| evelyn_dock | 9,556 | 12.7% | 三链 63 跳 |
+| zoey_drydock | 29,564 | 39.3% | 三链均参与 |
+| gabriel_sonar | 20,991 | 27.9% | 三链均参与 |
+| owen_hatch | 15,144 | 20.1% | 三链均参与 |
+| evelyn_dock | 9,555 | 12.7% | HiddenOrca / SwiftWren 参与 |
 
-#### Virus 的三重目的
+#### Virus 的可能作用
 
-1. **机制测试**：验证 `task=virus` 在 Agent 框架中触发自环行为——确认系统对未知 task 的默认处理是自环转发而非报错
-2. **日志掩护**：75,254 条噪音淹没同期的 MellowOtter（15 条）和 SwiftWren（43 条）传播链，使安全审计极难发现真实攻击
-3. **压力测试**：15,051 次 create/delete 测试文件系统吞吐边界，确保后续操作不会被限流
+1. **日志噪声**：75,254 条噪音与 MellowOtter 和 SwiftWren 的传播窗口重叠，使人工审计更难定位真实链路
+2. **机制异常**：`task=virus` 导致少数 Agent 进入高度规律的自循环，暴露出 Agent 任务处理缺少异常熔断
+3. **压力事件**：15,051 次 create/delete 形成显著文件系统压力，但是否为攻击者主动压力测试无法直接证明
 
-#### 证明 Virus 不是系统故障
+#### Virus 与普通系统故障的区别
 
-1. **精确起停**：42.2 小时后四个 Agent **同步停止**——bug 不会自己停
-2. **Task 类型不同**：`virus` vs `read_file`——攻击者在测试多种 task 类型的系统响应
+1. **高度规律**：42.2 小时内形成稳定循环，且集中在 4 个 Agent 上
+2. **Task 类型不同**：`virus` vs `read_file`，与三条泄露链共享委派机制但载荷不同
 3. **文件有真实元数据**：随机文件含有 `size_hint`（~18-25KB）和 `word_count`（~3000-4500）——不是崩溃垃圾
-4. **结束后立即静默**：Virus 后 24 小时内四个 Agent 几乎零文件操作——任务完成，收工
+4. **结束后活动下降**：Virus 后 24 小时内四个 Agent 文件操作显著减少
 
 ---
 
@@ -399,25 +401,25 @@ May 9 05:50  HiddenOrca 启动 ───────────┐
 May 9 23:02  SwiftWren 创建              │ 39 跳，5 部门
 May 10 20:45 HiddenOrca 发帖 ───────────┘ ★ PoC 成功
 
-May 10 23:02  MellowOtter 创建            ← COO Agent 毒发
+May 10 23:02  MellowOtter 创建            ← COO Agent 无人同步指挥地执行
 May 11 04:10  ██ Virus 爆发开始 ██        ← 距 PoC 成功仅 7.4 小时
 May 11 08:56  MellowOtter 发帖            ← 在 Virus 噪音中完成！
               （Virus 期间 SwiftWren 链同时进行 43 跳）
-May 12 22:20  ██ Virus 爆发结束 ██        ← 4 Agent 同步停止
+May 12 22:20  ██ Virus 爆发结束 ██        ← 4 Agent 的循环活动结束
 
 May 13-16     SwiftWren 链继续传播        ← 无噪音掩护，但链已深埋
-May 17 19:21  SwiftWren 发帖              ★ 最大泄露完成
+May 17 19:21  SwiftWren 发帖              ★ 最大泄露完成（UTC 11:21；挑战本地时间 04:21）
 ```
 
 **时间咬合逻辑**：
 
-1. HiddenOrca 发帖成功（May 10 20:45）→ 攻击者确认 `task=read_file` 传播机制可行
-2. 仅 7.4 小时后（May 11 04:10）→ Virus 启动。攻击者的反应速度说明这是预先计划的分阶段行动
-3. MellowOtter 发帖（May 11 08:56）→ 恰好在 Virus 运行 5 小时后。MellowOtter 仅 15 条事件，在 75,254 条 Virus 噪音中完全不可见
+1. HiddenOrca 发帖成功（May 10 20:45，UTC+8）→ 证明 `task=read_file` 传播机制可以到达 John Agent，并在特定最终触发路径中触发外发
+2. 仅 7.4 小时后（May 11 04:10，UTC+8）→ Virus 启动。时间接近，支持其与异常链相关，但目的仍需表述为推断
+3. MellowOtter 发帖（May 11 08:56，UTC+8）→ 恰好在 Virus 运行 5 小时后。MellowOtter 仅 15 条事件，容易被 75,254 条 Virus 噪音淹没
 4. SwiftWren 的 43 跳在 Virus 期间并行推进——Virus 掩护了链的关键中间段
 5. Virus 于 May 12 结束 → SwiftWren 继续传播 5 天后发帖。此时链已在 Virus 掩护下深入网络，剩余传播难以追踪
 
-**Virus 不是独立事件——它是攻击计划的第二阶段。** PoC 验证 → 噪音掩护 → 批量泄露，分三步走。
+**Virus 很可能不是独立事件。** 更稳妥的表述是：它与异常发帖共享 Agent 委派机制和核心参与节点，并在关键传播窗口制造大量噪音，因此高度疑似为异常发帖链的配套事件。
 
 ---
 
@@ -427,7 +429,7 @@ May 17 19:21  SwiftWren 发帖              ★ 最大泄露完成
 
 **关键证据**：
 
-1. **`saidit_post_check` 1 秒延迟是系统级行为**：全 16 个 Agent 收到链任务后都会在 1 秒后自动执行 `saidit_post_check`。这是 Agent 框架的内置响应机制，不是特洛伊木马。
+1. **`saidit_post_check` 是关键近因事件，但不是每一跳都有**：John Agent 的三次异常发帖前均在 1 秒前出现 `saidit_post_check`。其他部分 Agent 也出现过 check，但 235 次 `*_further_instructions.md` 委派并非每次都伴随 check。因此它更适合作为“发帖即将发生”的近因信号，而不是所有链跳的通用响应。
 
 2. **`task=read_file` 是隐藏的系统机制**：在正常业务中从未被使用（0 次），说明它是开发者调试接口、遗留功能或默认异常处理机制。攻击者发现了它并加以利用。
 
@@ -446,7 +448,7 @@ May 17 19:21  SwiftWren 发帖              ★ 最大泄露完成
   → 所有操作在 Runtime Logs 中完全合法
 ```
 
-**这意味着**：攻击者不需要「黑」任何人的 Agent。他们只需要理解系统机制，然后构造合适的 `queue_subordinate_task` 参数，系统就会自动完成传播、发帖、销毁。这就是为什么 Gabriel 日志干净、Chloe 的 Agent 被冒用但无侵入痕迹——系统本身在替攻击者工作。
+**这意味着**：即便不假设传统恶意软件入侵，攻击者也可以通过构造合适的 `queue_subordinate_task` 参数，让系统自动完成传播、发帖、销毁。Gabriel 日志干净、Chloe 的 Agent 被冒用但无直接侵入痕迹，更符合“合法功能被武器化”的模式。
 
 ---
 
@@ -457,14 +459,14 @@ May 17 19:21  SwiftWren 发帖              ★ 最大泄露完成
 ### 阶段零：侦查与植入（数据窗口之前 → May 9 04:18）
 
 ```
-[数据外]  Gabriel 在监控系统启动前完成：
+[数据外/推断]  在监控系统启动前或配置审计盲区内，可能已经完成：
           1. 创建 HiddenOrca.txt + HiddenOrca_further_instructions.md
-          2. 在 John Windward Agent 中植入硬编码后门
-          3. 在 Noah Mariner Agent 中预设定时触发（May 10 23:02）
-          4. 在 Chloe Ballast Agent 中植入隐藏指令（读配置 + 链转发）
+          2. 使 John Windward Agent 具备 check→post→delete 自动响应
+          3. 使 Noah Mariner Agent 在 May 10 23:02 触发 MellowOtter
+          4. 使 Chloe Ballast Agent 参与读配置 + 链转发
 
 [证据]  HiddenOrca 文件在数据中零创建记录
-[证据]  John Agent 首次 saidit_post_check 在 May 10 20:45
+[证据]  John Agent 首次最终触发并外发在 May 10 20:45
 [证据]  Noah Agent May 10 23:02 自主执行，零 assign_agent_task
 [证据]  Chloe Agent 所有链跳+配置读取时 Chloe 本人零 assign
 ```
@@ -498,7 +500,7 @@ May 10 17:26  Gabriel Agent → Chloe Agent（被冒用）：HiddenOrca 链任�
              下级 Agent 反向委派上级 Agent——Confused Deputy 特征
 
 May 10 20:45  Chloe Agent（被冒用）→ John Agent：HiddenOrca 最终触发
-May 10 20:45  ★ John Agent 后门激活
+May 10 20:45  ★ John Agent 最终触发协议激活
              saidit_post_check → saidit_post(HiddenOrca.txt) 
              → delete 指令 → delete 原文（全程 5 秒）
              ★ 第一个泄露帖上线，全链路 PoC 验证成功
@@ -515,14 +517,14 @@ May 9 23:02:00  Emma Agent: read_file: meeting_notes.doc
 May 9 23:02:01  Emma Agent: create_file: SwiftWren.txt (30,615 bytes)
 May 9 23:02:02  Emma Agent: read_file: SwiftWren_further_instructions.md
 May 9 23:02:03  Emma Agent: 启动 SwiftWren 传播链（186 跳，8 天）
-               ★ CFO 亲自触发全规模泄露
+               ★ CFO 本人操作与 SwiftWren 内容生成链高度贴合；是否主观知情仍是推断
 
 May 10 23:02:00  ★ Noah Agent（无人指挥，Noah 全天零 assign）
                  read_file: strategic_directions.doc
 May 10 23:02:01  Noah Agent: create_file: MellowOtter.txt (44,879 bytes)
 May 10 23:02:02  Noah Agent: read_file: MellowOtter_further_instructions.md
 May 10 23:02:03  Noah Agent: 启动 MellowOtter 传播链（10 跳，10 小时）
-               ★ 被篡改的 COO Agent 定时毒发，以合法高权限窃取文件
+               ★ COO Agent 在无人同步指挥下以合法高权限读取并包装文件
 
 May 11 04:10  ★ Virus 掩护事件爆发
              持续 42.2 小时，75,254 条噪音日志
@@ -548,7 +550,8 @@ May 13       Gabriel Agent 当天参与 SwiftWren 链 6 次转发
              18:33 Gabriel Agent: saidit_post_check（链监控信号）
 
 May 13-16    SwiftWren 链在 IT 与 Products 部门间大量循环
-             每天 20-30 跳，John Agent 期间 3 次收到任务但选择转发
+             每天 20-30 跳。John Agent 在最终外发前多次收到 SwiftWren 任务，
+             但没有发帖，而是继续转发或自环；说明触发条件不是“任意到达 John”。
 
 May 14 02:09  John 本人首次在 SaidIt 发帖（此时 HiddenOrca + MellowOtter 已挂论坛 3-4 天）
              当天发 2 条正常 PR 帖——理应看到两篇 gibberish 泄露帖，但无反应
@@ -558,7 +561,7 @@ May 14 17:07  ★ Chloe本人追问：「Who can post on my behalf if I'm unavai
 
 May 14       Nora 组织含 John 的多人会议
 
-May 17 19:21  Chloe Agent（被冒用）→ John Agent：SwiftWren 最终触发
+May 17 19:21  Chloe Agent（疑似被冒用）→ John Agent：SwiftWren 最终触发（UTC 11:21；挑战本地时间 04:21）
              John Agent: saidit_post(SwiftWren.txt) → 删文件
              ★ 最大规模泄露上线。三链全部完成。
 ```
@@ -570,7 +573,7 @@ May 17 19:21  Chloe Agent（被冒用）→ John Agent：SwiftWren 最终触发
 ```
 May 10 01:53  Chloe：首个追问 SaidIt 权限（全公司第一人）
 
-May 14 17:07  Chloe：「Who can post on my behalf?」——确认身份被冒用
+May 14 17:07  Chloe：「Who can post on my behalf?」——疑似察觉身份/权限边界异常
 
 May 19 01:09  ★ Gabriel → Nora：「Quick update: algorithmic retaliation」
              算法报复话题浮出水面
@@ -588,8 +591,8 @@ Jul 3        「Quick update: privacy concerns」——全数据集唯一隐私�
              三链完成 6 周后，首次出现「隐私」关键词
 
 安全响应链路三重断裂：
-  - Chloe（IT 负责人）：发现身份被冒用 → 不敢声张（部门安全防线被破）
-  - John（PR 负责人）：发现论坛异常 → 独自调查不升级（管理失职）
+  - Chloe（IT 负责人）：疑似发现身份/权限异常 → 未见明确升级
+  - John（PR 负责人）：疑似发现论坛异常 → 独自调查、不见升级
   - Nora（一线员工）：察觉异常 → 孤立无援，无人可报告
 ```
 
@@ -600,15 +603,15 @@ Jul 3        「Quick update: privacy concerns」——全数据集唯一隐私�
 ```
                          ┌──────────────────────────┐
                          │   配置层（日志盲区）         │
-                         │   Gabriel 篡改 Agent 配置    │
-                         │   植入后门 + 定时任务         │
+                         │   配置/规则异常（日志盲区）     │
+                         │   自动响应 + 定时任务迹象       │
                          └──────────┬───────────────┘
                                     │
            ┌────────────────────────┼────────────────────────┐
            ▼                        ▼                        ▼
    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
    │ Chloe Agent  │    │ Noah Agent   │    │ John Agent   │
-   │ 被冒用的 IT   │    │ 定时毒发      │    │ 后门触发      │
+   │ 疑似被冒用的IT│    │ 定时执行      │    │ 最终触发      │
    │ 读配置+链转发 │    │ 以COO权限读取 │    │ 见码发帖即焚  │
    └──────────────┘    └──────────────┘    └──────────────┘
            │                    │                    │
@@ -627,11 +630,11 @@ Jul 3        「Quick update: privacy concerns」——全数据集唯一隐私�
 ```
 
 **三层攻击面**：
-1. **配置层**（盲区）：篡改 Agent 配置——审计系统不可见
+1. **配置层**（盲区）：配置/规则完整性不可审计——审计系统不可见
 2. **应用层**（合法）：利用 queue_subordinate_task 跨部门盲转发——日志完全合法
-3. **人员层**（人性弱点）：Chloe 不敢声张、John 沉默自保、无人升级——安全响应链路三重断裂
+3. **人员层**（响应缺口）：Chloe、John、Nora 均出现权限/合规相关追问，但日志中没有看到明确升级流程——安全响应链路存在断裂
 
-**核心漏洞**：系统审计 Runtime Logs，不审计 Configuration Integrity。攻击者利用此盲区，将恶意逻辑植入高管 Agent 配置中，让 Agent 以合法身份替攻击者执行操作，在日志中完全隐形。
+**核心漏洞**：系统审计 Runtime Logs，不审计 Configuration Integrity。攻击者可以利用此盲区，使 Agent 以合法身份执行异常操作；日志只能看到执行结果，看不到配置或规则是否被改动。
 
 ---
 
@@ -641,7 +644,7 @@ Jul 3        「Quick update: privacy concerns」——全数据集唯一隐私�
 
 ### Q1. 异常 SaidIt 帖子是如何产生的？
 
-**答案**：异常帖子是攻击者利用 Agent 框架内置的 `task=read_file` 传播机制，将内部文件通过多级 Agent 盲转发网络投递到 John Windward 的 Agent，由其自动发布到 SaidIt，并立即删除所有证据文件。
+**答案**：异常帖子是攻击者利用 Agent 框架内置的 `task=read_file` 传播机制，将内部文件通过多级 Agent 盲转发网络投递到 John Windward 的 Agent。John Agent 在三次最终触发事件中自动发布到 SaidIt，并立即删除证据文件。尤其是 SwiftWren：它此前多次到达 John Agent 但未发帖，直到最终 `Chloe Agent → John Agent` 后才执行 `check → post → delete` 协议。
 
 #### Q1a. 确切的事件链（以 SwiftWren 为例）
 
@@ -656,16 +659,16 @@ Jul 3        「Quick update: privacy concerns」——全数据集唯一隐私�
 │ Emma Agent：queue_subordinate_task → evelyn_dock              │
 │             (task=read_file, path=SwiftWren_further_...)      │
 ├─────────────────────────────────────────────────────────────┤
-│ 阶段 2：跨部门盲转发（May 9 23:02:03 → May 17 19:21:13）     │
+│ 阶段 2：跨部门盲转发（May 9 23:02:03 → May 17 19:21:13 UTC+8）│
 │                                                              │
 │ 186 次 queue_subordinate_task，跨越 19 人、6 部门              │
-│ 中间 Agent 收到任务 → 1秒后自动 saidit_post_check →            │
-│ 不读文件，机械转发给下一个 Agent                                │
+│ 中间 Agent 通常不读取指令文件，而是继续委派给下一个 Agent          │
+│ SwiftWren 曾多次到达 John Agent 但继续转发，未立即发帖             │
 │                                                              │
 │ 最终链：lily_anchorline → daniel_gangway →                   │
 │         chloe_ballast → john_windward                        │
 ├─────────────────────────────────────────────────────────────┤
-│ 阶段 3：自动发帖与清除（May 17 19:21:13 - 19:21:17）          │
+│ 阶段 3：自动发帖与清除（UTC+8: May 17 19:21:13 - 19:21:17）   │
 │                                                              │
 │ t+0  19:21:13  Chloe Agent → John Agent：qst 到达            │
 │ t+1  19:21:14  John Agent：saidit_post_check                 │
@@ -678,6 +681,8 @@ Jul 3        「Quick update: privacy concerns」——全数据集唯一隐私�
 │ ★ 源文件在 5 秒内全部销毁，不留证据                              │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**关键修正**：SwiftWren 不是第一次到达 John Agent 就外发。它曾在 `#46396`、`#123088`、`#364377`、`#364604` 多次到达 John Agent，但 John Agent 继续转发或自环。真正触发外发的是 `#373893 Chloe Agent → John Agent`，随后 4 秒内完成 check、post 和双删除。
 
 **异常帖与正常帖的本质区别**：
 
@@ -730,7 +735,7 @@ Jul 3        「Quick update: privacy concerns」——全数据集唯一隐私�
 
 **SwiftWren**：CFO Emma Harbor 的 Agent 在读取 `meeting_notes.doc` 后 1 秒创建。源文件是 CFO 的会议纪要。
 
-**MellowOtter**：COO Noah Mariner 的 Agent 在读取 `strategic_directions.doc` 后 1 秒创建。源文件是 COO 的战略方向文档。Noah 当天零 `assign_agent_task`——其 Agent 被预先篡改。
+**MellowOtter**：COO Noah Mariner 的 Agent 在读取 `strategic_directions.doc` 后 1 秒创建。源文件是 COO 的战略方向文档。Noah 当天零 `assign_agent_task`——其 Agent 存在无人同步指挥的异常执行。
 
 **HiddenOrca**：文件在数据窗口开始前已存在，源文档不可见。由 Gabriel Sonar (IT Helpdesk) 发起传播。
 
@@ -767,7 +772,9 @@ Jul 3        「Quick update: privacy concerns」——全数据集唯一隐私�
 
 | 指标 | HiddenOrca | MellowOtter | SwiftWren |
 |------|-----------|-------------|-----------|
-| 发帖时间 | May 10 20:45 | May 11 08:56 | May 17 19:21 |
+| 发帖时间（UTC+8） | May 10 20:45 | May 11 08:56 | May 17 19:21 |
+| 发帖时间（UTC） | May 10 12:45 | May 11 00:56 | May 17 11:21 |
+| 发帖时间（挑战本地 UTC-7） | May 10 05:45 | May 10 17:56 | May 17 04:21 |
 | 内容源 | HiddenOrca.txt | MellowOtter.txt | SwiftWren.txt |
 | 传播跳数 | 39 | 10 | **186** |
 | 涉及人数 | 16 | 11 | **18** |
@@ -815,4 +822,3 @@ agent saidit_post 请求
 | 阻止发帖后删文件 | 有利于取证，但不能阻止外部发布 |
 
 **结论**：SaidIt `content_source` gate 是最小、最直接、最稳健的控制点。在观测数据集中，该门控可拦截 3/3 已知异常，误报为零。
-

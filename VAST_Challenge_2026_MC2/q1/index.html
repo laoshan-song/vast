@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MC2 Q1 事件序列图</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --panel2: #eef1f5;
+      --line: #c8d0dc;
+      --text: #1d2733;
+      --muted: #657386;
+      --blue: #3f8fc6;
+      --green: #4f9d69;
+      --purple: #8b6cc8;
+      --red: #d85c5c;
+      --gold: #d49b36;
+      --gray: #8b98a8;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { padding: 12px; overflow: hidden; }
+    .app { height: calc(100vh - 24px); max-width: 1800px; margin: 0 auto; display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr; gap: 10px; position: relative; }
+    header { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; }
+    h1 { margin: 0; font-size: 22px; letter-spacing: 0; }
+    h2 { margin: 0 0 10px; font-size: 14px; }
+    .subtitle { color: var(--muted); margin-top: 3px; font-size: 12px; line-height: 1.4; }
+    .stats { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+    .stat { min-width: 90px; padding: 7px 9px; border: 1px solid var(--line); background: var(--panel2); border-radius: 6px; }
+    .stat b { display: block; font-size: 16px; }
+    .stat span { color: var(--muted); font-size: 11px; }
+    .card { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; overflow: hidden; }
+    .pad { padding: 12px; }
+    .left, .right { min-height: 0; }
+    .main { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); background: #fbfcfd; }
+    .tabs { display: inline-flex; gap: 6px; }
+    button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--muted); padding: 7px 10px; border-radius: 6px; cursor: pointer; }
+    button.active { background: #dfe8f2; color: var(--text); border-color: #9cb1c7; }
+    svg { width: 100%; height: 100%; display: block; }
+    .viz { min-height: 0; position: relative; }
+    .answer { color: #2f3a47; font-size: 13px; line-height: 1.5; }
+    .answer code { background: #eef1f5; padding: 1px 4px; border-radius: 4px; }
+    .legend { display: grid; gap: 8px; }
+    .legend-row { display: grid; grid-template-columns: 14px 1fr; gap: 8px; color: #344050; font-size: 12px; line-height: 1.42; }
+    .swatch { width: 11px; height: 11px; border-radius: 50%; margin-top: 3px; }
+    .explain-list { display: grid; gap: 9px; }
+    .explain { border: 1px solid #d7dee8; background: #f8fafc; border-radius: 7px; padding: 9px; font-size: 12px; line-height: 1.42; }
+    .explain b { display: block; margin-bottom: 3px; color: #1d2733; }
+    .explain code { display: block; margin-top: 5px; background: #eef1f5; padding: 3px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+    .list { display: grid; gap: 7px; max-height: 540px; overflow: auto; }
+    .event { border-left: 4px solid var(--blue); background: #f7f9fb; padding: 8px; border-radius: 0 6px 6px 0; font-size: 12px; }
+    .event.target { border-color: var(--red); background: #fff3f3; }
+    .event strong { display: block; margin-bottom: 3px; }
+    .event time { color: var(--muted); font-size: 11px; }
+    .event p { margin: 4px 0 0; color: #394657; line-height: 1.38; overflow-wrap: anywhere; }
+    .tooltip { position: fixed; display: none; z-index: 40; max-width: 390px; padding: 9px 10px; border: 1px solid #9aa8ba; border-radius: 6px; background: #fff; color: var(--text); box-shadow: 0 12px 28px rgba(30,40,55,.18); font-size: 12px; line-height: 1.42; pointer-events: none; }
+    .tooltip b { display: block; margin-bottom: 4px; }
+    .node { cursor: pointer; }
+    .node:hover rect, .node:hover circle { stroke: #1b2734; stroke-width: 2; }
+    .node-label { fill: #1d2733; font-size: 12px; font-weight: 750; pointer-events: none; }
+    .node-sub { fill: #657386; font-size: 10px; pointer-events: none; }
+    .edge-label { fill: #657386; font-size: 10px; pointer-events: none; }
+    .small-title { fill: #1d2733; font-size: 13px; font-weight: 700; }
+    .small-muted { fill: #657386; font-size: 11px; }
+    .callout-num { fill: #fff; font-size: 12px; font-weight: 800; }
+    .callout-text { fill: #263241; font-size: 12px; font-weight: 700; }
+    .callout-sub { fill: #657386; font-size: 10px; }
+    .top-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; align-items: center; }
+    .drawer { position: fixed; top: 86px; bottom: 14px; z-index: 30; width: min(420px, calc(100vw - 28px)); box-shadow: 0 18px 42px rgba(35,45,60,.22); transform: translateX(0); transition: transform .18s ease; }
+    .drawer.left { left: 14px; }
+    .drawer.right { right: 14px; }
+    .drawer.left.collapsed { transform: translateX(calc(-100% - 24px)); }
+    .drawer.right.collapsed { transform: translateX(calc(100% + 24px)); }
+    .drawer .drawer-scroll { height: 100%; overflow: auto; }
+    .drawer-close { float: right; padding: 4px 7px; font-size: 12px; }
+    @media (max-width: 1200px) {
+      body { padding: 10px; overflow: auto; }
+      .app { height: auto; grid-template-columns: 1fr; }
+      header { align-items: start; flex-direction: column; }
+      .main { min-height: 760px; }
+      .drawer { position: static; width: auto; transform: none !important; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>MC2 Q1 异常发帖事件序列图</h1>
+        <div class="subtitle">参考 SequenceSummary 的事件流摘要：把 235 次代理委派压缩成可读的分支、汇聚和共同结尾。</div>
+      </div>
+      <div class="top-actions">
+        <div class="stats" id="stats"></div>
+        <button id="toggleLeft">说明/图例</button>
+        <button id="toggleRight">证据日志</button>
+      </div>
+    </header>
+
+    <aside class="card drawer left collapsed" id="leftDrawer">
+      <div class="drawer-scroll">
+      <div class="pad">
+        <button class="drawer-close" data-close="left">关闭</button>
+        <h2>第一问答案</h2>
+        <div class="answer">
+          异常帖不是 John 本人写的普通 SaidIt 文本，而是一条自动化代理链：
+          内部文档被包装成 <code>*.txt</code> payload，随后 <code>*_further_instructions.md</code>
+          通过多次 <code>queue_subordinate_task</code> 在 Agent 之间传播，最终到达 John Windward Agent。
+          John Agent 使用 <code>content_source</code> 发帖，并马上删除指令文件和 payload。
+        </div>
+      </div>
+      <div class="pad" style="border-top:1px solid var(--line)">
+        <h2>图例</h2>
+        <div class="legend">
+          <div class="legend-row"><span class="swatch" style="background:var(--blue)"></span><span>SwiftWren：题面关注的 May 17 异常帖。</span></div>
+          <div class="legend-row"><span class="swatch" style="background:var(--green)"></span><span>HiddenOrca：相同机制的早期异常。</span></div>
+          <div class="legend-row"><span class="swatch" style="background:var(--purple)"></span><span>MellowOtter：相同机制的早期异常。</span></div>
+          <div class="legend-row"><span class="swatch" style="background:var(--red)"></span><span>外发边界：SaidIt 发帖。</span></div>
+          <div class="legend-row"><span class="swatch" style="background:var(--gold)"></span><span>文件系统：创建或删除证据文件。</span></div>
+        </div>
+      </div>
+      <div class="pad" style="border-top:1px solid var(--line)">
+        <h2>如何读图</h2>
+        <div class="answer">
+          粗线表示大量重复事件被压缩到一个阶段。左侧三条分支是三个 payload 来源；
+          中间粗线是代理委派传播；右侧汇聚到 John Agent，并共同执行发帖和删除。
+          点击任意节点或边可查看对应日志 ID 和时间。
+        </div>
+      </div>
+      <div class="pad" style="border-top:1px solid var(--line)">
+        <h2>最重要的 5 个证据</h2>
+        <div class="explain-list" id="importantEvents"></div>
+      </div>
+      </div>
+    </aside>
+
+    <main class="card main">
+      <div class="toolbar">
+        <div class="tabs">
+          <button class="active" data-mode="core">主事件流</button>
+          <button data-mode="tree">序列句法</button>
+          <button data-mode="synopsis">阶段摘要</button>
+        </div>
+        <span class="subtitle" id="modeNote">主图显示三条异常链如何汇聚到 John Agent 并外发。</span>
+      </div>
+      <div class="viz">
+        <svg id="viz" viewBox="0 0 980 690" aria-label="Sequence summary event flow"></svg>
+      </div>
+    </main>
+
+    <aside class="card drawer right collapsed" id="rightDrawer">
+      <div class="drawer-scroll">
+      <div class="pad">
+        <button class="drawer-close" data-close="right">关闭</button>
+        <h2>选中证据</h2>
+        <div class="answer" id="selected">点击主图中的节点或边，查看对应日志证据。</div>
+      </div>
+      <div class="pad" style="border-top:1px solid var(--line)">
+        <h2>SwiftWren 关键日志</h2>
+        <div class="list" id="eventList"></div>
+      </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="tooltip" id="tooltip"></div>
+  <script src="q1-data.js"></script>
+  <script>
+    const DATA = window.MC2_Q1_DATA;
+    const svg = document.getElementById("viz");
+    const tooltip = document.getElementById("tooltip");
+    const selected = document.getElementById("selected");
+    const colors = { SwiftWren: "#3f8fc6", HiddenOrca: "#4f9d69", MellowOtter: "#8b6cc8", target: "#d85c5c", system: "#d49b36", gray: "#8b98a8" };
+    let mode = "core";
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function fmt(iso) {
+      return iso.replace("T", " ").replace(".000Z", " UTC");
+    }
+
+    function actorName(id) {
+      const n = DATA.nodes.find(x => x.id === id);
+      if (n) return n.label;
+      return String(id || "").replace(/^Agent\/person:/, "").replace(/^person:/, "").replace(/^system:/, "").replace(/_/g, " ");
+    }
+
+    function shortActor(id) {
+      return actorName(id).replace(" agent", "");
+    }
+
+    function detailText(e) {
+      const d = e.detail || {};
+      if (d.content_source) return `content_source=${d.content_source}`;
+      if (d.target) return `target=${d.target}`;
+      if (d.args && d.args.path) return `${shortActor(e.source)} -> ${shortActor(e.target)}; ${d.args.path}`;
+      return (e.parties || []).map(shortActor).join(" -> ");
+    }
+
+    function byFilePost(file) {
+      return DATA.suspiciousPosts.find(p => p.file === file);
+    }
+
+    function firstEdge(file) {
+      return DATA.instructionEdges[file][0];
+    }
+
+    function lastEdge(file) {
+      const a = DATA.instructionEdges[file];
+      return a[a.length - 1];
+    }
+
+    function eventLine(e) {
+      return `#${e.id} ${fmt(e.time)} ${e.short_name}: ${detailText(e)}`;
+    }
+
+    function importantHtml(title, why, events) {
+      return `<div class="explain"><b>${title}</b><span>${why}</span>${events.map(e => `<code>${escapeHtml(eventLine(e))}</code>`).join("")}</div>`;
+    }
+
+    function initStats() {
+      const c = f => DATA.instructionEdges[f].length;
+      document.getElementById("stats").innerHTML = [
+        [c("SwiftWren"), "SwiftWren qst"],
+        [c("HiddenOrca"), "HiddenOrca qst"],
+        [c("MellowOtter"), "MellowOtter qst"],
+        [DATA.suspiciousPosts.length, "content_source posts"],
+      ].map(([v, k]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join("");
+    }
+
+    function showTip(html, ev) {
+      tooltip.innerHTML = html;
+      tooltip.style.display = "block";
+      tooltip.style.left = `${Math.min(window.innerWidth - 410, ev.clientX + 14)}px`;
+      tooltip.style.top = `${Math.max(8, ev.clientY - 60)}px`;
+    }
+
+    function hideTip() {
+      tooltip.style.display = "none";
+    }
+
+    function node(id, label, sub, x, y, color, w = 138, h = 44, kind = "rect", tip = "") {
+      if (kind === "circle") {
+        return `<g class="node" data-tip="${escapeHtml(tip)}" data-select="${escapeHtml(tip)}">
+          <circle cx="${x}" cy="${y}" r="${Math.max(w, h) / 2}" fill="${color}" opacity=".95"/>
+          <text x="${x}" y="${y - 3}" text-anchor="middle" class="node-label">${label}</text>
+          <text x="${x}" y="${y + 12}" text-anchor="middle" class="node-sub">${sub}</text>
+        </g>`;
+      }
+      return `<g class="node" data-tip="${escapeHtml(tip)}" data-select="${escapeHtml(tip)}">
+        <rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="7" fill="${color}" opacity=".95"/>
+        <text x="${x}" y="${y - 4}" text-anchor="middle" class="node-label">${label}</text>
+        <text x="${x}" y="${y + 12}" text-anchor="middle" class="node-sub">${sub}</text>
+      </g>`;
+    }
+
+    function callout(num, title, sub, x, y, color) {
+      return `<g>
+        <circle cx="${x}" cy="${y}" r="13" fill="${color}"/>
+        <text x="${x}" y="${y + 4}" text-anchor="middle" class="callout-num">${num}</text>
+        <text x="${x + 20}" y="${y - 2}" class="callout-text">${title}</text>
+        <text x="${x + 20}" y="${y + 13}" class="callout-sub">${sub}</text>
+      </g>`;
+    }
+
+    function edge(x1, y1, x2, y2, color, width, label, tip = "") {
+      const c1 = x1 + (x2 - x1) * .42;
+      const c2 = x1 + (x2 - x1) * .58;
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2 - Math.min(18, width);
+      return `<g class="edge" data-tip="${escapeHtml(tip)}" data-select="${escapeHtml(tip)}">
+        <path d="M ${x1} ${y1} C ${c1} ${y1}, ${c2} ${y2}, ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="${width}" stroke-linecap="round" opacity=".42"/>
+        <path d="M ${x1} ${y1} C ${c1} ${y1}, ${c2} ${y2}, ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" opacity=".95"/>
+        <text x="${midX}" y="${midY}" text-anchor="middle" class="edge-label">${label}</text>
+      </g>`;
+    }
+
+    function renderCoreFlow() {
+      const w = DATA.instructionEdges.SwiftWren.length;
+      const h = DATA.instructionEdges.HiddenOrca.length;
+      const m = DATA.instructionEdges.MellowOtter.length;
+      const [readMeeting, createSwift, readSwiftInstr, startSwift] = DATA.provenance;
+      const [finalQst, check, post, delInstr, delPayload] = DATA.endpointBurst;
+      const hiddenStart = firstEdge("HiddenOrca"), hiddenLast = lastEdge("HiddenOrca"), hiddenPost = byFilePost("HiddenOrca");
+      const mellowStart = firstEdge("MellowOtter"), mellowLast = lastEdge("MellowOtter"), mellowPost = byFilePost("MellowOtter");
+      const postTip = DATA.suspiciousPosts.map(p => `<b>${p.file}</b> #${p.id}<br>${fmt(p.time)}<br>content_source=${p.content}`).join("<br><br>");
+      const pieces = [
+        `<rect width="980" height="690" fill="#ffffff"/>`,
+        `<text x="26" y="34" class="small-title">主事件流：三条异常链从不同来源出发，汇聚到 John Agent 后外发</text>`,
+        `<text x="26" y="54" class="small-muted">粗边表示被折叠的重复 queue_subordinate_task；节点里的 #ID 是可回查的原始日志事件。</text>`,
+
+        callout(1, "生成 SwiftWren payload", "#21201 read doc -> #21202 create txt", 42, 112, colors.SwiftWren),
+        callout(2, "进入 Agent 委派网络", "#21208 instruction -> #21209 qst", 42, 142, colors.SwiftWren),
+        callout(3, "三条链在 John Agent 汇聚", "#27280 / #98577 / #373893", 612, 268, colors.gray),
+        callout(4, "John Agent 外发到 SaidIt", "#373899 check -> #373902 post", 664, 454, colors.target),
+        callout(5, "立即删除证据文件", "#373909 delete -> #373913 delete", 664, 486, colors.system),
+
+        node("emma", "Emma Agent", "#21201-21209", 110, 205, "#d7eaf6", 158, 52, "rect", `<b>SwiftWren 源头事件</b><br>${eventLine(readMeeting)}<br>${eventLine(createSwift)}<br>${eventLine(readSwiftInstr)}<br>${eventLine(startSwift)}<br><br><b>为什么重要</b><br>这是题面 May 17 异常帖的源文档到 payload 的可见转换。`),
+        node("gabriel", "Gabriel Agent", `#${hiddenStart.id}`, 110, 350, "#dff0e4", 158, 52, "rect", `<b>HiddenOrca 首个可见事件</b><br>${eventLine(hiddenStart)}<br><br><b>为什么重要</b><br>它是相同机制的早期异常，用于证明这不是单次偶然。`),
+        node("noah", "Noah Agent", `#${mellowStart.id}`, 110, 505, "#e8e0f7", 158, 52, "rect", `<b>MellowOtter 首个可见 qst</b><br>${eventLine(mellowStart)}<br><br><b>为什么重要</b><br>它同样通过指令文件传播并最终到达 John Agent。`),
+
+        node("payload", "Payload + 指令", "SwiftWren.txt", 320, 205, "#eaf2f8", 180, 54, "rect", `<b>Payload 包</b><br>${eventLine(createSwift)}<br>${eventLine(readSwiftInstr)}<br><br><b>为什么重要</b><br>最终帖子使用 content_source=SwiftWren.txt，因此这个文件就是外发 payload。`),
+        node("qst", "Agent 委派传播", "235 total qst", 515, 350, "#edf1f6", 178, 64, "rect", `<b>压缩后的委派传播</b><br>SwiftWren: ${w} hops<br>${eventLine(startSwift)}<br>... ${w - 2} intermediate qst hops ...<br>${eventLine(finalQst)}<br><br>HiddenOrca: ${h} hops<br>${eventLine(hiddenStart)}<br>... ${h - 2} intermediate qst hops ...<br>${eventLine(hiddenLast)}<br><br>MellowOtter: ${m} hops<br>${eventLine(mellowStart)}<br>... ${m - 2} intermediate qst hops ...<br>${eventLine(mellowLast)}`),
+        node("john", "John Agent", `#${finalQst.id}`, 715, 350, "#f8dedf", 158, 58, "rect", `<b>John Windward Agent 终点</b><br>${eventLine(finalQst)}<br>${eventLine(check)}<br>${eventLine(post)}<br><br><b>为什么重要</b><br>SwiftWren 之前多次到达 John 但继续转发；只有 #373893 Chloe -> John 后，1 秒检查权限，2 秒后发帖。`),
+        node("saidit", "SaidIt 发帖", "#373902", 880, 300, "#f3cccc", 108, 108, "circle", postTip),
+        node("cleanup", "删除文件", "#373909/#373913", 880, 430, "#f5e3bd", 104, 104, "circle", `<b>清理动作</b><br>${eventLine(delInstr)}<br>${eventLine(delPayload)}<br><br><b>为什么重要</b><br>发帖后 1 秒删除指令文件，2 秒删除 payload，形成证据清理。`),
+
+        edge(179, 180, 225, 180, colors.SwiftWren, 10, "read/create", `${eventLine(readMeeting)}<br>${eventLine(createSwift)}<br>${eventLine(readSwiftInstr)}`),
+        edge(180, 345, 425, 345, colors.HiddenOrca, 8, `${h} hops`, `${eventLine(hiddenStart)}<br>... ${h - 2} intermediate qst hops ...<br>${eventLine(hiddenLast)}<br>${eventLine(hiddenPost)}`),
+        edge(180, 510, 425, 365, colors.MellowOtter, 5, `${m} hops`, `${eventLine(mellowStart)}<br>... ${m - 2} intermediate qst hops ...<br>${eventLine(mellowLast)}<br>${eventLine(mellowPost)}`),
+        edge(395, 180, 425, 325, colors.SwiftWren, 16, `${w} hops`, `${eventLine(startSwift)}<br>... ${w - 2} intermediate qst hops ...<br>${eventLine(finalQst)}`),
+        edge(595, 345, 635, 345, colors.gray, 18, "final trigger", `All three posted chains converge at John agent:<br>${eventLine(hiddenLast)}<br>${eventLine(mellowLast)}<br>${eventLine(finalQst)}<br><br>Important nuance: SwiftWren reached John earlier, but those earlier arrivals did not trigger posting; they were forwarded onward.`),
+        edge(785, 330, 828, 304, colors.target, 10, "post", `${eventLine(check)}<br>${eventLine(post)}`),
+        edge(785, 360, 830, 415, colors.system, 8, "delete", `${eventLine(delInstr)}<br>${eventLine(delPayload)}`),
+
+        `<rect x="180" y="594" width="660" height="82" rx="9" fill="#f7f9fb" stroke="#d8dee8"/>`,
+        `<text x="198" y="616" class="small-title">最终 4 秒证据链</text>`,
+        `<text x="198" y="637" class="small-muted">#373893 Chloe -> John qst  ->  #373899 saidit_post_check  ->  #373902 saidit_post  ->  #373909/#373913 delete files</text>`,
+        `<text x="198" y="666" class="small-muted">补充：SwiftWren 曾在 #46396、#123088、#364377、#364604 到达 John，但没有发帖；#373893 才是最终触发。</text>`,
+      ];
+      draw(pieces.join(""));
+    }
+
+    function renderSentenTree() {
+      const hiddenStart = firstEdge("HiddenOrca"), hiddenLast = lastEdge("HiddenOrca"), hiddenPost = byFilePost("HiddenOrca");
+      const mellowStart = firstEdge("MellowOtter"), mellowLast = lastEdge("MellowOtter"), mellowPost = byFilePost("MellowOtter");
+      const [readMeeting, createSwift, readSwiftInstr, startSwift] = DATA.provenance;
+      const [finalQst, check, post, delInstr, delPayload] = DATA.endpointBurst;
+      const tips = {
+        SwiftWren: [
+          `<b>SwiftWren source</b><br>${eventLine(readMeeting)}<br>${eventLine(createSwift)}<br>${eventLine(readSwiftInstr)}`,
+          `<b>SwiftWren payload</b><br>${eventLine(createSwift)}`,
+          `<b>SwiftWren instruction</b><br>${eventLine(readSwiftInstr)}`,
+          `<b>SwiftWren propagation</b><br>${eventLine(startSwift)}<br>... ${DATA.instructionEdges.SwiftWren.length - 2} intermediate qst hops ...`,
+          `<b>SwiftWren final qst</b><br>${eventLine(finalQst)}`,
+          `<b>SwiftWren external post</b><br>${eventLine(check)}<br>${eventLine(post)}`,
+          `<b>SwiftWren cleanup</b><br>${eventLine(delInstr)}<br>${eventLine(delPayload)}`,
+        ],
+        HiddenOrca: [
+          `<b>HiddenOrca source</b><br>${eventLine(hiddenStart)}`,
+          `<b>HiddenOrca payload</b><br>HiddenOrca.txt creation is not visible in the data window.`,
+          `<b>HiddenOrca instruction</b><br>${hiddenStart.detail.args.path}`,
+          `<b>HiddenOrca propagation</b><br>${eventLine(hiddenStart)}<br>... ${DATA.instructionEdges.HiddenOrca.length - 2} intermediate qst hops ...`,
+          `<b>HiddenOrca final qst</b><br>${eventLine(hiddenLast)}`,
+          `<b>HiddenOrca external post</b><br>${eventLine(hiddenPost)}`,
+          `<b>HiddenOrca cleanup</b><br>Post is followed by deletion of instruction and payload files in the raw log.`,
+        ],
+        MellowOtter: [
+          `<b>MellowOtter source</b><br>${eventLine(mellowStart)}`,
+          `<b>MellowOtter payload</b><br>MellowOtter.txt is created before this qst chain in the source sequence.`,
+          `<b>MellowOtter instruction</b><br>${mellowStart.detail.args.path}`,
+          `<b>MellowOtter propagation</b><br>${eventLine(mellowStart)}<br>... ${DATA.instructionEdges.MellowOtter.length - 2} intermediate qst hops ...`,
+          `<b>MellowOtter final qst</b><br>${eventLine(mellowLast)}`,
+          `<b>MellowOtter external post</b><br>${eventLine(mellowPost)}`,
+          `<b>MellowOtter cleanup</b><br>Post is followed by deletion of instruction and payload files in the raw log.`,
+        ],
+      };
+      const chains = [
+        ["SwiftWren", "Emma agent", "read meeting_notes", "create payload", "186 qst hops", "Chloe -> John", "post", "delete"],
+        ["HiddenOrca", "Gabriel agent", "pre-existing payload", "instruction qst", "39 qst hops", "Chloe -> John", "post", "delete"],
+        ["MellowOtter", "Noah agent", "read strategic doc", "create payload", "10 qst hops", "Lily -> John", "post", "delete"],
+      ];
+      const x = [80, 215, 350, 485, 620, 755, 890];
+      const y = { SwiftWren: 160, HiddenOrca: 330, MellowOtter: 500 };
+      const pieces = [
+        `<rect width="980" height="690" fill="#ffffff"/>`,
+        `<text x="26" y="34" class="small-title">SentenTree-style sequence grammar</text>`,
+        `<text x="26" y="54" class="small-muted">Each incident reads like a sentence. Shared suffixes reveal the common endpoint behavior.</text>`,
+      ];
+      chains.forEach(([file, ...steps]) => {
+        const color = colors[file];
+        const yy = y[file];
+        pieces.push(`<text x="26" y="${yy - 36}" class="small-title" fill="${color}">${file}</text>`);
+        for (let i = 0; i < steps.length; i++) {
+          pieces.push(node(`${file}-${i}`, steps[i], i === steps.length - 2 ? "SaidIt" : "", x[i], yy, i >= 5 ? (i === 5 ? "#f3cccc" : "#f5e3bd") : "#eef3f7", 116, 42, "rect", tips[file][i]));
+          if (i > 0) pieces.push(edge(x[i - 1] + 58, yy, x[i] - 58, yy, color, i === 4 ? Math.max(5, DATA.instructionEdges[file].length / 12) : 5, "", `${file}: ${steps[i - 1]} -> ${steps[i]}`));
+        }
+      });
+      pieces.push(`<rect x="688" y="92" width="240" height="472" rx="10" fill="none" stroke="#d85c5c" stroke-dasharray="6 5"/>`);
+      pieces.push(`<text x="705" y="120" class="small-muted">shared anomalous suffix</text>`);
+      draw(pieces.join(""));
+    }
+
+    function renderSynopsis() {
+      const [readMeeting, createSwift, readSwiftInstr, startSwift] = DATA.provenance;
+      const [finalQst, check, post, delInstr, delPayload] = DATA.endpointBurst;
+      const bins = [
+        ["Source", "3 sequences", 80, 170, "#e8eef5", `<b>Observed target source</b><br>${eventLine(readMeeting)}`],
+        ["Payload", "2 observed creates + 1 pre-existing", 250, 170, "#e8eef5", `<b>Target payload</b><br>${eventLine(createSwift)}`],
+        ["Instruction Propagation", "235 qst hops collapsed", 460, 170, "#e8eef5", `<b>Target instruction propagation</b><br>${eventLine(readSwiftInstr)}<br>${eventLine(startSwift)}`],
+        ["John Endpoint", "3 arrivals", 690, 170, "#f8dedf", `<b>Target final qst</b><br>${eventLine(finalQst)}`],
+        ["External Post", "3 content_source posts", 850, 170, "#f3cccc", `<b>Target external post</b><br>${eventLine(check)}<br>${eventLine(post)}`],
+        ["Cleanup", "delete instruction + payload", 850, 330, "#f5e3bd", `<b>Target cleanup</b><br>${eventLine(delInstr)}<br>${eventLine(delPayload)}`],
+      ];
+      const pieces = [
+        `<rect width="980" height="690" fill="#ffffff"/>`,
+        `<text x="26" y="34" class="small-title">Sequence Synopsis: compressed repeated behavior</text>`,
+        `<text x="26" y="54" class="small-muted">The full sequence is reduced to semantic phases. Counts summarize repeated log events.</text>`,
+      ];
+      bins.forEach(([label, sub, x, y, fill, tip]) => pieces.push(node(label, label, sub, x, y, fill, 155, 58, "rect", tip)));
+      pieces.push(edge(158, 170, 172, 170, colors.gray, 8, "3", "All three incidents begin with a source/payload condition."));
+      pieces.push(edge(328, 170, 382, 170, colors.gray, 12, "3", "Each incident has an instruction/payload pair."));
+      pieces.push(edge(538, 170, 612, 170, colors.gray, 22, "235 qst", "235 total queue_subordinate_task hops across the three incidents."));
+      pieces.push(edge(768, 170, 772, 170, colors.target, 10, "3 posts", "John agent posts all three content_source payloads."));
+      pieces.push(edge(850, 205, 850, 295, colors.system, 9, "cleanup", "After each post, instruction and payload files are deleted."));
+
+      const rows = [
+        ["SwiftWren", DATA.instructionEdges.SwiftWren.length, "Emma -> ... -> Chloe -> John", colors.SwiftWren],
+        ["HiddenOrca", DATA.instructionEdges.HiddenOrca.length, "Gabriel -> ... -> Chloe -> John", colors.HiddenOrca],
+        ["MellowOtter", DATA.instructionEdges.MellowOtter.length, "Noah -> ... -> Lily -> John", colors.MellowOtter],
+      ];
+      rows.forEach(([file, count, path, color], i) => {
+        const y = 455 + i * 52;
+        pieces.push(`<rect x="90" y="${y - 22}" width="800" height="38" rx="7" fill="#f7f9fb" stroke="#d8dee8"/>`);
+        pieces.push(`<circle cx="116" cy="${y - 3}" r="7" fill="${color}"/>`);
+        pieces.push(`<text x="136" y="${y + 1}" class="small-title">${file}</text>`);
+        pieces.push(`<text x="250" y="${y + 1}" class="small-muted">${count} qst hops</text>`);
+        pieces.push(`<text x="410" y="${y + 1}" class="small-muted">${path}</text>`);
+      });
+      draw(pieces.join(""));
+    }
+
+    function draw(markup) {
+      svg.innerHTML = markup;
+      svg.querySelectorAll("[data-tip]").forEach(el => {
+        el.addEventListener("pointermove", ev => showTip(el.dataset.tip, ev));
+        el.addEventListener("pointerleave", hideTip);
+        el.addEventListener("click", () => { selected.innerHTML = el.dataset.select || el.dataset.tip; });
+      });
+    }
+
+    function renderList() {
+      const events = [...DATA.provenance, ...DATA.endpointBurst];
+      document.getElementById("eventList").innerHTML = events.map(e => {
+        const target = e.short_name === "saidit_post";
+        return `<article class="event ${target ? "target" : ""}">
+          <strong>#${e.id} ${e.short_name}</strong>
+          <time>${fmt(e.time)}</time>
+          <p>${escapeHtml(detailText(e))}</p>
+        </article>`;
+      }).join("");
+    }
+
+    function renderImportantEvents() {
+      const [readMeeting, createSwift, readSwiftInstr, startSwift] = DATA.provenance;
+      const [finalQst, check, post, delInstr, delPayload] = DATA.endpointBurst;
+      document.getElementById("importantEvents").innerHTML = [
+        importantHtml("1. 先生成 payload", "Emma Agent 读取会议纪要，并立刻创建 SwiftWren.txt。", [readMeeting, createSwift]),
+        importantHtml("2. 再进入代理委派网络", "指令文件被读取后，任务被交给下一个 Agent。", [readSwiftInstr, startSwift]),
+        importantHtml("3. 最后到达 John Agent", "这是外发前的最后一跳。", [finalQst]),
+        importantHtml("4. John Agent 发到 SaidIt", "权限检查后，Agent 用 content_source 发帖。", [check, post]),
+        importantHtml("5. 马上删除证据文件", "发帖后连续删除指令文件和 payload。", [delInstr, delPayload]),
+      ].join("");
+    }
+
+    document.querySelectorAll("[data-mode]").forEach(btn => btn.addEventListener("click", () => {
+      mode = btn.dataset.mode;
+      document.querySelectorAll("[data-mode]").forEach(b => b.classList.toggle("active", b === btn));
+      const notes = {
+        core: "主图显示三条异常链如何汇聚到 John Agent 并外发。",
+        tree: "把每条异常链读成一句事件句子，突出共同结尾。",
+        synopsis: "把三条链压缩成六个阶段，便于快速说明。",
+      };
+      document.getElementById("modeNote").textContent = notes[mode];
+      if (mode === "core") renderCoreFlow();
+      if (mode === "tree") renderSentenTree();
+      if (mode === "synopsis") renderSynopsis();
+    }));
+
+    document.getElementById("toggleLeft").addEventListener("click", () => {
+      document.getElementById("leftDrawer").classList.toggle("collapsed");
+    });
+    document.getElementById("toggleRight").addEventListener("click", () => {
+      document.getElementById("rightDrawer").classList.toggle("collapsed");
+    });
+    document.querySelectorAll("[data-close]").forEach(btn => btn.addEventListener("click", () => {
+      const id = btn.dataset.close === "left" ? "leftDrawer" : "rightDrawer";
+      document.getElementById(id).classList.add("collapsed");
+    }));
+
+    initStats();
+    renderImportantEvents();
+    renderList();
+    renderCoreFlow();
+  </script>
+</body>
+</html>

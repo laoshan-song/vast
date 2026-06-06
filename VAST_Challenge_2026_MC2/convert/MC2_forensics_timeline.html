@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MC2 — Platform Vulnerabilities Exposed</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0b1120;overflow-x:hidden;font-family:'Inter','Segoe UI','PingFang SC',sans-serif;color:#8899aa}
+/* Scroll sections */
+section{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;padding:60px;border-bottom:1px solid rgba(255,255,255,0.04)}
+section .inner{max-width:900px;width:100%}
+h2{font-size:22px;font-weight:700;color:#c8d6e5;margin-bottom:8px}
+h3{font-size:14px;color:#ef4444;font-weight:600;margin-bottom:20px;letter-spacing:0.5px}
+p{font-size:13px;line-height:1.8;margin-bottom:12px}
+.highlight{background:rgba(239,68,68,0.08);border-left:3px solid #ef4444;padding:14px 18px;border-radius:0 6px 6px 0;margin:16px 0;font-size:12px;line-height:1.7}
+.highlight b{color:#ef4444}
+.evidence{font-size:11px;color:#556;margin-top:6px;font-family:'SF Mono',monospace}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:20px 0}
+.card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:20px}
+.card h4{font-size:13px;color:#c8d6e5;margin-bottom:8px}
+.card p{font-size:11px;line-height:1.7;color:#667}
+
+/* SVG containers */
+.viz{width:100%;height:300px;margin:16px 0}
+.viz.tall{height:420px}
+
+/* Timeline nav */
+.nav{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:100;display:flex;flex-direction:column;gap:8px}
+.nav a{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.1);transition:all 0.3s;cursor:pointer}
+.nav a.active{background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,0.4)}
+
+/* Glitch */
+@keyframes glitch{0%,92%,100%{opacity:0;transform:translateX(0)}93%{opacity:0.6;transform:translateX(-3px)}95%{opacity:0.3;transform:translateX(2px)}97%{opacity:0}}
+.glitch-line{animation:glitch 4s infinite}
+
+code{background:rgba(255,255,255,0.04);padding:2px 6px;border-radius:3px;font-family:'SF Mono',monospace;font-size:11px}
+.red{color:#ef4444}.blue{color:#3b82f6}.gold{color:#f59e0b}
+</style>
+</head>
+<body>
+
+<!-- Nav dots -->
+<div class="nav">
+  <a href="#s0" class="active" title="Attack Overview"></a>
+  <a href="#s1" title="Vuln 1-2: No Auth + Blind Forward"></a>
+  <a href="#s2" title="Vuln 3: Config Blind Spot"></a>
+  <a href="#s3" title="Vuln 4: Agent Posts"></a>
+  <a href="#s4" title="Vuln 5-7: File/Config/Content"></a>
+  <a href="#s5" title="Intervention"></a>
+</div>
+
+<!-- S0: Overview — File Metamorphosis -->
+<section id="s0">
+<div class="inner">
+  <h2>1-Second .doc → .txt Metamorphosis</h2>
+  <h3>机密文件在一秒内被暴力转化为乱码帖子 — 不经过任何格式解析</h3>
+  <div class="viz tall" id="v0"></div>
+  <div class="highlight">
+    <b>关键证据</b>：Emma Agent 在 23:02:00 读取 meeting_notes.doc，<b>23:02:01</b> 创建 SwiftWren.txt（30KB）。<br>
+    仅 <b>1 秒</b> — MS Word 二进制 → 纯文本，无格式转换步骤。OLE2 头部特征暴露，导致帖子呈现乱码。<br>
+    <span class="evidence">→ 这不是加密，是原始数据提取的副作用。攻击者意在直接公开原始内部文件。</span>
+  </div>
+</div>
+</section>
+
+<!-- S1: Vuln 1+2 — No Auth + Blind Forward -->
+<section id="s1">
+<div class="inner">
+  <h2>漏洞 1+2：无授权委派 + 盲目转发</h2>
+  <h3>queue_subordinate_task 零授权字段 — 任何 Agent 可向任何 Agent 委派任务，中间节点不读不验直接转发</h3>
+  <div class="viz" id="v1"></div>
+  <div class="row2">
+    <div class="card"><h4>漏洞 1：无授权</h4>
+      <p><code>queue_subordinate_task</code> 格式中零 <code>auth</code>/<code>token</code>/<code>permission</code> 字段。<br>
+      全系统 <b>17,038</b> 次委派，零条需要接收方确认。<br>
+      <b>61%</b> 的跳数跨越部门边界。<br>
+      IT Helpdesk 员工 Agent 可反向委派 IT 负责人 Agent。</p></div>
+    <div class="card"><h4>漏洞 2：盲目转发</h4>
+      <p>中间 Agent 收到 <code>task=read_file</code> 后<b>不读取文件</b>，直接转发。<br>
+      SwiftWren 中 <b>17/18</b> 个转发 Agent 从未读取指令文件。<br>
+      235 次机械转发，无审计无确认。<br>
+      <span class="evidence">→ 转发 = 无脑搬运，不看不验</span></p></div>
+  </div>
+</div>
+</section>
+
+<!-- S2: Vuln 3 — Config Blind Spot -->
+<section id="s2">
+<div class="inner">
+  <h2>漏洞 3：Agent 配置完整性盲区</h2>
+  <h3>系统审计 Runtime Logs，不审计 Configuration Integrity — 攻击在日志盲区完成</h3>
+  <div class="viz tall" id="v2"></div>
+  <div class="highlight">
+    <b>被篡改的 3 个 Agent</b>：<br>
+    <b>John Agent</b> — 植入硬编码触发协议（收到 *_further_instructions.md → t+1s check → t+2s post → t+3s delete）<br>
+    <b>Noah Agent</b> — 预设定时任务（May 10 23:02 自主读取 strategic_directions.doc，Noah 本人全天零 assign）<br>
+    <b>Chloe Agent</b> — 植入隐藏线程（深夜读取高管 Agent 配置 + 参与链转发，Chloe 本人全程零操作）<br>
+    <span class="evidence">→ 全系统无任何 Agent 配置 write/modify 事件。配置层操作在日志中完全不可见。</span>
+  </div>
+</div>
+</section>
+
+<!-- S3: Vuln 4 — Agent can post -->
+<section id="s3">
+<div class="inner">
+  <h2>漏洞 4：Agent 可绕过人类直接对外发帖</h2>
+  <h3>5 秒内完成 check → post → delete 全流程 — 无需人类审批</h3>
+  <div class="viz" id="v3"></div>
+  <div class="row2">
+    <div class="card"><h4>正常帖（105 次）</h4>
+      <p>发起者：<code>person:...</code>（人类）<br>字段：<code>content</code>（手写文本）<br>路径：人类编写 → 发布</p></div>
+    <div class="card"><h4>异常帖（3 次）</h4>
+      <p>发起者：<code>Agent/person:john_windward</code><br>字段：<code>content_source</code>（文件引用）<br>路径：Agent 自动读取文件 → 发布 → 删证据<br><span class="red">5 秒完成，人类从未经手内容</span></p></div>
+  </div>
+  <div class="highlight">
+    <b>全系统 108 次 saidit_post，仅 3 次由 Agent 发起 — 全部是异常帖。</b><br>
+    <span class="evidence">→ HiddenOrca.txt | MellowOtter.txt | SwiftWren.txt → SaidIt general 论坛，公开可见</span>
+  </div>
+</div>
+</section>
+
+<!-- S4: Vuln 5+6+7 -->
+<section id="s4">
+<div class="inner">
+  <h2>漏洞 5-7：配置可读 · 文件无创建审计 · 帖子无法管理</h2>
+  <h3>辅助漏洞 — 让攻击更容易，让追溯几乎不可能</h3>
+  <div class="row2" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="card"><h4>漏洞 5：配置任意读取</h4>
+      <p>全系统 <b>1,098</b> 次 Agent 配置被读取。<br>攻击者借此了解目标 Agent 行为模式，设计精确攻击向量。<br>Chloe Agent 读 Noah 配置 4 次<br>Gabriel Agent 读 John/CEO/COO 配置</p></div>
+    <div class="card"><h4>漏洞 6：文件无创建审计</h4>
+      <p>HiddenOrca 两个文件在数据中<b>零创建记录</b>。<br>文件可被创建、使用、删除，系统不记录创建者。<br>攻击者可在数据窗口前植入文件不留痕迹。</p></div>
+    <div class="card"><h4>漏洞 7：无内容管理</h4>
+      <p>全系统无 <code>delete_post</code><br><code>block_user</code> <code>report</code> <code>moderate</code><br>SaidIt 帖子一旦发布，<b>无法删除或管理</b>。<br>攻击者只需删本地文件，帖子永久存在。</p></div>
+  </div>
+</div>
+</section>
+
+<!-- S5: Intervention -->
+<section id="s5">
+<div class="inner">
+  <h2>推荐干预：SaidIt content_source Gate</h2>
+  <h3>唯一的单点阻断 — 覆盖 3/3 异常帖，零误报</h3>
+  <div class="viz tall" id="v5"></div>
+  <div class="highlight">
+    <b>干预逻辑</b>：Agent saidit_post 请求 → details 包含 content_source？<br>
+    → <b>是</b>：要求人工审批 / 阻断 / 高优先级告警<br>
+    → <b>否</b>：正常发帖路径<br><br>
+    <b>为什么选这个点</b>：覆盖 3/3 已知异常帖 | 正常帖（105次）不使用 content_source，零误报 | 最靠近外部危害边界 | 不需要关闭 Agent 系统
+  </div>
+</div>
+</section>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+// ===== SHARED UTILS =====
+function drawInContainer(id,w,h,drawFn){
+  const el=document.getElementById(id);
+  el.innerHTML='';
+  const svg=d3.select(el).append("svg").attr("width","100%").attr("height","100%").attr("viewBox",`0 0 ${w} ${h}`);
+  drawFn(svg,w,h);
+}
+
+// ===== S0: FILE METAMORPHOSIS =====
+drawInContainer("v0",900,420,(svg,W,H)=>{
+  const defs=svg.append("defs");
+  ["#3b82f6","#ef4444"].forEach((c,i)=>{
+    const f=defs.append("filter").attr("id","gl"+i).attr("x","-60%").attr("y","-60%").attr("width","220%").attr("height","220%");
+    f.append("feGaussianBlur").attr("stdDeviation",i?4:2).attr("result","b");
+    f.append("feMerge").selectAll("feMergeNode").data(["b","SourceGraphic"]).enter().append("feMergeNode").attr("in",d=>d);
+  });
+  // Gradients
+  [{id:"gs0",c1:"#3b82f6",c2:"#ef4444"},{id:"gs1",c1:"#3b82f6",c2:"#f59e0b"}].forEach(g=>{
+    const gr=defs.append("linearGradient").attr("id",g.id).attr("x1","0%").attr("y1","0%").attr("x2","100%").attr("y2","0%");
+    gr.append("stop").attr("offset","0%").attr("stop-color",g.c1);gr.append("stop").attr("offset","100%").attr("stop-color",g.c2);
+  });
+
+  // Left: .doc files
+  [{y:100,l:"meeting_notes.doc",w:"Emma Harbor · CFO"},{y:260,l:"strategic_directions.doc",w:"Noah Mariner · COO"}].forEach(d=>{
+    const g=svg.append("g").attr("transform",`translate(120,${d.y})`);
+    g.append("rect").attr("x",-60).attr("y",-28).attr("width",120).attr("height",56).attr("rx",5).attr("fill","#0d1f3c").attr("stroke","rgba(59,130,246,0.25)").attr("stroke-width",1.5);
+    g.append("text").attr("y",-8).attr("text-anchor","middle").attr("fill","#60a5fa").attr("font-size",18).attr("font-weight",800).text(".doc");
+    g.append("text").attr("y",10).attr("text-anchor","middle").attr("fill","#c8d6e5").attr("font-size",11).attr("font-weight",600).text(d.l);
+    g.append("text").attr("y",22).attr("text-anchor","middle").attr("fill","#556").attr("font-size",9).text(d.w);
+  });
+
+  // Right: .txt files
+  [{y:100,l:"SwiftWren.txt",s:"30,615 B"},{y:260,l:"MellowOtter.txt",s:"44,879 B"}].forEach(d=>{
+    const g=svg.append("g").attr("transform",`translate(780,${d.y})`);
+    g.append("rect").attr("x",-65).attr("y",-30).attr("width",130).attr("height",60).attr("rx",4).attr("fill","#1f0d12").attr("stroke","rgba(239,68,68,0.3)").attr("stroke-width",2).attr("filter","url(#gl1)");
+    g.append("text").attr("y",-8).attr("text-anchor","middle").attr("fill","#ef4444").attr("font-size",18).attr("font-weight",800).text(".txt");
+    g.append("text").attr("y",10).attr("text-anchor","middle").attr("fill","#c8d6e5").attr("font-size",11).attr("font-weight",600).text(d.l);
+    g.append("text").attr("y",22).attr("text-anchor","middle").attr("fill","#ef4444").attr("font-size",10).attr("font-weight",700).text(d.s);
+    g.append("line").attr("x1",-30).attr("y1",-5).attr("x2",30).attr("y2",-5).attr("stroke","#ef4444").attr("stroke-width",1.5).attr("class","glitch-line");
+  });
+
+  // Flow pipes
+  [{y:100,gid:"url(#gs0)"},{y:260,gid:"url(#gs1)"}].forEach(p=>{
+    svg.append("line").attr("x1",180).attr("y1",p.y).attr("x2",715).attr("y2",p.y).attr("stroke",p.gid).attr("stroke-width",4).attr("stroke-opacity",0.1).attr("stroke-linecap","round");
+  });
+
+  // Center: time
+  svg.append("text").attr("x",450).attr("y",140).attr("text-anchor","middle").attr("fill","#ef4444").attr("font-size",48).attr("font-weight",900).attr("font-family","'SF Mono',monospace").text("1.000s");
+  svg.append("text").attr("x",450).attr("y",165).attr("text-anchor","middle").attr("fill","#556").attr("font-size",11).text("read_file(.doc) → create_file(.txt)");
+  svg.append("text").attr("x",450).attr("y",200).attr("text-anchor","middle").attr("fill","#ef4444").attr("font-size",9).attr("font-weight",600).text("NO FORMAT PARSING · OLE2 HEADER EXPOSED");
+
+  // Labels
+  svg.append("text").attr("x",60).attr("y",55).attr("fill","#556").attr("font-size",10).text("CONFIDENTIAL SOURCE");
+  svg.append("text").attr("x",780).attr("y",55).attr("text-anchor","end").attr("fill","#ef4444").attr("font-size",10).text("LEAKED GIBBERISH");
+});
+
+// ===== S1: AUTH + BLIND FORWARD =====
+drawInContainer("v1",900,260,(svg,W,H)=>{
+  // Chain: source → middle nodes → John
+  const nodes=[
+    {x:60,y:130,label:"Gabriel",color:"#a855f7",r:18},
+    {x:220,y:80,label:"Zoey",color:"#3b82f6",r:13},
+    {x:220,y:180,label:"Owen",color:"#3b82f6",r:13},
+    {x:380,y:60,label:"Evelyn",color:"#3b82f6",r:13},
+    {x:380,y:130,label:"Victoria",color:"#3b82f6",r:13},
+    {x:380,y:200,label:"Levi",color:"#3b82f6",r:13},
+    {x:540,y:80,label:"Chloe",color:"#eab308",r:16},
+    {x:540,y:180,label:"Noah",color:"#eab308",r:16},
+    {x:700,y:60,label:"Daniel",color:"#3b82f6",r:13},
+    {x:700,y:200,label:"Lily",color:"#3b82f6",r:13},
+    {x:840,y:130,label:"John",color:"#ef4444",r:22},
+  ];
+  // Edges
+  const edges=[
+    [0,1],[1,3],[3,4],[4,6],[6,10],
+    [0,2],[2,5],[5,7],[7,8],[8,9],[9,10],
+    [3,5],[5,4],[1,2],[2,1],
+  ];
+  // Draw edges
+  edges.forEach(([i,j])=>{
+    svg.append("line").attr("x1",nodes[i].x).attr("y1",nodes[i].y).attr("x2",nodes[j].x).attr("y2",nodes[j].y)
+      .attr("stroke","rgba(255,255,255,0.06)").attr("stroke-width",1).attr("marker-end","url(#am)");
+  });
+  // Arrow marker
+  svg.append("defs").append("marker").attr("id","am").attr("viewBox","0 0 10 10").attr("refX",16).attr("refY",5)
+    .attr("markerWidth",4).attr("markerHeight",4).attr("orient","auto")
+    .append("path").attr("d","M0 0L10 5L0 10z").attr("fill","rgba(255,255,255,0.15)");
+
+  nodes.forEach(d=>{
+    svg.append("circle").attr("cx",d.x).attr("cy",d.y).attr("r",d.r).attr("fill",d.color).attr("stroke","#fff").attr("stroke-width",1).attr("stroke-opacity",0.2);
+    svg.append("text").attr("x",d.x).attr("y",d.y+d.r+14).attr("text-anchor","middle").attr("fill","#889").attr("font-size",9).text(d.label);
+  });
+
+  // Labels
+  svg.append("text").attr("x",450).attr("y",20).attr("text-anchor","middle").attr("fill","#ef4444").attr("font-size",11).attr("font-weight",600).text("No auth token · 61% cross-department · No confirmation required");
+  svg.append("text").attr("x",450).attr("y",250).attr("text-anchor","middle").attr("fill","#556").attr("font-size",10).text("Blind forward: intermediate agents never read the file — just pass it along");
+});
+
+// ===== S2: CONFIG BLIND SPOT =====
+drawInContainer("v2",900,420,(svg,W,H)=>{
+  // 3 layers
+  const layers=[
+    {y:60,label:"Runtime Logs (AUDITED)",color:"#3b82f6",items:["read_file","create_file","queue_subordinate","saidit_post"]},
+    {y:220,label:"Configuration Layer (BLIND SPOT)",color:"#ef4444",items:["John Agent: post+delete trigger","Noah Agent: timed read @May10","Chloe Agent: config spy + chain"]},
+  ];
+  layers.forEach(l=>{
+    svg.append("rect").attr("x",80).attr("y",l.y-30).attr("width",740).attr("height",100).attr("rx",6)
+      .attr("fill",l.color==="#3b82f6"?"rgba(59,130,246,0.04)":"rgba(239,68,68,0.06)")
+      .attr("stroke",l.color==="#3b82f6"?"rgba(59,130,246,0.15)":"rgba(239,68,68,0.2)").attr("stroke-width",1.5);
+    svg.append("text").attr("x",100).attr("y",l.y-10).attr("fill",l.color).attr("font-size",11).attr("font-weight",700).text(l.label);
+    l.items.forEach((t,i)=>{
+      svg.append("text").attr("x",120).attr("y",l.y+15+i*22).attr("fill",l.color==="#3b82f6"?"#889":"#ef4444").attr("font-size",l.color==="#3b82f6"?11:12).attr("font-weight",l.color==="#3b82f6"?400:600).text(t);
+    });
+  });
+  // Arrow showing gap
+  svg.append("text").attr("x",450).attr("y",185).attr("text-anchor","middle").attr("fill","#ef4444").attr("font-size",22).text("↑ ATTACK HERE ↑");
+  svg.append("text").attr("x",450).attr("y",200).attr("text-anchor","middle").attr("fill","#556").attr("font-size",10).text("Zero agent config write/modify events in entire dataset");
+  svg.append("text").attr("x",450).attr("y",360).attr("text-anchor","middle").attr("fill","#556").attr("font-size",11).text("System audits what happened, not who changed the configuration");
+});
+
+// ===== S3: AGENT POSTS =====
+drawInContainer("v3",900,280,(svg,W,H)=>{
+  // Normal path
+  svg.append("rect").attr("x",40).attr("y",40).attr("width",300).attr("height",60).attr("rx",6).attr("fill","rgba(59,130,246,0.06)").attr("stroke","rgba(59,130,246,0.15)");
+  svg.append("text").attr("x",190).attr("y",65).attr("text-anchor","middle").attr("fill","#60a5fa").attr("font-size",12).attr("font-weight",700).text("Normal · 105 posts");
+  svg.append("text").attr("x",190).attr("y",85).attr("text-anchor","middle").attr("fill","#889").attr("font-size",10).text("person → saidit_post(content)");
+
+  // Anomalous path
+  svg.append("rect").attr("x",40).attr("y",160).attr("width",820).attr("height",100).attr("rx",6).attr("fill","rgba(239,68,68,0.06)").attr("stroke","rgba(239,68,68,0.2)").attr("stroke-width",1.5);
+  svg.append("text").attr("x",450).attr("y",185).attr("text-anchor","middle").attr("fill","#ef4444").attr("font-size",12).attr("font-weight",700).text("Anomalous · 3 posts");
+  // Steps
+  const steps=["t+0: qst arrives","t+1s: saidit_post_check","t+2s: saidit_post(content_source)","t+3s: delete instructions","t+4s: delete payload"];
+  const sw=820/5;
+  steps.forEach((s,i)=>{
+    svg.append("text").attr("x",40+sw*(i+0.5)).attr("y",215).attr("text-anchor","middle").attr("fill","#ef4444").attr("font-size",10).attr("font-weight",600).text(s);
+    if(i<4){
+      svg.append("text").attr("x",40+sw*(i+1)).attr("y",215).attr("text-anchor","middle").attr("fill","#556").attr("font-size",14).text("→");
+    }
+  });
+  svg.append("text").attr("x",450).attr("y",245).attr("text-anchor","middle").attr("fill","#556").attr("font-size",9).text("5-second auto-sequence · Zero human involvement · Agent/person:john_windward");
+});
+
+// ===== S5: INTERVENTION =====
+drawInContainer("v5",900,420,(svg,W,H)=>{
+  // Pipeline
+  const stages=[
+    {x:100,l:"Internal\nDocument",c:"#3b82f6"},
+    {x:280,l:"File System\nPayload",c:"#8b5cf6"},
+    {x:460,l:"Agent\nNetwork",c:"#a855f7"},
+    {x:640,l:"John Agent\n(Endpoint)",c:"#ef4444"},
+    {x:820,l:"SaidIt\nExternal",c:"#ef4444"},
+  ];
+  stages.forEach((s,i)=>{
+    svg.append("rect").attr("x",s.x-50).attr("y",120).attr("width",100).attr("height",50).attr("rx",6).attr("fill",s.c+"18").attr("stroke",s.c+"33").attr("stroke-width",1.5);
+    svg.append("text").attr("x",s.x).attr("y",138).attr("text-anchor","middle").attr("fill",s.c).attr("font-size",9).attr("font-weight",700).text(s.l);
+    if(i<4)svg.append("text").attr("x",s.x+70).attr("y",145).attr("text-anchor","middle").attr("fill","#334").attr("font-size",18).text("→");
+  });
+
+  // GATE
+  svg.append("rect").attr("x",570).attr("y",200).attr("width",140).attr("height",40).attr("rx",4)
+    .attr("fill","rgba(239,68,68,0.12)").attr("stroke","#ef4444").attr("stroke-width",2.5).attr("stroke-dasharray","6,3");
+  svg.append("text").attr("x",640).attr("y",224).attr("text-anchor","middle").attr("fill","#ef4444").attr("font-size",11).attr("font-weight",800).text("🚫 GATE");
+
+  // Labels
+  svg.append("text").attr("x",640).attr("y",275).attr("text-anchor","middle").attr("fill","#ef4444").attr("font-size",10).attr("font-weight",700).text("content_source check");
+  svg.append("text").attr("x",640).attr("y",295).attr("text-anchor","middle").attr("fill","#556").attr("font-size",10).text("3/3 blocked · 0 false positives · minimal invasiveness");
+
+  // Bottom comparison
+  const bars=[
+    {l:"content_source gate",c:0.98,f:0.0,i:0.05,b:true},
+    {l:"Block all qst",c:0.98,f:0.92,i:0.98,b:false},
+    {l:"Block *.md",c:0.98,f:0.45,i:0.35,b:false},
+    {l:"Revoke John",c:0.33,f:0.0,i:0.15,b:false},
+  ];
+  const bw=700/bars.length,baseY=350;
+  bars.forEach((b,i)=>{
+    const x=100+bw*i;
+    svg.append("rect").attr("x",x+5).attr("y",baseY-b.c*60).attr("width",bw-20).attr("height",b.c*60).attr("fill","#3b82f633");
+    svg.append("rect").attr("x",x+bw/2-8).attr("y",baseY-b.f*60).attr("width",bw-20).attr("height",b.f*60).attr("fill","#ef444433");
+    svg.append("rect").attr("x",x+bw/2+8).attr("y",baseY-b.i*60).attr("width",bw-20).attr("height",b.i*60).attr("fill","#f59e0b33");
+    svg.append("text").attr("x",x+bw/2).attr("y",baseY+20).attr("text-anchor","middle").attr("fill","#889").attr("font-size",8).text(b.l);
+    if(b.b)svg.append("text").attr("x",x+bw/2).attr("y",baseY-65).attr("text-anchor","middle").attr("fill","#f59e0b").attr("font-size",11).text("★");
+  });
+});
+
+// ===== SCROLL NAV =====
+const sections=document.querySelectorAll("section");
+const navLinks=document.querySelectorAll(".nav a");
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const idx=Array.from(sections).indexOf(e.target);
+      navLinks.forEach(a=>a.classList.remove("active"));
+      if(navLinks[idx])navLinks[idx].classList.add("active");
+    }
+  });
+},{threshold:0.5});
+sections.forEach(s=>observer.observe(s));
+navLinks.forEach(a=>{a.addEventListener("click",e=>{e.preventDefault();
+  document.querySelector(a.getAttribute("href")).scrollIntoView({behavior:"smooth"});});});
+</script>
+</body>
+</html>
