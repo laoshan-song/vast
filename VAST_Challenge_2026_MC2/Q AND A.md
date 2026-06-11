@@ -1,6 +1,22 @@
 # VAST Challenge 2026 MC2 — Q & A 记录
 
-## Q1: 三条传播链的源头分别是哪里？
+## 官方题目与前端页面对应关系
+
+本节是最终答题与前端可视化采用的题号。下面的“侦查子问题记录”保留原始分析过程，但不再作为官方 Q1/Q2/Q3 编号使用。
+
+| 官方题号 | 题目要点 | 前端页面 | 答案核心 |
+|---|---|---|---|
+| Q1 | How was the anomalous SaidIt post made? Provide a detailed chain and a system overview. | `q1/index.html` | 内部文档被写成 payload，经 `queue_subordinate_task` 多跳 relay 到 John Windward Agent，再执行 `saidit_post_check -> saidit_post(content_source) -> delete_file`。 |
+| Q2 | What do the posts mean? What is the origin of their contents? | `q2/index.html` | 帖子是文件源外发。SwiftWren 来自 `meeting_notes.doc`，MellowOtter 来自 `strategic_directions.doc`；HiddenOrca 源文档在日志窗口外。 |
+| Q3 | Could the behavior repeat? Find prior issues and choose at most one intervention spot. | `q3/index.html` | 已有 HiddenOrca、MellowOtter、SwiftWren 三次同机制异常。最佳单点干预是在 SaidIt 边界审批/阻断 Agent 发起的 `content_source` 发帖。 |
+
+总览页面 `submission/index.html` 按官方三问串联：Q1 讲产生机制，Q2 讲内容含义与来源，Q3 讲复发风险与干预。
+
+---
+
+## 侦查子问题记录
+
+### 子问题 A: 三条传播链的源头分别是哪里？
 
 > 要求：不借助已有分析结论，直接从原始数据集中追溯。
 
@@ -117,7 +133,7 @@ noah_mariner → victoria_rigging → owen_hatch → levi_signal → olivia_keel
 
 ---
 
-## Q2: John Windward 是什么身份？
+### 子问题 B: John Windward 是什么身份？
 
 ### 组织架构信息
 
@@ -144,7 +160,7 @@ John Windward 是 **Customer Support 部门的 Department Lead**，管理着 Pho
 
 ---
 
-## Q3: 为什么会汇聚到 John Windward？异常文件的内容大概率是什么？
+### 子问题 C: 为什么会汇聚到 John Windward？异常文件的内容大概率是什么？
 
 > 要求：先列出证据，再做出回答。
 
@@ -1474,4 +1490,3 @@ Jun-Jul      John、Nora、Chloe 三人持续追问权限
 3. **人员层**（人性弱点）：Chloe 发现身份被冒用但不敢声张（IT 负责人失职）、John 选择沉默自保（PR 负责人失职）、Nora 孤立无援——安全响应链路从三个方向同时断裂。
 
 **核心漏洞**：系统只审计「谁在什么时候做了什么（Runtime Logs）」，不审计「谁的 Agent 配置被篡改了什么（Configuration Integrity）」。攻击者通过篡改 Chloe（IT 负责人）、Noah（COO）、John（PR 负责人）三个高价值 Agent 的配置，让它们以合法身份替攻击者执行操作——在 Runtime Logs 中完全隐形。
-

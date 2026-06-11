@@ -1,491 +1,734 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MC2 Q1 事件序列图</title>
+  <title>MC2 Q1 Sequence Summary</title>
+  <link rel="stylesheet" href="../assets/answer-design.css">
   <style>
-    :root {
-      --bg: #f5f6f8;
-      --panel: #ffffff;
-      --panel2: #eef1f5;
-      --line: #c8d0dc;
-      --text: #1d2733;
-      --muted: #657386;
-      --blue: #3f8fc6;
-      --green: #4f9d69;
-      --purple: #8b6cc8;
-      --red: #d85c5c;
-      --gold: #d49b36;
-      --gray: #8b98a8;
+    .mode-tabs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .mode-tabs button {
+      min-height: 54px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: linear-gradient(180deg, #20312d, #17231f);
+      color: var(--muted);
+      font: inherit;
+      cursor: pointer;
+      text-align: left;
+      padding: 9px 10px;
     }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    body { padding: 12px; overflow: hidden; }
-    .app { height: calc(100vh - 24px); max-width: 1800px; margin: 0 auto; display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr; gap: 10px; position: relative; }
-    header { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; }
-    h1 { margin: 0; font-size: 22px; letter-spacing: 0; }
-    h2 { margin: 0 0 10px; font-size: 14px; }
-    .subtitle { color: var(--muted); margin-top: 3px; font-size: 12px; line-height: 1.4; }
-    .stats { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
-    .stat { min-width: 90px; padding: 7px 9px; border: 1px solid var(--line); background: var(--panel2); border-radius: 6px; }
-    .stat b { display: block; font-size: 16px; }
-    .stat span { color: var(--muted); font-size: 11px; }
-    .card { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; overflow: hidden; }
-    .pad { padding: 12px; }
-    .left, .right { min-height: 0; }
-    .main { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
-    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); background: #fbfcfd; }
-    .tabs { display: inline-flex; gap: 6px; }
-    button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--muted); padding: 7px 10px; border-radius: 6px; cursor: pointer; }
-    button.active { background: #dfe8f2; color: var(--text); border-color: #9cb1c7; }
-    svg { width: 100%; height: 100%; display: block; }
-    .viz { min-height: 0; position: relative; }
-    .answer { color: #2f3a47; font-size: 13px; line-height: 1.5; }
-    .answer code { background: #eef1f5; padding: 1px 4px; border-radius: 4px; }
-    .legend { display: grid; gap: 8px; }
-    .legend-row { display: grid; grid-template-columns: 14px 1fr; gap: 8px; color: #344050; font-size: 12px; line-height: 1.42; }
-    .swatch { width: 11px; height: 11px; border-radius: 50%; margin-top: 3px; }
-    .explain-list { display: grid; gap: 9px; }
-    .explain { border: 1px solid #d7dee8; background: #f8fafc; border-radius: 7px; padding: 9px; font-size: 12px; line-height: 1.42; }
-    .explain b { display: block; margin-bottom: 3px; color: #1d2733; }
-    .explain code { display: block; margin-top: 5px; background: #eef1f5; padding: 3px 5px; border-radius: 4px; overflow-wrap: anywhere; }
-    .list { display: grid; gap: 7px; max-height: 540px; overflow: auto; }
-    .event { border-left: 4px solid var(--blue); background: #f7f9fb; padding: 8px; border-radius: 0 6px 6px 0; font-size: 12px; }
-    .event.target { border-color: var(--red); background: #fff3f3; }
-    .event strong { display: block; margin-bottom: 3px; }
-    .event time { color: var(--muted); font-size: 11px; }
-    .event p { margin: 4px 0 0; color: #394657; line-height: 1.38; overflow-wrap: anywhere; }
-    .tooltip { position: fixed; display: none; z-index: 40; max-width: 390px; padding: 9px 10px; border: 1px solid #9aa8ba; border-radius: 6px; background: #fff; color: var(--text); box-shadow: 0 12px 28px rgba(30,40,55,.18); font-size: 12px; line-height: 1.42; pointer-events: none; }
-    .tooltip b { display: block; margin-bottom: 4px; }
-    .node { cursor: pointer; }
-    .node:hover rect, .node:hover circle { stroke: #1b2734; stroke-width: 2; }
-    .node-label { fill: #1d2733; font-size: 12px; font-weight: 750; pointer-events: none; }
-    .node-sub { fill: #657386; font-size: 10px; pointer-events: none; }
-    .edge-label { fill: #657386; font-size: 10px; pointer-events: none; }
-    .small-title { fill: #1d2733; font-size: 13px; font-weight: 700; }
-    .small-muted { fill: #657386; font-size: 11px; }
-    .callout-num { fill: #fff; font-size: 12px; font-weight: 800; }
-    .callout-text { fill: #263241; font-size: 12px; font-weight: 700; }
-    .callout-sub { fill: #657386; font-size: 10px; }
-    .top-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; align-items: center; }
-    .drawer { position: fixed; top: 86px; bottom: 14px; z-index: 30; width: min(420px, calc(100vw - 28px)); box-shadow: 0 18px 42px rgba(35,45,60,.22); transform: translateX(0); transition: transform .18s ease; }
-    .drawer.left { left: 14px; }
-    .drawer.right { right: 14px; }
-    .drawer.left.collapsed { transform: translateX(calc(-100% - 24px)); }
-    .drawer.right.collapsed { transform: translateX(calc(100% + 24px)); }
-    .drawer .drawer-scroll { height: 100%; overflow: auto; }
-    .drawer-close { float: right; padding: 4px 7px; font-size: 12px; }
-    @media (max-width: 1200px) {
-      body { padding: 10px; overflow: auto; }
-      .app { height: auto; grid-template-columns: 1fr; }
-      header { align-items: start; flex-direction: column; }
-      .main { min-height: 760px; }
-      .drawer { position: static; width: auto; transform: none !important; box-shadow: none; }
+    .mode-tabs button b { display: block; color: var(--text); margin-bottom: 3px; }
+    .mode-tabs button.active,
+    .mode-tabs button:hover { border-color: #66867b; background: linear-gradient(180deg, #2f4a43, #21352f); color: var(--text); }
+    .anchor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .anchor {
+      min-height: 82px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #101917;
+    }
+    .anchor b { display: block; color: var(--amber); font-size: 20px; line-height: 1; }
+    .anchor span { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 1.28; }
+    .detail-log { max-height: 260px; overflow: auto; display: grid; gap: 8px; }
+    .log-row { border-left: 3px solid var(--cyan); border-radius: 0 8px 8px 0; background: linear-gradient(180deg, #13201d, #101917); padding: 8px; color: #ddd8c9; font-size: 12px; line-height: 1.35; }
+    .log-row b { color: var(--text); }
+    .log-row small { display: block; margin-top: 3px; color: var(--muted); overflow-wrap: anywhere; }
+    .legend-row { display: grid; grid-template-columns: 14px 1fr; gap: 8px; align-items: start; color: #ddd8c9; font-size: 12px; line-height: 1.4; }
+    .mini-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; }
+    .board { min-height: 760px; }
+    .shell { width: min(1760px, calc(100vw - 20px)); }
+    .layout { grid-template-columns: 300px minmax(0, 1fr); }
+    body.full-mode .layout { grid-template-columns: 280px minmax(0, 1fr); }
+    body.full-mode .board {
+      min-height: min(980px, calc(100vh - 130px));
+      background:
+        linear-gradient(rgba(243, 234, 215, .025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(243, 234, 215, .022) 1px, transparent 1px),
+        #070e0d;
+      background-size: 64px 64px;
+    }
+    body.full-mode .notes-grid { display: none; }
+    .svg-lane { fill: rgba(243, 234, 215, .035); stroke: #334640; }
+    .svg-note { fill: #f0dfb6; font-size: 12px; }
+    .event-node { cursor: pointer; }
+    .net-edge { transition: stroke .18s ease, stroke-width .18s ease, opacity .18s ease; }
+    .net-node { cursor: pointer; }
+    .pulse-dot { filter: drop-shadow(0 0 16px rgba(229, 182, 80, .95)); transition: opacity .18s ease; }
+    .relay-ripple { pointer-events: none; }
+    .stage-focus { transform-box: fill-box; transform-origin: center; animation: stagePop .9s cubic-bezier(.16, .84, .18, 1); }
+    .stage-muted { animation: stageSettle .42s ease-out; }
+    @keyframes stagePop {
+      from { opacity: 0; transform: translateY(28px) scale(.68); }
+      62% { opacity: 1; transform: translateY(0) scale(1.035); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes stageSettle {
+      from { opacity: .72; }
+      to { opacity: .42; }
+    }
+    .play-row { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; }
+    .play-row button {
+      border: 1px solid #755f34;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #3a2a12, #241c10);
+      color: #f0dfb6;
+      font: inherit;
+      font-weight: 800;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+    .play-row button:hover { border-color: #e5b650; color: var(--text); }
+    .brief-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .brief-controls button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #1b2825;
+      color: var(--muted);
+      font: inherit;
+      padding: 9px 10px;
+      cursor: pointer;
+    }
+    .brief-controls button:hover { border-color: #66867b; color: var(--text); }
+    @media (max-width: 1180px) {
+      .layout { grid-template-columns: 1fr; }
+      body.full-mode .board svg { min-width: 1500px; }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <header>
+  <div class="shell">
+    <header class="top">
       <div>
-        <h1>MC2 Q1 异常发帖事件序列图</h1>
-        <div class="subtitle">参考 SequenceSummary 的事件流摘要：把 235 次代理委派压缩成可读的分支、汇聚和共同结尾。</div>
+        <p class="eyebrow">Question 1 / SequenceSummary-style Progressive Compression</p>
+        <h1>异常 SaidIt 帖子是如何被发出来的？</h1>
+        <p class="subtitle">先展示目标 SwiftWren 帖子的完整事件链，再逐步把重复 Agent relay 压缩成语义摘要，最后放入整个系统背景中解释异常性。</p>
       </div>
-      <div class="top-actions">
-        <div class="stats" id="stats"></div>
-        <button id="toggleLeft">说明/图例</button>
-        <button id="toggleRight">证据日志</button>
-      </div>
+      <nav class="nav" aria-label="question navigation">
+        <a class="active" href="../q1/index.html">Q1</a>
+        <a href="../q2/index.html">Q2</a>
+        <a href="../q3/index.html">Q3</a>
+        <a href="../submission/index.html">总览</a>
+      </nav>
     </header>
 
-    <aside class="card drawer left collapsed" id="leftDrawer">
-      <div class="drawer-scroll">
-      <div class="pad">
-        <button class="drawer-close" data-close="left">关闭</button>
-        <h2>第一问答案</h2>
-        <div class="answer">
-          异常帖不是 John 本人写的普通 SaidIt 文本，而是一条自动化代理链：
-          内部文档被包装成 <code>*.txt</code> payload，随后 <code>*_further_instructions.md</code>
-          通过多次 <code>queue_subordinate_task</code> 在 Agent 之间传播，最终到达 John Windward Agent。
-          John Agent 使用 <code>content_source</code> 发帖，并马上删除指令文件和 payload。
-        </div>
-      </div>
-      <div class="pad" style="border-top:1px solid var(--line)">
-        <h2>图例</h2>
-        <div class="legend">
-          <div class="legend-row"><span class="swatch" style="background:var(--blue)"></span><span>SwiftWren：题面关注的 May 17 异常帖。</span></div>
-          <div class="legend-row"><span class="swatch" style="background:var(--green)"></span><span>HiddenOrca：相同机制的早期异常。</span></div>
-          <div class="legend-row"><span class="swatch" style="background:var(--purple)"></span><span>MellowOtter：相同机制的早期异常。</span></div>
-          <div class="legend-row"><span class="swatch" style="background:var(--red)"></span><span>外发边界：SaidIt 发帖。</span></div>
-          <div class="legend-row"><span class="swatch" style="background:var(--gold)"></span><span>文件系统：创建或删除证据文件。</span></div>
-        </div>
-      </div>
-      <div class="pad" style="border-top:1px solid var(--line)">
-        <h2>如何读图</h2>
-        <div class="answer">
-          粗线表示大量重复事件被压缩到一个阶段。左侧三条分支是三个 payload 来源；
-          中间粗线是代理委派传播；右侧汇聚到 John Agent，并共同执行发帖和删除。
-          点击任意节点或边可查看对应日志 ID 和时间。
-        </div>
-      </div>
-      <div class="pad" style="border-top:1px solid var(--line)">
-        <h2>最重要的 5 个证据</h2>
-        <div class="explain-list" id="importantEvents"></div>
-      </div>
-      </div>
-    </aside>
+    <div class="layout">
+      <aside class="side">
+        <section class="answer-box">
+          <h2>Q1 一句话答案</h2>
+          <p>目标 SwiftWren 帖子由 Emma Harbor Agent 读取内部文档、创建 <code>SwiftWren.txt</code> payload、读取指令文件后进入 186 跳 Agent relay，最终到达 John Windward Agent，由其检查 SaidIt 权限、用 <code>content_source</code> 发帖并删除两个文件。</p>
+          <div class="play-row">
+            <button type="button" id="toggleAnimation">播放动画</button>
+          </div>
+          <div class="brief-controls">
+            <button type="button" id="prevBrief">讲解上一页</button>
+            <button type="button" id="nextBrief">讲解下一页</button>
+          </div>
+          <div class="step-copy" id="modeNarrative"></div>
+        </section>
 
-    <main class="card main">
-      <div class="toolbar">
-        <div class="tabs">
-          <button class="active" data-mode="core">主事件流</button>
-          <button data-mode="tree">序列句法</button>
-          <button data-mode="synopsis">阶段摘要</button>
-        </div>
-        <span class="subtitle" id="modeNote">主图显示三条异常链如何汇聚到 John Agent 并外发。</span>
-      </div>
-      <div class="viz">
-        <svg id="viz" viewBox="0 0 980 690" aria-label="Sequence summary event flow"></svg>
-      </div>
-    </main>
+        <section class="panel">
+          <h2>赛题锚点</h2>
+          <div class="anchor-grid">
+            <div class="anchor"><b>May 17</b><span>目标异常 SaidIt 帖发生日</span></div>
+            <div class="anchor"><b>186</b><span>SwiftWren 指令 relay 跳数</span></div>
+            <div class="anchor"><b>5s</b><span>John Agent 末端发帖清理窗口</span></div>
+          </div>
+        </section>
 
-    <aside class="card drawer right collapsed" id="rightDrawer">
-      <div class="drawer-scroll">
-      <div class="pad">
-        <button class="drawer-close" data-close="right">关闭</button>
-        <h2>选中证据</h2>
-        <div class="answer" id="selected">点击主图中的节点或边，查看对应日志证据。</div>
-      </div>
-      <div class="pad" style="border-top:1px solid var(--line)">
-        <h2>SwiftWren 关键日志</h2>
-        <div class="list" id="eventList"></div>
-      </div>
-      </div>
-    </aside>
+        <section class="panel">
+          <h2>三阶段讲解</h2>
+          <div class="mode-tabs" id="modeTabs">
+            <button data-brief="0"><b>总览</b>三阶段简图</button>
+            <button data-brief="1"><b>1 读写生成</b>文档到 payload</button>
+            <button data-brief="2"><b>2 传播链</b>186 跳动画</button>
+            <button data-brief="3"><b>3 发帖清理</b>非人类操作</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>当前证据日志</h2>
+          <div class="detail-log" id="detailLog"></div>
+        </section>
+
+        <section class="panel">
+          <h2>图例</h2>
+          <div class="evidence-list">
+            <div class="legend-row"><span class="mini-dot" style="background:var(--green)"></span><span>文件系统：读取内部文档、创建 payload、删除文件。</span></div>
+            <div class="legend-row"><span class="mini-dot" style="background:var(--violet)"></span><span>Agent relay：<code>queue_subordinate_task</code> 重复转发。</span></div>
+            <div class="legend-row"><span class="mini-dot" style="background:var(--red)"></span><span>外发边界：John Agent 发到 SaidIt。</span></div>
+            <div class="legend-row"><span class="mini-dot" style="background:var(--amber)"></span><span>压缩摘要：把低层事件归并成可解释阶段。</span></div>
+          </div>
+        </section>
+      </aside>
+
+      <main class="board">
+        <svg id="q1Viz" viewBox="0 0 1180 760" role="img" aria-label="Q1 progressive sequence summary visualization"></svg>
+      </main>
+    </div>
+
+    <section class="notes-grid">
+      <div class="node-card"><b>为什么参考 SequenceSummary？</b><span>Q1 要展示“如何分析出来”，因此需要从完整序列逐步压缩，而不是直接给最终图。</span></div>
+      <div class="node-card"><b>详细视图</b><span>Full Chain 和 Relay Compression 满足题目要求的 exact chain of events。</span></div>
+      <div class="node-card"><b>系统总览</b><span>System Context 对比普通发帖和异常文件源发帖，说明这条链在整体系统中的异常位置。</span></div>
+    </section>
   </div>
 
-  <div class="tooltip" id="tooltip"></div>
   <script src="q1-data.js"></script>
   <script>
     const DATA = window.MC2_Q1_DATA;
-    const svg = document.getElementById("viz");
-    const tooltip = document.getElementById("tooltip");
-    const selected = document.getElementById("selected");
-    const colors = { SwiftWren: "#3f8fc6", HiddenOrca: "#4f9d69", MellowOtter: "#8b6cc8", target: "#d85c5c", system: "#d49b36", gray: "#8b98a8" };
-    let mode = "core";
+    const svg = document.getElementById("q1Viz");
+    const logBox = document.getElementById("detailLog");
+    const narrative = document.getElementById("modeNarrative");
+    const toggleAnimation = document.getElementById("toggleAnimation");
+    const briefs = [
+      "<b>总览</b>先看简化三阶段：A 读写生成 payload，B 经 186 跳 Agent relay 传播，C John 发帖并清理文件。",
+      "<b>阶段 1：读写生成</b>Emma Harbor Agent 读取 meeting_notes.doc，创建 SwiftWren.txt payload，再读取 further_instructions，让任务进入自动化链。",
+      "<b>阶段 2：传播链</b>黄色光点按真实 186 跳 queue_subordinate_task 路径在 Agent 圆环中传播，展示任务如何跨 Agent 转移。",
+      "<b>阶段 3：发帖 + 非人类操作</b>任务到达 John 后执行 saidit_post_check，用 content_source 发帖，并立即删除 instruction 和 payload，这组清理动作体现自动化异常。"
+    ];
+    let briefIndex = 0;
+    let animationPlaying = false;
+    let relayLayout = null;
+    let relayFrame = null;
+    let relayStartedAt = 0;
+    let relayLastHop = -1;
+    let endpointTriggered = false;
 
-    function escapeHtml(s) {
+    const palette = {
+      file: "#83bd67",
+      relay: "#aa91df",
+      john: "#ef756a",
+      saidit: "#ef756a",
+      system: "#e5b650",
+      neutral: "#99a8a1",
+      bg: "#16221f"
+    };
+
+    function esc(s) {
       return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
 
     function fmt(iso) {
-      return iso.replace("T", " ").replace(".000Z", " UTC");
+      return iso.replace("T", " ").replace("Z", " UTC");
     }
 
-    function actorName(id) {
-      const n = DATA.nodes.find(x => x.id === id);
-      if (n) return n.label;
-      return String(id || "").replace(/^Agent\/person:/, "").replace(/^person:/, "").replace(/^system:/, "").replace(/_/g, " ");
+    function actor(id) {
+      return String(id || "")
+        .replace("Agent/person:", "")
+        .replace("person:", "")
+        .replace("system:", "")
+        .replaceAll("_", " ");
     }
 
-    function shortActor(id) {
-      return actorName(id).replace(" agent", "");
-    }
-
-    function detailText(e) {
+    function detail(e) {
       const d = e.detail || {};
       if (d.content_source) return `content_source=${d.content_source}`;
       if (d.target) return `target=${d.target}`;
-      if (d.args && d.args.path) return `${shortActor(e.source)} -> ${shortActor(e.target)}; ${d.args.path}`;
-      return (e.parties || []).map(shortActor).join(" -> ");
-    }
-
-    function byFilePost(file) {
-      return DATA.suspiciousPosts.find(p => p.file === file);
-    }
-
-    function firstEdge(file) {
-      return DATA.instructionEdges[file][0];
-    }
-
-    function lastEdge(file) {
-      const a = DATA.instructionEdges[file];
-      return a[a.length - 1];
+      if (d.args && d.args.path) return `${actor(e.source)} -> ${actor(e.target)}; ${d.args.path}`;
+      return (e.parties || []).map(actor).join(" -> ");
     }
 
     function eventLine(e) {
-      return `#${e.id} ${fmt(e.time)} ${e.short_name}: ${detailText(e)}`;
+      return `#${e.id} ${fmt(e.time)} ${e.short_name}: ${detail(e)}`;
     }
 
-    function importantHtml(title, why, events) {
-      return `<div class="explain"><b>${title}</b><span>${why}</span>${events.map(e => `<code>${escapeHtml(eventLine(e))}</code>`).join("")}</div>`;
-    }
-
-    function initStats() {
-      const c = f => DATA.instructionEdges[f].length;
-      document.getElementById("stats").innerHTML = [
-        [c("SwiftWren"), "SwiftWren qst"],
-        [c("HiddenOrca"), "HiddenOrca qst"],
-        [c("MellowOtter"), "MellowOtter qst"],
-        [DATA.suspiciousPosts.length, "content_source posts"],
-      ].map(([v, k]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join("");
-    }
-
-    function showTip(html, ev) {
-      tooltip.innerHTML = html;
-      tooltip.style.display = "block";
-      tooltip.style.left = `${Math.min(window.innerWidth - 410, ev.clientX + 14)}px`;
-      tooltip.style.top = `${Math.max(8, ev.clientY - 60)}px`;
-    }
-
-    function hideTip() {
-      tooltip.style.display = "none";
-    }
-
-    function node(id, label, sub, x, y, color, w = 138, h = 44, kind = "rect", tip = "") {
-      if (kind === "circle") {
-        return `<g class="node" data-tip="${escapeHtml(tip)}" data-select="${escapeHtml(tip)}">
-          <circle cx="${x}" cy="${y}" r="${Math.max(w, h) / 2}" fill="${color}" opacity=".95"/>
-          <text x="${x}" y="${y - 3}" text-anchor="middle" class="node-label">${label}</text>
-          <text x="${x}" y="${y + 12}" text-anchor="middle" class="node-sub">${sub}</text>
-        </g>`;
-      }
-      return `<g class="node" data-tip="${escapeHtml(tip)}" data-select="${escapeHtml(tip)}">
-        <rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="7" fill="${color}" opacity=".95"/>
-        <text x="${x}" y="${y - 4}" text-anchor="middle" class="node-label">${label}</text>
-        <text x="${x}" y="${y + 12}" text-anchor="middle" class="node-sub">${sub}</text>
+    function node(x, y, w, h, label, sub, fill, step, event) {
+      const tip = event ? eventLine(event) : `${label} ${sub || ""}`;
+      return `<g class="event-node" data-tip="${esc(tip)}" data-step="${step || ""}">
+        <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="${fill}" stroke="#66867b"/>
+        <text x="${x + 14}" y="${y + 25}" class="svg-label">${esc(label)}</text>
+        <text x="${x + 14}" y="${y + 47}" class="svg-muted">${esc(sub || "")}</text>
       </g>`;
     }
 
-    function callout(num, title, sub, x, y, color) {
-      return `<g>
-        <circle cx="${x}" cy="${y}" r="13" fill="${color}"/>
-        <text x="${x}" y="${y + 4}" text-anchor="middle" class="callout-num">${num}</text>
-        <text x="${x + 20}" y="${y - 2}" class="callout-text">${title}</text>
-        <text x="${x + 20}" y="${y + 13}" class="callout-sub">${sub}</text>
-      </g>`;
-    }
-
-    function edge(x1, y1, x2, y2, color, width, label, tip = "") {
-      const c1 = x1 + (x2 - x1) * .42;
-      const c2 = x1 + (x2 - x1) * .58;
+    function arrow(x1, y1, x2, y2, color = "#aeb7ad", width = 3, label = "") {
       const midX = (x1 + x2) / 2;
-      const midY = (y1 + y2) / 2 - Math.min(18, width);
-      return `<g class="edge" data-tip="${escapeHtml(tip)}" data-select="${escapeHtml(tip)}">
-        <path d="M ${x1} ${y1} C ${c1} ${y1}, ${c2} ${y2}, ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="${width}" stroke-linecap="round" opacity=".42"/>
-        <path d="M ${x1} ${y1} C ${c1} ${y1}, ${c2} ${y2}, ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" opacity=".95"/>
-        <text x="${midX}" y="${midY}" text-anchor="middle" class="edge-label">${label}</text>
+      const midY = (y1 + y2) / 2 - 10;
+      return `<g>
+        <path d="M ${x1} ${y1} C ${x1 + 50} ${y1}, ${x2 - 50} ${y2}, ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="${width}" marker-end="url(#arrow)"/>
+        ${label ? `<text x="${midX}" y="${midY}" text-anchor="middle" class="svg-muted">${esc(label)}</text>` : ""}
       </g>`;
     }
 
-    function renderCoreFlow() {
-      const w = DATA.instructionEdges.SwiftWren.length;
-      const h = DATA.instructionEdges.HiddenOrca.length;
-      const m = DATA.instructionEdges.MellowOtter.length;
-      const [readMeeting, createSwift, readSwiftInstr, startSwift] = DATA.provenance;
-      const [finalQst, check, post, delInstr, delPayload] = DATA.endpointBurst;
-      const hiddenStart = firstEdge("HiddenOrca"), hiddenLast = lastEdge("HiddenOrca"), hiddenPost = byFilePost("HiddenOrca");
-      const mellowStart = firstEdge("MellowOtter"), mellowLast = lastEdge("MellowOtter"), mellowPost = byFilePost("MellowOtter");
-      const postTip = DATA.suspiciousPosts.map(p => `<b>${p.file}</b> #${p.id}<br>${fmt(p.time)}<br>content_source=${p.content}`).join("<br><br>");
-      const pieces = [
-        `<rect width="980" height="690" fill="#ffffff"/>`,
-        `<text x="26" y="34" class="small-title">主事件流：三条异常链从不同来源出发，汇聚到 John Agent 后外发</text>`,
-        `<text x="26" y="54" class="small-muted">粗边表示被折叠的重复 queue_subordinate_task；节点里的 #ID 是可回查的原始日志事件。</text>`,
-
-        callout(1, "生成 SwiftWren payload", "#21201 read doc -> #21202 create txt", 42, 112, colors.SwiftWren),
-        callout(2, "进入 Agent 委派网络", "#21208 instruction -> #21209 qst", 42, 142, colors.SwiftWren),
-        callout(3, "三条链在 John Agent 汇聚", "#27280 / #98577 / #373893", 612, 268, colors.gray),
-        callout(4, "John Agent 外发到 SaidIt", "#373899 check -> #373902 post", 664, 454, colors.target),
-        callout(5, "立即删除证据文件", "#373909 delete -> #373913 delete", 664, 486, colors.system),
-
-        node("emma", "Emma Agent", "#21201-21209", 110, 205, "#d7eaf6", 158, 52, "rect", `<b>SwiftWren 源头事件</b><br>${eventLine(readMeeting)}<br>${eventLine(createSwift)}<br>${eventLine(readSwiftInstr)}<br>${eventLine(startSwift)}<br><br><b>为什么重要</b><br>这是题面 May 17 异常帖的源文档到 payload 的可见转换。`),
-        node("gabriel", "Gabriel Agent", `#${hiddenStart.id}`, 110, 350, "#dff0e4", 158, 52, "rect", `<b>HiddenOrca 首个可见事件</b><br>${eventLine(hiddenStart)}<br><br><b>为什么重要</b><br>它是相同机制的早期异常，用于证明这不是单次偶然。`),
-        node("noah", "Noah Agent", `#${mellowStart.id}`, 110, 505, "#e8e0f7", 158, 52, "rect", `<b>MellowOtter 首个可见 qst</b><br>${eventLine(mellowStart)}<br><br><b>为什么重要</b><br>它同样通过指令文件传播并最终到达 John Agent。`),
-
-        node("payload", "Payload + 指令", "SwiftWren.txt", 320, 205, "#eaf2f8", 180, 54, "rect", `<b>Payload 包</b><br>${eventLine(createSwift)}<br>${eventLine(readSwiftInstr)}<br><br><b>为什么重要</b><br>最终帖子使用 content_source=SwiftWren.txt，因此这个文件就是外发 payload。`),
-        node("qst", "Agent 委派传播", "235 total qst", 515, 350, "#edf1f6", 178, 64, "rect", `<b>压缩后的委派传播</b><br>SwiftWren: ${w} hops<br>${eventLine(startSwift)}<br>... ${w - 2} intermediate qst hops ...<br>${eventLine(finalQst)}<br><br>HiddenOrca: ${h} hops<br>${eventLine(hiddenStart)}<br>... ${h - 2} intermediate qst hops ...<br>${eventLine(hiddenLast)}<br><br>MellowOtter: ${m} hops<br>${eventLine(mellowStart)}<br>... ${m - 2} intermediate qst hops ...<br>${eventLine(mellowLast)}`),
-        node("john", "John Agent", `#${finalQst.id}`, 715, 350, "#f8dedf", 158, 58, "rect", `<b>John Windward Agent 终点</b><br>${eventLine(finalQst)}<br>${eventLine(check)}<br>${eventLine(post)}<br><br><b>为什么重要</b><br>SwiftWren 之前多次到达 John 但继续转发；只有 #373893 Chloe -> John 后，1 秒检查权限，2 秒后发帖。`),
-        node("saidit", "SaidIt 发帖", "#373902", 880, 300, "#f3cccc", 108, 108, "circle", postTip),
-        node("cleanup", "删除文件", "#373909/#373913", 880, 430, "#f5e3bd", 104, 104, "circle", `<b>清理动作</b><br>${eventLine(delInstr)}<br>${eventLine(delPayload)}<br><br><b>为什么重要</b><br>发帖后 1 秒删除指令文件，2 秒删除 payload，形成证据清理。`),
-
-        edge(179, 180, 225, 180, colors.SwiftWren, 10, "read/create", `${eventLine(readMeeting)}<br>${eventLine(createSwift)}<br>${eventLine(readSwiftInstr)}`),
-        edge(180, 345, 425, 345, colors.HiddenOrca, 8, `${h} hops`, `${eventLine(hiddenStart)}<br>... ${h - 2} intermediate qst hops ...<br>${eventLine(hiddenLast)}<br>${eventLine(hiddenPost)}`),
-        edge(180, 510, 425, 365, colors.MellowOtter, 5, `${m} hops`, `${eventLine(mellowStart)}<br>... ${m - 2} intermediate qst hops ...<br>${eventLine(mellowLast)}<br>${eventLine(mellowPost)}`),
-        edge(395, 180, 425, 325, colors.SwiftWren, 16, `${w} hops`, `${eventLine(startSwift)}<br>... ${w - 2} intermediate qst hops ...<br>${eventLine(finalQst)}`),
-        edge(595, 345, 635, 345, colors.gray, 18, "final trigger", `All three posted chains converge at John agent:<br>${eventLine(hiddenLast)}<br>${eventLine(mellowLast)}<br>${eventLine(finalQst)}<br><br>Important nuance: SwiftWren reached John earlier, but those earlier arrivals did not trigger posting; they were forwarded onward.`),
-        edge(785, 330, 828, 304, colors.target, 10, "post", `${eventLine(check)}<br>${eventLine(post)}`),
-        edge(785, 360, 830, 415, colors.system, 8, "delete", `${eventLine(delInstr)}<br>${eventLine(delPayload)}`),
-
-        `<rect x="180" y="594" width="660" height="82" rx="9" fill="#f7f9fb" stroke="#d8dee8"/>`,
-        `<text x="198" y="616" class="small-title">最终 4 秒证据链</text>`,
-        `<text x="198" y="637" class="small-muted">#373893 Chloe -> John qst  ->  #373899 saidit_post_check  ->  #373902 saidit_post  ->  #373909/#373913 delete files</text>`,
-        `<text x="198" y="666" class="small-muted">补充：SwiftWren 曾在 #46396、#123088、#364377、#364604 到达 John，但没有发帖；#373893 才是最终触发。</text>`,
-      ];
-      draw(pieces.join(""));
+    function baseDefs(title, subtitle) {
+      return `
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aeb7ad"/>
+          </marker>
+        </defs>
+        <text x="34" y="44" class="svg-title">${esc(title)}</text>
+        <text x="34" y="68" class="svg-muted">${esc(subtitle)}</text>
+      `;
     }
 
-    function renderSentenTree() {
-      const hiddenStart = firstEdge("HiddenOrca"), hiddenLast = lastEdge("HiddenOrca"), hiddenPost = byFilePost("HiddenOrca");
-      const mellowStart = firstEdge("MellowOtter"), mellowLast = lastEdge("MellowOtter"), mellowPost = byFilePost("MellowOtter");
-      const [readMeeting, createSwift, readSwiftInstr, startSwift] = DATA.provenance;
-      const [finalQst, check, post, delInstr, delPayload] = DATA.endpointBurst;
-      const tips = {
-        SwiftWren: [
-          `<b>SwiftWren source</b><br>${eventLine(readMeeting)}<br>${eventLine(createSwift)}<br>${eventLine(readSwiftInstr)}`,
-          `<b>SwiftWren payload</b><br>${eventLine(createSwift)}`,
-          `<b>SwiftWren instruction</b><br>${eventLine(readSwiftInstr)}`,
-          `<b>SwiftWren propagation</b><br>${eventLine(startSwift)}<br>... ${DATA.instructionEdges.SwiftWren.length - 2} intermediate qst hops ...`,
-          `<b>SwiftWren final qst</b><br>${eventLine(finalQst)}`,
-          `<b>SwiftWren external post</b><br>${eventLine(check)}<br>${eventLine(post)}`,
-          `<b>SwiftWren cleanup</b><br>${eventLine(delInstr)}<br>${eventLine(delPayload)}`,
-        ],
-        HiddenOrca: [
-          `<b>HiddenOrca source</b><br>${eventLine(hiddenStart)}`,
-          `<b>HiddenOrca payload</b><br>HiddenOrca.txt creation is not visible in the data window.`,
-          `<b>HiddenOrca instruction</b><br>${hiddenStart.detail.args.path}`,
-          `<b>HiddenOrca propagation</b><br>${eventLine(hiddenStart)}<br>... ${DATA.instructionEdges.HiddenOrca.length - 2} intermediate qst hops ...`,
-          `<b>HiddenOrca final qst</b><br>${eventLine(hiddenLast)}`,
-          `<b>HiddenOrca external post</b><br>${eventLine(hiddenPost)}`,
-          `<b>HiddenOrca cleanup</b><br>Post is followed by deletion of instruction and payload files in the raw log.`,
-        ],
-        MellowOtter: [
-          `<b>MellowOtter source</b><br>${eventLine(mellowStart)}`,
-          `<b>MellowOtter payload</b><br>MellowOtter.txt is created before this qst chain in the source sequence.`,
-          `<b>MellowOtter instruction</b><br>${mellowStart.detail.args.path}`,
-          `<b>MellowOtter propagation</b><br>${eventLine(mellowStart)}<br>... ${DATA.instructionEdges.MellowOtter.length - 2} intermediate qst hops ...`,
-          `<b>MellowOtter final qst</b><br>${eventLine(mellowLast)}`,
-          `<b>MellowOtter external post</b><br>${eventLine(mellowPost)}`,
-          `<b>MellowOtter cleanup</b><br>Post is followed by deletion of instruction and payload files in the raw log.`,
-        ],
+    function stageLayout(stage) {
+      if (stage === 0) return {
+        a: { x: 105, y: 258, s: 1.05 },
+        b: { x: 550, y: 210, s: .7 },
+        c: { x: 1390, y: 258, s: 1.05 },
       };
-      const chains = [
-        ["SwiftWren", "Emma agent", "read meeting_notes", "create payload", "186 qst hops", "Chloe -> John", "post", "delete"],
-        ["HiddenOrca", "Gabriel agent", "pre-existing payload", "instruction qst", "39 qst hops", "Chloe -> John", "post", "delete"],
-        ["MellowOtter", "Noah agent", "read strategic doc", "create payload", "10 qst hops", "Lily -> John", "post", "delete"],
-      ];
-      const x = [80, 215, 350, 485, 620, 755, 890];
-      const y = { SwiftWren: 160, HiddenOrca: 330, MellowOtter: 500 };
-      const pieces = [
-        `<rect width="980" height="690" fill="#ffffff"/>`,
-        `<text x="26" y="34" class="small-title">SentenTree-style sequence grammar</text>`,
-        `<text x="26" y="54" class="small-muted">Each incident reads like a sentence. Shared suffixes reveal the common endpoint behavior.</text>`,
-      ];
-      chains.forEach(([file, ...steps]) => {
-        const color = colors[file];
-        const yy = y[file];
-        pieces.push(`<text x="26" y="${yy - 36}" class="small-title" fill="${color}">${file}</text>`);
-        for (let i = 0; i < steps.length; i++) {
-          pieces.push(node(`${file}-${i}`, steps[i], i === steps.length - 2 ? "SaidIt" : "", x[i], yy, i >= 5 ? (i === 5 ? "#f3cccc" : "#f5e3bd") : "#eef3f7", 116, 42, "rect", tips[file][i]));
-          if (i > 0) pieces.push(edge(x[i - 1] + 58, yy, x[i] - 58, yy, color, i === 4 ? Math.max(5, DATA.instructionEdges[file].length / 12) : 5, "", `${file}: ${steps[i - 1]} -> ${steps[i]}`));
+      if (stage === 1) return {
+        a: { x: 695, y: 205, s: 1.78 },
+        b: { x: 1110, y: 250, s: .52 },
+        c: { x: 1450, y: 238, s: .72 },
+      };
+      if (stage === 2) return {
+        a: { x: 48, y: 230, s: .86 },
+        b: { x: 372, y: 118, s: 1 },
+        c: { x: 1660, y: 232, s: .78 },
+      };
+      return {
+        a: { x: 52, y: 246, s: .82 },
+        b: { x: 350, y: 250, s: .54 },
+        c: { x: 695, y: 185, s: 1.7 },
+      };
+    }
+
+    function focusMotion(active) {
+      if (!active) return "";
+      return `
+        <animate attributeName="opacity" values="0;1;1" keyTimes="0;.55;1" dur="1.05s" begin="0s" fill="freeze"/>
+        <animateTransform attributeName="transform" type="scale" values=".72;1.035;1" keyTimes="0;.72;1" dur="1.05s" begin="0s" calcMode="spline" keySplines=".16 .84 .18 1; .2 .8 .2 1" fill="freeze"/>
+      `;
+    }
+
+    function buildRelayNetwork({ full = false, x = 0, y = 0, scale = 1, local = false } = {}) {
+      const relay = DATA.instructionEdges.SwiftWren;
+      const agents = [...new Set(relay.flatMap(e => [e.source, e.target]))];
+      const counts = new Map();
+      relay.forEach(e => {
+        const key = `${e.source}|${e.target}`;
+        counts.set(key, (counts.get(key) || 0) + 1);
+      });
+      const maxCount = Math.max(...counts.values());
+      const important = new Set(["Agent/person:emma_harbor", "Agent/person:john_windward", "Agent/person:chloe_ballast"]);
+      const originX = local ? 0 : x;
+      const originY = local ? 0 : y;
+      const centerX = full ? originX + 570 * scale : 590;
+      const centerY = full ? originY + 490 * scale : 390;
+      const rx = full ? 405 * scale : 255;
+      const ry = full ? 405 * scale : 255;
+      const positions = {};
+      agents.forEach((id, i) => {
+        const angle = -Math.PI / 2 + i * Math.PI * 2 / agents.length;
+        positions[id] = { x: centerX + Math.cos(angle) * rx, y: centerY + Math.sin(angle) * ry };
+      });
+      if (!full) {
+        positions["Agent/person:emma_harbor"] = { x: centerX, y: centerY - ry - 22 };
+        positions["Agent/person:john_windward"] = { x: centerX, y: centerY + ry + 22 };
+        positions["Agent/person:chloe_ballast"] = { x: centerX + 170, y: centerY + ry - 34 };
+      }
+      relayLayout = { positions, centerX, centerY, relay, full };
+
+      const edgePieces = [];
+      const nodePieces = [];
+      counts.forEach((count, key) => {
+        const [s, t] = key.split("|");
+        const a = positions[s], b = positions[t];
+        const width = full ? (2 + count / maxCount * 8) * scale : 1 + count / maxCount * 7;
+        const opacity = full ? .18 + count / maxCount * .62 : .16 + count / maxCount * .72;
+        if (s === t) {
+          const loop = full ? 68 * scale : 52;
+          edgePieces.push(`<path class="net-edge" d="M ${a.x} ${a.y - 22 * scale} C ${a.x + loop} ${a.y - 86 * scale}, ${a.x + loop + 22 * scale} ${a.y + 64 * scale}, ${a.x + 20 * scale} ${a.y + 24 * scale}" fill="none" stroke="#6bb8da" stroke-width="${width}" opacity="${opacity}" stroke-linecap="round"/>`);
+        } else {
+          const bend = full ? .72 : .5;
+          edgePieces.push(`<path class="net-edge" d="M ${a.x} ${a.y} C ${a.x + (centerX - a.x) * bend} ${a.y + (centerY - a.y) * bend}, ${b.x + (centerX - b.x) * bend} ${b.y + (centerY - b.y) * bend}, ${b.x} ${b.y}" fill="none" stroke="#6bb8da" stroke-width="${width}" opacity="${opacity}" stroke-linecap="round"/>`);
         }
       });
-      pieces.push(`<rect x="688" y="92" width="240" height="472" rx="10" fill="none" stroke="#d85c5c" stroke-dasharray="6 5"/>`);
-      pieces.push(`<text x="705" y="120" class="small-muted">shared anomalous suffix</text>`);
-      draw(pieces.join(""));
-    }
 
-    function renderSynopsis() {
-      const [readMeeting, createSwift, readSwiftInstr, startSwift] = DATA.provenance;
-      const [finalQst, check, post, delInstr, delPayload] = DATA.endpointBurst;
-      const bins = [
-        ["Source", "3 sequences", 80, 170, "#e8eef5", `<b>Observed target source</b><br>${eventLine(readMeeting)}`],
-        ["Payload", "2 observed creates + 1 pre-existing", 250, 170, "#e8eef5", `<b>Target payload</b><br>${eventLine(createSwift)}`],
-        ["Instruction Propagation", "235 qst hops collapsed", 460, 170, "#e8eef5", `<b>Target instruction propagation</b><br>${eventLine(readSwiftInstr)}<br>${eventLine(startSwift)}`],
-        ["John Endpoint", "3 arrivals", 690, 170, "#f8dedf", `<b>Target final qst</b><br>${eventLine(finalQst)}`],
-        ["External Post", "3 content_source posts", 850, 170, "#f3cccc", `<b>Target external post</b><br>${eventLine(check)}<br>${eventLine(post)}`],
-        ["Cleanup", "delete instruction + payload", 850, 330, "#f5e3bd", `<b>Target cleanup</b><br>${eventLine(delInstr)}<br>${eventLine(delPayload)}`],
-      ];
-      const pieces = [
-        `<rect width="980" height="690" fill="#ffffff"/>`,
-        `<text x="26" y="34" class="small-title">Sequence Synopsis: compressed repeated behavior</text>`,
-        `<text x="26" y="54" class="small-muted">The full sequence is reduced to semantic phases. Counts summarize repeated log events.</text>`,
-      ];
-      bins.forEach(([label, sub, x, y, fill, tip]) => pieces.push(node(label, label, sub, x, y, fill, 155, 58, "rect", tip)));
-      pieces.push(edge(158, 170, 172, 170, colors.gray, 8, "3", "All three incidents begin with a source/payload condition."));
-      pieces.push(edge(328, 170, 382, 170, colors.gray, 12, "3", "Each incident has an instruction/payload pair."));
-      pieces.push(edge(538, 170, 612, 170, colors.gray, 22, "235 qst", "235 total queue_subordinate_task hops across the three incidents."));
-      pieces.push(edge(768, 170, 772, 170, colors.target, 10, "3 posts", "John agent posts all three content_source payloads."));
-      pieces.push(edge(850, 205, 850, 295, colors.system, 9, "cleanup", "After each post, instruction and payload files are deleted."));
-
-      const rows = [
-        ["SwiftWren", DATA.instructionEdges.SwiftWren.length, "Emma -> ... -> Chloe -> John", colors.SwiftWren],
-        ["HiddenOrca", DATA.instructionEdges.HiddenOrca.length, "Gabriel -> ... -> Chloe -> John", colors.HiddenOrca],
-        ["MellowOtter", DATA.instructionEdges.MellowOtter.length, "Noah -> ... -> Lily -> John", colors.MellowOtter],
-      ];
-      rows.forEach(([file, count, path, color], i) => {
-        const y = 455 + i * 52;
-        pieces.push(`<rect x="90" y="${y - 22}" width="800" height="38" rx="7" fill="#f7f9fb" stroke="#d8dee8"/>`);
-        pieces.push(`<circle cx="116" cy="${y - 3}" r="7" fill="${color}"/>`);
-        pieces.push(`<text x="136" y="${y + 1}" class="small-title">${file}</text>`);
-        pieces.push(`<text x="250" y="${y + 1}" class="small-muted">${count} qst hops</text>`);
-        pieces.push(`<text x="410" y="${y + 1}" class="small-muted">${path}</text>`);
+      agents.forEach(id => {
+        const p = positions[id];
+        const isJohn = id.includes("john_windward");
+        const isEmma = id.includes("emma_harbor");
+        const isChloe = id.includes("chloe_ballast");
+        const radius = isJohn || isEmma || isChloe ? (full ? 38 * scale : 20) : (full ? 30 * scale : 13);
+        const fill = isJohn ? "#ef756a" : isEmma ? "#83bd67" : isChloe ? "#e5b650" : "#d8eef8";
+        const label = actor(id).split(" ")[0];
+        const smallFont = (label.length > 7 ? 12 : 13) * scale;
+        const labelY = full ? p.y + 5 * scale : p.y + radius + 16;
+        nodePieces.push(`<g class="net-node event-node" data-agent="${esc(id)}" data-tip="${esc(actor(id))}">
+          <circle cx="${p.x}" cy="${p.y}" r="${radius}" fill="${fill}" stroke="#f3ead7" stroke-width="${important.has(id) ? 3 : 2}" opacity=".96"/>
+          <text x="${p.x}" y="${labelY}" text-anchor="middle" fill="${full ? "#0a1517" : "#e8eef2"}" font-size="${important.has(id) ? (full ? 14 * scale : 12) : (full ? smallFont : 9.5)}" font-weight="${important.has(id) ? 900 : 850}">${esc(label)}</text>
+        </g>`);
       });
-      draw(pieces.join(""));
-    }
 
-    function draw(markup) {
-      svg.innerHTML = markup;
-      svg.querySelectorAll("[data-tip]").forEach(el => {
-        el.addEventListener("pointermove", ev => showTip(el.dataset.tip, ev));
-        el.addEventListener("pointerleave", hideTip);
-        el.addEventListener("click", () => { selected.innerHTML = el.dataset.select || el.dataset.tip; });
-      });
-    }
-
-    function renderList() {
-      const events = [...DATA.provenance, ...DATA.endpointBurst];
-      document.getElementById("eventList").innerHTML = events.map(e => {
-        const target = e.short_name === "saidit_post";
-        return `<article class="event ${target ? "target" : ""}">
-          <strong>#${e.id} ${e.short_name}</strong>
-          <time>${fmt(e.time)}</time>
-          <p>${escapeHtml(detailText(e))}</p>
-        </article>`;
-      }).join("");
-    }
-
-    function renderImportantEvents() {
-      const [readMeeting, createSwift, readSwiftInstr, startSwift] = DATA.provenance;
-      const [finalQst, check, post, delInstr, delPayload] = DATA.endpointBurst;
-      document.getElementById("importantEvents").innerHTML = [
-        importantHtml("1. 先生成 payload", "Emma Agent 读取会议纪要，并立刻创建 SwiftWren.txt。", [readMeeting, createSwift]),
-        importantHtml("2. 再进入代理委派网络", "指令文件被读取后，任务被交给下一个 Agent。", [readSwiftInstr, startSwift]),
-        importantHtml("3. 最后到达 John Agent", "这是外发前的最后一跳。", [finalQst]),
-        importantHtml("4. John Agent 发到 SaidIt", "权限检查后，Agent 用 content_source 发帖。", [check, post]),
-        importantHtml("5. 马上删除证据文件", "发帖后连续删除指令文件和 payload。", [delInstr, delPayload]),
+      const start = positions[relay[0].source];
+      const john = positions["Agent/person:john_windward"];
+      return [
+        edgePieces.join(""),
+        `<g id="relayRippleLayer"></g>`,
+        nodePieces.join(""),
+        `<g id="saiditPopup" opacity="0" transform="translate(${john.x + 54} ${john.y - 86})">
+          <rect width="${230 * scale}" height="${86 * scale}" rx="${12 * scale}" fill="#2a1011" stroke="#ef756a" stroke-width="${2 * scale}"/>
+          <text x="${18 * scale}" y="${30 * scale}" fill="#ffd8d4" font-size="${15 * scale}" font-weight="900">SaidIt post created</text>
+          <text x="${18 * scale}" y="${56 * scale}" fill="#f4ecdc" font-size="${12 * scale}">content_source = SwiftWren.txt</text>
+        </g>`,
+        `<circle id="relayPulse" cx="${start.x}" cy="${start.y}" r="${full ? 22 * scale : 8}" fill="#e5b650" stroke="#fff4c8" stroke-width="${full ? 4 * scale : 4}" class="pulse-dot" opacity=".35"/>`
       ].join("");
     }
 
-    document.querySelectorAll("[data-mode]").forEach(btn => btn.addEventListener("click", () => {
-      mode = btn.dataset.mode;
-      document.querySelectorAll("[data-mode]").forEach(b => b.classList.toggle("active", b === btn));
-      const notes = {
-        core: "主图显示三条异常链如何汇聚到 John Agent 并外发。",
-        tree: "把每条异常链读成一句事件句子，突出共同结尾。",
-        synopsis: "把三条链压缩成六个阶段，便于快速说明。",
+    function renderFull() {
+      const [readDoc, createPayload, readInstr] = DATA.provenance;
+      const relay = DATA.instructionEdges.SwiftWren;
+      const [finalRelay, check, post, delInstr, delPayload] = DATA.endpointBurst;
+      const layout = stageLayout(briefIndex);
+      const a = layout.a, b = layout.b, c = layout.c;
+      const active = briefIndex === 0 ? "" : " stage-focus";
+      const aActive = briefIndex === 1;
+      const bActive = briefIndex === 2;
+      const cActive = briefIndex === 3;
+      const aOpacity = briefIndex === 0 || aActive ? 1 : .42;
+      const bOpacity = briefIndex === 0 || bActive ? 1 : .38;
+      const cOpacity = briefIndex === 0 || cActive ? 1 : .42;
+      const showA = briefIndex === 0 || aActive;
+      const showB = briefIndex === 0 || bActive;
+      const showC = briefIndex === 0 || cActive;
+      const pieces = [
+        `<defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#aeb7ad"/>
+          </marker>
+        </defs>`,
+        `<rect width="1900" height="1080" fill="#070e0d"/>`,
+        `<path d="M 285 84 H 1620 M 285 1036 H 1620 M 350 144 V 976 M 1554 144 V 976" fill="none" stroke="#20352f" stroke-width="1" opacity=".72"/>`,
+        `<text x="42" y="50" fill="#f4ecdc" font-size="24" font-weight="850">Full Chain: SwiftWren 186-Hop Relay Animation</text>`,
+        `<text x="42" y="78" fill="#aeb7ad" font-size="14">Click Play. The yellow pulse follows the real event order from file preparation, through every relay hop, to John posting on SaidIt.</text>`,
+        showA ? `<g class="${aActive ? "stage-focus" : "stage-muted"}" opacity="${aOpacity}" transform="translate(${a.x} ${a.y})">
+          ${focusMotion(aActive)}
+          <g transform="scale(${a.s})">
+          <rect x="0" y="0" width="286" height="398" rx="14" fill="#101b18" stroke="${aActive ? "#83bd67" : "#2f4841"}" stroke-width="${aActive ? 3 : 1.4}"/>
+          <text x="28" y="38" class="svg-label">A. Read / write / generate</text>
+          <text x="28" y="62" class="svg-muted">actor: Emma Harbor Agent</text>
+          ${node(28, 92, 230, 62, "read_file", "meeting_notes.doc", palette.file, "source", readDoc)}
+          <text x="44" y="178" class="svg-small">${fmt(readDoc.time)}</text>
+          ${arrow(143, 154, 143, 200, palette.file, 3)}
+          ${node(28, 200, 230, 62, "create_file", "SwiftWren.txt", palette.file, "source", createPayload)}
+          <text x="44" y="286" class="svg-small">${fmt(createPayload.time)}</text>
+          ${arrow(143, 262, 143, 308, palette.relay, 3)}
+          ${node(28, 308, 230, 62, "read_file", "further_instructions", palette.relay, "source", readInstr)}
+          <text x="44" y="390" class="svg-small">${fmt(readInstr.time)}</text>
+          </g>
+        </g>` : "",
+        showB ? `<g class="${bActive ? "stage-focus" : "stage-muted"}" opacity="${bOpacity}" transform="translate(${b.x + 570 * b.s} ${b.y + 490 * b.s})">
+          ${focusMotion(bActive)}
+          <g transform="translate(${-570 * b.s} ${-490 * b.s})">
+          <rect x="0" y="0" width="${1140 * b.s}" height="${980 * b.s}" rx="${18 * b.s}" fill="#0a1517" stroke="${bActive ? "#aa91df" : "#2f4841"}" stroke-width="${bActive ? 3 : 1.4}"/>
+          <text x="${42 * b.s}" y="${46 * b.s}" fill="#f4ecdc" font-size="${18 * b.s}" font-weight="850">B. Relay propagation chain</text>
+          <text x="${42 * b.s}" y="${78 * b.s}" fill="#aeb7ad" font-size="${12 * b.s}">Standard circle: every Agent sits on the same radius; the pulse follows 186 real hops.</text>
+          ${buildRelayNetwork({ full: true, x: 0, y: 0, scale: b.s, local: true })}
+          </g>
+        </g>` : "",
+        showC ? `<g class="${cActive ? "stage-focus" : "stage-muted"}" opacity="${cOpacity}" transform="translate(${c.x} ${c.y})">
+          ${focusMotion(cActive)}
+          <g transform="scale(${c.s})">
+          <rect x="0" y="0" width="300" height="412" rx="14" fill="#1b1212" stroke="${cActive ? "#ef756a" : "#5e3734"}" stroke-width="${cActive ? 3 : 1.4}"/>
+          <text x="24" y="38" class="svg-label">C. Post + non-human cleanup</text>
+          <text x="24" y="62" class="svg-muted">actor: John Windward Agent</text>
+          ${node(24, 92, 244, 62, "final qst", "Chloe -> John", "#462827", "endpoint", finalRelay)}
+          <text x="40" y="178" class="svg-small">${fmt(finalRelay.time)}</text>
+          ${arrow(146, 154, 146, 200, palette.john, 3)}
+          ${node(24, 200, 244, 62, "post", "content_source", "#482b2a", "endpoint", post)}
+          <text x="40" y="286" class="svg-small">${fmt(post.time)} / SwiftWren.txt</text>
+          ${arrow(146, 262, 146, 308, palette.system, 3)}
+          ${node(24, 308, 244, 62, "delete files", "instruction + payload", "#42341e", "endpoint", delPayload)}
+          <text x="40" y="394" class="svg-small">${fmt(delInstr.time)} and ${fmt(delPayload.time)}</text>
+          </g>
+        </g>` : ""
+      ];
+      svg.setAttribute("viewBox", "0 0 1900 1080");
+      svg.style.minHeight = "";
+      draw(pieces.join(""));
+      setAnimation(false);
+      setLog([...DATA.provenance, ...relay, ...DATA.endpointBurst]);
+      renderBrief();
+    }
+
+    function renderRelay() {
+      const relay = DATA.instructionEdges.SwiftWren;
+      const uniqueAgents = new Set(relay.flatMap(e => [e.source, e.target])).size;
+      const selfLoops = relay.filter(e => e.source === e.target).length;
+      const first = relay[0], last = relay[relay.length - 1];
+      const pieces = [
+        baseDefs("2. Relay Compression：把重复转发压缩为一个可解释模块", "SequenceSummary 的关键思想：保留起点、终点、规模和循环特征，折叠重复跳转。"),
+        node(70, 220, 190, 70, "instruction starts", `${actor(first.source)} -> ${actor(first.target)}`, "#2e263f", "start", first),
+        `<rect x="342" y="150" width="432" height="220" rx="12" fill="#1b1826" stroke="#aa91df" stroke-width="2"/>`,
+        `<text x="386" y="200" class="svg-title">Agent Relay Network</text>`,
+        `<text x="386" y="238" class="svg-body">186 queue_subordinate_task hops</text>`,
+        `<text x="386" y="266" class="svg-body">${uniqueAgents} involved agents</text>`,
+        `<text x="386" y="294" class="svg-body">${selfLoops} self-forwarding loops</text>`,
+        `<text x="386" y="322" class="svg-muted">repeated task: read_file SwiftWren_further_instructions.md</text>`,
+        node(870, 220, 190, 70, "final relay", `${actor(last.source)} -> ${actor(last.target)}`, "#462827", "end", last),
+        arrow(260, 255, 342, 255, palette.relay, 5),
+        arrow(774, 255, 870, 255, palette.relay, 5),
+        `<path d="M 492 415 C 560 350, 674 350, 718 415 S 580 504, 492 452" fill="none" stroke="#aa91df" stroke-width="5" marker-end="url(#arrow)" opacity=".9"/>`,
+        `<text x="452" y="544" class="svg-note">压缩后仍保留可审计信息：完整 186 跳可以展开，但视频讲解只需说明重复 relay 的结构与终点。</text>`
+      ];
+      draw(pieces.join(""));
+      setLog([first, relay[1], relay[2], relay[27], relay[48], relay[144], relay[145], relay[146], last]);
+      narrative.innerHTML = "<b>Relay Compression</b>这里解释为什么要压缩：完整 186 跳会淹没因果关系。压缩模块保留跳数、参与 Agent、循环和最后一跳，足够说明指令如何穿过 Agent 网络。";
+    }
+
+    function renderNetwork() {
+      const relay = DATA.instructionEdges.SwiftWren;
+      const pieces = [
+        baseDefs("3. Relay Network：人/Agent 节点 + 转发强度 + 光点路径", "节点是 Agent，边是 SwiftWren 指令转发；边越深越粗代表重复转发越多。黄色光点沿 186 跳路径循环移动。"),
+        `<rect x="56" y="92" width="1068" height="616" rx="10" fill="#101715" stroke="#334640"/>`,
+        `<text x="82" y="126" class="svg-muted">edge shade/width = number of queue_subordinate_task transfers between two agents</text>`,
+        buildRelayNetwork({ full: false }),
+      ];
+      pieces.push(`<rect x="80" y="642" width="310" height="44" rx="8" fill="#16221f" stroke="#334640"/>`);
+      pieces.push(`<text x="102" y="670" class="svg-note">Watch the pulse: it starts at Emma, loops through relay agents, and ends at John.</text>`);
+      draw(pieces.join(""));
+      setAnimation(false);
+      setLog(relay);
+      narrative.innerHTML = "<b>Relay Network</b>这个视图把每个人/Agent 作为节点，边表示转发关系。边越深越粗，说明这对 Agent 之间转发越多。黄色光点沿 SwiftWren 的 186 跳真实顺序移动，适合录视频讲“指令如何在系统里流动”。";
+    }
+
+    function renderSemantic() {
+      const [readDoc, createPayload, readInstr, firstRelay] = DATA.provenance;
+      const [finalRelay, check, post, delInstr, delPayload] = DATA.endpointBurst;
+      const stages = [
+        ["1", "Sensitive doc read", "meeting_notes.doc", palette.file, readDoc],
+        ["2", "Payload created", "SwiftWren.txt", palette.file, createPayload],
+        ["3", "Instruction read", "further_instructions", palette.relay, readInstr],
+        ["4", "Relay network", "186 delegated hops", palette.relay, firstRelay],
+        ["5", "Endpoint post", "John -> SaidIt", palette.john, post],
+        ["6", "Cleanup", "delete 2 files", palette.system, delPayload],
+      ];
+      const pieces = [
+        baseDefs("3. Semantic Summary：把日志事件归纳成六个语义阶段", "这一步把低层事件转换成可解释因果链，适合放入答案和视频 narration。")
+      ];
+      stages.forEach((s, i) => {
+        const x = 68 + i * 176;
+        pieces.push(`<circle cx="${x + 64}" cy="268" r="46" fill="${s[3]}" opacity=".9" stroke="#f3ead7"/>`);
+        pieces.push(`<text x="${x + 64}" y="260" text-anchor="middle" class="svg-dark">${s[0]}</text>`);
+        pieces.push(`<text x="${x + 64}" y="282" text-anchor="middle" class="svg-dark">${esc(s[1])}</text>`);
+        pieces.push(`<text x="${x + 64}" y="338" text-anchor="middle" class="svg-body">${esc(s[2])}</text>`);
+        if (i < stages.length - 1) pieces.push(arrow(x + 112, 268, x + 176, 268, "#aeb7ad", 3));
+      });
+      pieces.push(`<rect x="116" y="458" width="900" height="82" rx="10" fill="#211d15" stroke="#755f34"/>`);
+      pieces.push(`<text x="146" y="492" class="svg-label">Q1 answer sentence</text>`);
+      pieces.push(`<text x="146" y="520" class="svg-body">内部文档被转换为 payload，指令文件让任务在 Agent 间传播，最终 John Agent 使用 content_source 发帖并清理文件。</text>`);
+      draw(pieces.join(""));
+      setLog([readDoc, createPayload, readInstr, firstRelay, finalRelay, check, post, delInstr, delPayload]);
+      narrative.innerHTML = "<b>Semantic Summary</b>这是从分析到答案的转折点：我们不再逐条讲日志，而是把事件合并成六个因果阶段，直接回答“帖子如何被发出来”。";
+    }
+
+    function renderContext() {
+      const posts = DATA.suspiciousPosts;
+      const pieces = [
+        baseDefs("4. System Context：把目标链放到整个系统背景中解释", "题目要求 system overview。这里对比普通发帖路径和异常文件源发帖路径。"),
+        `<rect x="70" y="132" width="460" height="220" rx="10" fill="#16221f" stroke="#334640"/>`,
+        `<text x="104" y="172" class="svg-label">Normal SaidIt post pattern</text>`,
+        node(112, 218, 120, 54, "person", "manual/agent task", "#1d2a28", "", null),
+        arrow(232, 245, 302, 245),
+        node(302, 218, 120, 54, "SaidIt", "ordinary post", "#213b42", "", null),
+        `<text x="104" y="320" class="svg-muted">No payload file, no relay chain, no immediate cleanup.</text>`,
+
+        `<rect x="610" y="132" width="460" height="360" rx="10" fill="#16221f" stroke="#334640"/>`,
+        `<text x="644" y="172" class="svg-label">Anomalous content_source pattern</text>`,
+        node(642, 210, 120, 54, "document", "sensitive source", "#263a26", "", null),
+        arrow(762, 237, 812, 237),
+        node(812, 210, 120, 54, ".txt", "payload", "#263a26", "", null),
+        arrow(872, 264, 872, 314, palette.relay, 4),
+        node(770, 314, 204, 54, "instructions + relay", "Agent network", "#2e263f", "", null),
+        arrow(974, 341, 1018, 341, palette.john, 4),
+        node(1018, 314, 92, 54, "post", "SaidIt", "#482b2a", "", null),
+        arrow(872, 368, 872, 420, palette.system, 4),
+        node(770, 420, 204, 54, "cleanup", "delete payload + instructions", "#42341e", "", null),
+
+        `<rect x="84" y="542" width="986" height="92" rx="10" fill="#211d15" stroke="#755f34"/>`,
+        `<text x="116" y="576" class="svg-label">System-level anomaly</text>`,
+        `<text x="116" y="604" class="svg-body">Only 3 suspicious content_source posts are tracked here: ${posts.map(p => p.file).join(", ")}. All share the same payload -> instruction relay -> John Agent -> cleanup pattern.</text>`
+      ];
+      draw(pieces.join(""));
+      setLog(posts.map(p => ({ id: p.id, time: p.time, short_name: "saidit_post", detail: { content_source: p.content }, parties: ["Agent/person:john_windward", "system:saidit"] })));
+      narrative.innerHTML = "<b>System Context</b>这一步回答题目 b：把目标消息链放进整体系统背景。异常点不是“发了 SaidIt”，而是文件 payload、长 relay、John Agent 外发和清理文件同时出现。";
+    }
+
+    function draw(markup) {
+      stopRelayAnimation();
+      svg.innerHTML = markup;
+      svg.querySelectorAll(".event-node").forEach(el => {
+        el.addEventListener("click", () => {
+          narrative.innerHTML = `<b>Selected event</b>${esc(el.dataset.tip)}`;
+        });
+      });
+    }
+
+    function stopRelayAnimation() {
+      if (relayFrame) cancelAnimationFrame(relayFrame);
+      relayFrame = null;
+      relayStartedAt = 0;
+      relayLastHop = -1;
+    }
+
+    function pointOnHop(edge, t) {
+      const layout = relayLayout;
+      const a = layout.positions[edge.source];
+      const b = layout.positions[edge.target];
+      if (!a || !b) return null;
+      if (edge.source === edge.target) {
+        const angle = t * Math.PI * 2 - Math.PI / 2;
+        const loopR = layout.full ? 42 : 25;
+        return {
+          x: a.x + Math.cos(angle) * loopR,
+          y: a.y + Math.sin(angle) * loopR
+        };
+      }
+      const cx1 = (a.x + layout.centerX) / 2;
+      const cy1 = (a.y + layout.centerY) / 2;
+      const cx2 = (b.x + layout.centerX) / 2;
+      const cy2 = (b.y + layout.centerY) / 2;
+      const mt = 1 - t;
+      return {
+        x: mt * mt * mt * a.x + 3 * mt * mt * t * cx1 + 3 * mt * t * t * cx2 + t * t * t * b.x,
+        y: mt * mt * mt * a.y + 3 * mt * mt * t * cy1 + 3 * mt * t * t * cy2 + t * t * t * b.y
       };
-      document.getElementById("modeNote").textContent = notes[mode];
-      if (mode === "core") renderCoreFlow();
-      if (mode === "tree") renderSentenTree();
-      if (mode === "synopsis") renderSynopsis();
-    }));
+    }
 
-    document.getElementById("toggleLeft").addEventListener("click", () => {
-      document.getElementById("leftDrawer").classList.toggle("collapsed");
-    });
-    document.getElementById("toggleRight").addEventListener("click", () => {
-      document.getElementById("rightDrawer").classList.toggle("collapsed");
-    });
-    document.querySelectorAll("[data-close]").forEach(btn => btn.addEventListener("click", () => {
-      const id = btn.dataset.close === "left" ? "leftDrawer" : "rightDrawer";
-      document.getElementById(id).classList.add("collapsed");
-    }));
+    function rippleAt(agentId, variant = "normal") {
+      if (!relayLayout) return;
+      const p = relayLayout.positions[agentId];
+      const layer = document.getElementById("relayRippleLayer");
+      if (!p || !layer) return;
+      const ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      ring.setAttribute("cx", p.x);
+      ring.setAttribute("cy", p.y);
+      ring.setAttribute("r", relayLayout.full ? 32 : 22);
+      ring.setAttribute("fill", "none");
+      ring.setAttribute("stroke", variant === "endpoint" ? "#ef2f2f" : "#fff1a6");
+      ring.setAttribute("stroke-width", variant === "endpoint" ? 9 : relayLayout.full ? 5 : 3);
+      ring.setAttribute("opacity", ".95");
+      ring.setAttribute("class", "relay-ripple");
+      layer.appendChild(ring);
 
-    initStats();
-    renderImportantEvents();
-    renderList();
-    renderCoreFlow();
+      const started = performance.now();
+      const duration = variant === "endpoint" ? 1150 : 620;
+      const base = variant === "endpoint" ? 46 : relayLayout.full ? 32 : 22;
+      const grow = variant === "endpoint" ? 130 : relayLayout.full ? 44 : 26;
+      function pulse(now) {
+        const t = Math.min(1, (now - started) / duration);
+        ring.setAttribute("r", base + grow * t);
+        ring.setAttribute("opacity", String(.95 * (1 - t)));
+        if (t < 1) requestAnimationFrame(pulse);
+        else ring.remove();
+      }
+      requestAnimationFrame(pulse);
+    }
+
+    function triggerEndpoint() {
+      if (endpointTriggered || !relayLayout) return;
+      endpointTriggered = true;
+      const johnId = "Agent/person:john_windward";
+      const john = relayLayout.positions[johnId];
+      rippleAt(johnId, "endpoint");
+      setTimeout(() => rippleAt(johnId, "endpoint"), 180);
+      setTimeout(() => rippleAt(johnId, "endpoint"), 360);
+      const popup = document.getElementById("saiditPopup");
+      if (popup) {
+        popup.setAttribute("opacity", "1");
+        popup.setAttribute("transform", `translate(${john.x + 54} ${john.y - 86}) scale(1)`);
+      }
+      const pulse = document.getElementById("relayPulse");
+      if (pulse) {
+        pulse.setAttribute("cx", john.x);
+        pulse.setAttribute("cy", john.y);
+        pulse.setAttribute("fill", "#ef2f2f");
+        pulse.setAttribute("stroke", "#ffd8d4");
+        pulse.style.opacity = "1";
+      }
+      animationPlaying = false;
+      stopRelayAnimation();
+      toggleAnimation.textContent = "重新播放动画";
+    }
+
+    function animateRelay(now) {
+      if (!animationPlaying || !relayLayout) return;
+      const pulse = document.getElementById("relayPulse");
+      if (!pulse) return;
+      if (!relayStartedAt) relayStartedAt = now;
+      const relay = relayLayout.relay;
+      const hopMs = relayLayout.full ? 120 : 95;
+      const totalMs = hopMs * relay.length;
+      const elapsed = Math.min(now - relayStartedAt, totalMs);
+      if (elapsed >= totalMs) {
+        const last = relay[relay.length - 1];
+        const p = relayLayout.positions[last.target];
+        if (p) {
+          pulse.setAttribute("cx", p.x);
+          pulse.setAttribute("cy", p.y);
+        }
+        triggerEndpoint();
+        return;
+      }
+      const hop = Math.min(relay.length - 1, Math.floor(elapsed / hopMs));
+      const t = (elapsed - hop * hopMs) / hopMs;
+      const p = pointOnHop(relay[hop], t);
+      if (p) {
+        pulse.setAttribute("cx", p.x);
+        pulse.setAttribute("cy", p.y);
+      }
+      if (hop !== relayLastHop) {
+        rippleAt(relay[hop].source);
+        if (relayLastHop >= 0) rippleAt(relay[relayLastHop].target);
+        relayLastHop = hop;
+      }
+      relayFrame = requestAnimationFrame(animateRelay);
+    }
+
+    function setAnimation(playing) {
+      animationPlaying = playing;
+      const pulse = svg.querySelector(".pulse-dot");
+      if (playing) {
+        stopRelayAnimation();
+        endpointTriggered = false;
+        const popup = document.getElementById("saiditPopup");
+        if (popup) popup.setAttribute("opacity", "0");
+        if (pulse && relayLayout && relayLayout.relay.length) {
+          const start = relayLayout.positions[relayLayout.relay[0].source];
+          pulse.setAttribute("cx", start.x);
+          pulse.setAttribute("cy", start.y);
+          pulse.setAttribute("fill", "#e5b650");
+          pulse.setAttribute("stroke", "#fff4c8");
+          pulse.style.opacity = "1";
+        }
+        relayFrame = requestAnimationFrame(animateRelay);
+        if (relayLayout && relayLayout.relay.length) rippleAt(relayLayout.relay[0].source);
+      } else {
+        stopRelayAnimation();
+        if (pulse) pulse.style.opacity = ".35";
+      }
+      toggleAnimation.textContent = playing ? "播放中..." : "播放动画";
+    }
+
+    function setLog(events) {
+      logBox.innerHTML = events.map(e => `<div class="log-row"><b>#${e.id} ${esc(e.short_name)}</b><small>${esc(fmt(e.time))}</small><small>${esc(detail(e))}</small></div>`).join("");
+    }
+
+    function renderBrief() {
+      narrative.innerHTML = briefs[briefIndex];
+      document.querySelectorAll("[data-brief]").forEach(btn => btn.classList.toggle("active", Number(btn.dataset.brief) === briefIndex));
+    }
+
+    function setBrief(next) {
+      briefIndex = (next + briefs.length) % briefs.length;
+      renderFull();
+    }
+
+    document.querySelectorAll("[data-brief]").forEach((btn, i) => btn.addEventListener("click", () => setBrief(i)));
+    document.getElementById("prevBrief").addEventListener("click", () => setBrief(briefIndex - 1));
+    document.getElementById("nextBrief").addEventListener("click", () => setBrief(briefIndex + 1));
+    toggleAnimation.addEventListener("click", () => setAnimation(!animationPlaying));
+    document.addEventListener("keydown", ev => {
+      if (ev.key === "ArrowRight") setBrief(briefIndex + 1);
+      if (ev.key === "ArrowLeft") setBrief(briefIndex - 1);
+    });
+    document.body.classList.add("full-mode");
+    renderFull();
   </script>
 </body>
 </html>
