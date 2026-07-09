@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Q3 · 复发风险与单点干预 — MC2</title>
+<link rel="stylesheet" href="./assets/app.css">
+</head>
+<body>
+<div id="nav" data-active="q3.html"></div>
+<div class="wrap">
+  <header class="hero">
+    <div class="tag">Question 3 · Could it repeat? Investigate history & pick ONE intervention</div>
+    <h1>复发风险与单点干预</h1>
+    <p class="lead">Q3 分两步：先<b>用历史数据证明这不是第一次</b>（建立基线、对比先例），
+      再<b>只选一处</b>做整改，并用数据论证它为何有效、且不误伤正常业务。</p>
+  </header>
+
+  <div class="layout">
+    <aside class="side">
+      <div class="card answer">
+        <h2>Q3 答案</h2>
+        <div class="a-body">
+          <b>会复发</b>——同一机制已发生 3 次（HiddenOrca→MellowOtter→SwiftWren），规模递增、
+          源头各异，说明漏洞是<b>结构性</b>的。最佳单点干预：在 <b>SaidIt 边界</b>拦截 / 人工审批
+          任何 <b>Agent 发起且带 <code>content_source</code></b> 的发帖。
+        </div>
+        <div class="note" style="margin-top:12px">该门控 <b>3/3</b> 覆盖已知异常，对 <b>105</b> 条正常人工帖
+          <b>0 误报</b>——因为正常帖从不使用 content_source。</div>
+      </div>
+      <div class="card">
+        <h3>三段论证</h3>
+        <div class="steps" id="steps"></div>
+      </div>
+    </aside>
+
+    <main>
+      <section class="panel" id="p-base">
+        <div class="head"><h2>A · 基线 vs 异常：三张对比</h2>
+          <span class="sub">正常系统长什么样，异常偏在哪</span></div>
+        <p class="desc">题面要求“建立正常基准再对标异常”。三个维度上，异常都是极小但极清晰的离群点。</p>
+        <div id="baseline"></div>
+      </section>
+
+      <section class="panel" id="p-prior">
+        <div class="head"><h2>B · 先例对比：这是第三次，不是第一次</h2>
+          <span class="sub">三次同机制事件的时间线与规模</span></div>
+        <p class="desc">三次事件机制完全相同：<code>指令 relay → John Agent → content_source 发帖 → 清理</code>。
+          规模从 39 跳递增到 186 跳，传播越久越难追溯。</p>
+        <div class="svg-wrap"><svg id="timeline" width="1160" height="230"></svg></div>
+        <div id="priortable" style="margin-top:16px"></div>
+      </section>
+
+      <section class="panel" id="p-fix">
+        <div class="head"><h2>C · 单点干预：为什么选 SaidIt 边界</h2>
+          <span class="sub">覆盖率 vs 误伤，逐点评估</span></div>
+        <div id="gate"></div>
+        <h3 style="margin-top:20px">候选干预点评估</h3>
+        <div id="alts"></div>
+      </section>
+
+      <div class="footer">干预评估基于全量计数：content_source 命中 3/3 异常、0/105 正常帖；qst 总量 17,038。</div>
+    </main>
+  </div>
+</div>
+<script src="./mc2_viz_data.js"></script>
+<script src="./assets/app.js"></script>
+<script src="./assets/q3.js"></script>
+</body>
+</html>

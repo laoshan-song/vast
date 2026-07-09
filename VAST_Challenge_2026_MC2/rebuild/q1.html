@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Q1 · 异常帖如何产生 — MC2</title>
+<link rel="stylesheet" href="./assets/app.css">
+</head>
+<body>
+<div id="nav" data-active="q1.html"></div>
+<div class="wrap">
+  <header class="hero">
+    <div class="tag">Question 1 · How was the anomalous SaidIt post made?</div>
+    <h1>异常帖如何产生：精确链路 + 系统总图</h1>
+    <p class="lead">Q1 要两样东西：<b>目标帖的精确事件链</b>，以及把它<b>放回整个系统的总图</b>。
+      下面先看 John Agent 每次发帖都完全相同的 5 步“配方”，再看指令在 Agent 网络里的真实游走轨迹，最后是分层系统图。</p>
+  </header>
+
+  <div class="layout">
+    <aside class="side">
+      <div class="card answer">
+        <h2>Q1 答案</h2>
+        <div class="a-body">
+          攻击者利用框架内置、正常业务从不使用的 <code>task=read_file</code> 传播机制，
+          把 <code>&lt;code&gt;_further_instructions.md</code> 在 Agent 间盲转发，
+          直到抵达唯一有公开发帖权的 John Windward Agent。John Agent 随后 4 秒内完成
+          <code>saidit_post_check → saidit_post(content_source) → delete×2</code>。
+          三帖 100% 同一配方。
+        </div>
+        <div class="note" style="margin-top:12px"><b>关键订正：</b>SwiftWren 并非“第一次到 John 就发”。
+          指令 <b>5 次</b>到达 John Agent，前 4 次继续转发/自环，第 5 次才发帖——说明这是<b>概率性随机游走</b>，
+          而非“到达即触发”。</div>
+      </div>
+      <div class="card">
+        <h3>选择事件（incident）</h3>
+        <div class="btnrow" id="incsel"></div>
+        <div class="stats" id="incstats" style="margin-top:6px"></div>
+      </div>
+      <div class="card">
+        <h3>三段讲解</h3>
+        <div class="steps" id="steps"></div>
+      </div>
+    </aside>
+
+    <main>
+      <section class="panel" id="p-recipe">
+        <div class="head"><h2>A · 精确链路：终点 5 步配方</h2>
+          <span class="sub" id="recipe-sub"></span></div>
+        <p class="desc">这是 John Agent 收到 relay 任务后发生的确切事件序列（含 event id 与本地时间）。
+          三次泄露的这 5 步逐字相同，时间精确到秒。</p>
+        <div class="svg-wrap"><svg id="recipe" width="1160" height="260"></svg></div>
+      </section>
+
+      <section class="panel" id="p-walk">
+        <div class="head"><h2>B · 传播链：指令的随机游走轨迹</h2>
+          <span class="sub">Agent 在纵轴，跳序在横轴 · 折线即 relay 路径</span></div>
+        <p class="desc">不用力导向“毛球图”，而是把随机游走<b>按时间展开</b>：每个点是一跳的接收者，
+          折线连起来就是指令的真实路线。你能直接看到<b>反复经过同一人</b>、<b>自环</b>、以及最后如何落到
+          <span style="color:var(--anom);font-weight:700">John（红线行）</span>。红色圆点是指令到达 John 的时刻。</p>
+        <div class="legend" id="walk-legend"></div>
+        <div class="svg-wrap"><svg id="walk" width="1160" height="520"></svg></div>
+      </section>
+
+      <section class="panel" id="p-sys">
+        <div class="head"><h2>C · 系统总图：异常链路在系统中的位置</h2>
+          <span class="sub">source doc → payload → relay → SaidIt 边界 → cleanup</span></div>
+        <p class="desc">把这条链放回系统，它横跨四个层。真正把风险从“内部”变成“外部危害”的是
+          <b>SaidIt 边界</b>那一步——这也预示了 Q3 的干预点。</p>
+        <div id="sysflow"></div>
+      </section>
+
+      <div class="footer">时间口径：挑战本地 UTC-7。event id 与原始 <code>MC2 data.json</code> 一致。</div>
+    </main>
+  </div>
+</div>
+<script src="./mc2_viz_data.js"></script>
+<script src="./assets/app.js"></script>
+<script src="./assets/q1.js"></script>
+</body>
+</html>
