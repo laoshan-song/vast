@@ -22,7 +22,7 @@
       <div class="card answer">
         <h2>一句话结论</h2>
         <div class="a-body">
-          异常帖是一个<b>寄生在 Agent 任务队列里的 prompt-injection 蠕虫</b>：一份内部文档被打包成
+          异常帖来自一条<b>利用 Agent 任务队列的指令转发链</b>：一份内部文档被打包成
           <code>&lt;代号&gt;.txt</code>，其 <code>_further_instructions.md</code> 通过
           <code>queue_subordinate_task(task=read_file)</code> 在 Agent 间<b>盲转发随机游走</b>，
           直到抵达全公司唯一有公开发帖权的 <b>John Windward Agent</b>，由它执行

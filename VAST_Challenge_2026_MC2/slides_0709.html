@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MC2 答辩展示稿</title>
+  <style>
+    :root {
+      --bg: #0a0e13;
+      --panel: #121924;
+      --ink: #e6edf3;
+      --muted: #9aa8b8;
+      --blue: #58a6ff;
+      --red: #ff6b6b;
+      --green: #3fb950;
+      --yellow: #e3b341;
+      --border: #27384c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.55;
+    }
+    .deck {
+      height: 100vh;
+      overflow-y: auto;
+      scroll-snap-type: y mandatory;
+    }
+    section {
+      min-height: 100vh;
+      scroll-snap-align: start;
+      padding: 54px 72px;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 36px;
+      align-items: center;
+    }
+    section.title {
+      grid-template-columns: 1fr;
+      align-content: center;
+    }
+    h1 {
+      font-size: 58px;
+      line-height: 1.08;
+      margin: 0 0 18px;
+    }
+    h2 {
+      font-size: 38px;
+      line-height: 1.15;
+      margin: 0 0 20px;
+    }
+    .tag {
+      color: var(--yellow);
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      font-weight: 800;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    p, li { font-size: 21px; color: var(--muted); }
+    li { margin: 10px 0; }
+    b { color: var(--ink); }
+    code {
+      color: var(--blue);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #111c2a;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: .88em;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(160px, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+    }
+    .metric strong {
+      display: block;
+      font-size: 38px;
+      color: var(--blue);
+      line-height: 1;
+    }
+    .metric span { color: var(--muted); font-size: 15px; }
+    img {
+      width: 100%;
+      max-height: 76vh;
+      object-fit: contain;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #0b1017;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    .rule {
+      background: var(--panel);
+      border-left: 4px solid var(--green);
+      border-radius: 10px;
+      padding: 20px 22px;
+      font-size: 22px;
+      margin-top: 20px;
+    }
+    .foot {
+      position: fixed;
+      right: 22px;
+      bottom: 14px;
+      color: #526174;
+      font-size: 13px;
+    }
+    @media (max-width: 900px) {
+      section { grid-template-columns: 1fr; padding: 36px 24px; }
+      h1 { font-size: 38px; }
+      h2 { font-size: 28px; }
+      p, li { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+<div class="deck">
+  <section class="title">
+    <div>
+      <div class="tag">VAST Challenge 2026 · Mini-Challenge 2</div>
+      <h1>一条异常 SaidIt 帖，如何从内部文档走到公开论坛</h1>
+      <p>核心结论：异常帖不是普通人工发帖，而是一条利用 Agent 任务队列的指令转发链。</p>
+      <div class="metrics">
+        <div class="metric"><strong>185,147</strong><span>原始事件</span></div>
+        <div class="metric"><strong>108</strong><span>SaidIt posts</span></div>
+        <div class="metric"><strong>3</strong><span>Agent + content_source 异常帖</span></div>
+        <div class="metric"><strong>0/105</strong><span>推荐门控对正常帖误报</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div>
+      <div class="tag">System Baseline</div>
+      <h2>异常数量很少，但签名非常干净</h2>
+      <ul>
+        <li>正常 SaidIt 帖：人类发起，使用普通 <code>content</code>。</li>
+        <li>异常 SaidIt 帖：Agent 发起，使用文件型 <code>content_source</code>。</li>
+        <li>这个组合在全量日志中只出现 3 次，正好对应三次异常外发。</li>
+      </ul>
+    </div>
+    <img src="rebuild/shot-overview.png" alt="Overview visualization">
+  </section>
+
+  <section>
+    <div>
+      <div class="tag">Q1 · Mechanism</div>
+      <h2>终点行为固定：5 步自动化配方</h2>
+      <ol>
+        <li>relay 任务到达 John Agent；</li>
+        <li><code>saidit_post_check</code>；</li>
+        <li><code>saidit_post(content_source)</code>；</li>
+        <li>删除指令文件；</li>
+        <li>删除 payload 文件。</li>
+      </ol>
+      <p>SwiftWren 是最大链路：186 跳、18 个 Agent、119 次跨部门跳。</p>
+    </div>
+    <img src="rebuild/shot-q1.png" alt="Q1 visualization">
+  </section>
+
+  <section>
+    <div>
+      <div class="tag">Q2 · Provenance</div>
+      <h2>内容是内部文件外部化，不是人工发言</h2>
+      <ul>
+        <li><b>SwiftWren</b>：CFO 的 <code>meeting_notes.doc</code>。</li>
+        <li><b>MellowOtter</b>：COO 的 <code>strategic_directions.doc</code>。</li>
+        <li><b>HiddenOrca</b>：源文档在数据窗口外，必须保持 unknown。</li>
+      </ul>
+      <p>关键做法：区分 observed / inferred / unknown，避免把推断写成事实。</p>
+    </div>
+    <img src="rebuild/shot-q2.png" alt="Q2 visualization">
+  </section>
+
+  <section>
+    <div>
+      <div class="tag">Q3 · Intervention</div>
+      <h2>最佳单点干预：SaidIt 边界门控</h2>
+      <div class="rule">
+        如果发帖者是 Agent，且 <code>saidit_post.details.content_source</code> 存在：阻断或转人工审批。
+      </div>
+      <ul>
+        <li>覆盖 3/3 已知异常。</li>
+        <li>对 105 条正常人工帖 0 误报。</li>
+        <li>比阻断 17,038 条 <code>queue_subordinate_task</code> 更低成本。</li>
+      </ul>
+    </div>
+    <img src="rebuild/shot-q3.png" alt="Q3 visualization">
+  </section>
+
+  <section class="title">
+    <div>
+      <div class="tag">Closing</div>
+      <h1>高分答辩的重点</h1>
+      <ul>
+        <li>不是只讲“谁可疑”，而是讲清楚系统如何失控。</li>
+        <li>不是堆文字，而是用图证明链路、溯源和干预点。</li>
+        <li>不声称知道文件全文、HiddenOrca 源文档或动机。</li>
+        <li>最终建议必须是“一处”干预，并能用数据证明有效。</li>
+      </ul>
+    </div>
+  </section>
+</div>
+<div class="foot">Use PgDn / scroll to advance · MC2 final presentation</div>
+</body>
+</html>
+

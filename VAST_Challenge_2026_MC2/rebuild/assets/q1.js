@@ -51,11 +51,19 @@
     const svg = document.getElementById("recipe");
     svg.innerHTML = "";
     const rec = inc.recipe || [];
-    const W = 1160, n = rec.length, pad = 40;
+    const W = Math.max(760, Math.floor(svg.parentElement.clientWidth || 1160));
+    svg.setAttribute("viewBox", `0 0 ${W} 260`);
+    const n = rec.length, pad = 28;
     const gapW = (W - pad * 2) / Math.max(n, 5);
     const y = 120, boxW = Math.min(190, gapW - 18), boxH = 74;
     const COLORS = { queue_subordinate_task: "#a371f7", saidit_post_check: "#e3b341",
       saidit_post: "#e5484d", delete_file: "#58a6ff" };
+    const LABELS = {
+      queue_subordinate_task: "relay task",
+      saidit_post_check: "post_check",
+      saidit_post: "saidit_post",
+      delete_file: "delete_file",
+    };
     rec.forEach((r, i) => {
       const cx = pad + i * gapW + gapW / 2;
       // connector
@@ -66,12 +74,17 @@
       add(g, "rect", { x: cx - boxW / 2, y: y - boxH / 2, width: boxW, height: boxH, rx: 8,
         fill: "#18212e", stroke: col, "stroke-width": r.action === "saidit_post" ? 2.5 : 1.5 });
       add(g, "text", { x: cx, y: y - 16, "text-anchor": "middle", "font-size": 12.5, "font-weight": 700, fill: col },
-        `${i + 1}. ${r.action}`);
+        `${i + 1}. ${LABELS[r.action] || r.action}`);
       const who = r.action === "queue_subordinate_task" ? `${name(r.from)}→John` : "John Agent";
       add(g, "text", { x: cx, y: y + 2, "text-anchor": "middle", "font-size": 11, fill: "#93a1b0" }, who);
       const dt = r.detail.content_source || r.detail.target || r.detail.task || r.detail.forum || "";
       if (dt) add(g, "text", { x: cx, y: y + 18, "text-anchor": "middle", "font-size": 10.5,
-        fill: "#63748a", "font-family": "var(--mono)" }, String(dt).slice(0, 26));
+        fill: "#63748a", "font-family": "var(--mono)" }, String(dt).slice(0, Math.max(16, Math.floor(boxW / 7))));
+      g.addEventListener("mousemove", e => showTip(
+        `<div class="tt-h">${i + 1}. ${r.action}</div>
+         <div class="tt-r">${r.when} · id ${r.id}</div>
+         <div class="tt-r">${JSON.stringify(r.detail)}</div>`, e));
+      g.addEventListener("mouseleave", hideTip);
       // time + id below
       add(svg, "text", { x: cx, y: y + boxH / 2 + 22, "text-anchor": "middle", "font-size": 10.5,
         fill: "#63748a", "font-family": "var(--mono)" }, r.when.slice(11));
@@ -100,7 +113,9 @@
       return da === db ? a.localeCompare(b) : da.localeCompare(db);
     });
     const rowOf = {}; agents.forEach((a, i) => rowOf[a] = i);
-    const W = 1160, ml = 150, mr = 30, mt = 20, mb = 30;
+    const W = Math.max(760, Math.floor(svg.parentElement.clientWidth || 1160));
+    svg.setAttribute("viewBox", `0 0 ${W} 520`);
+    const ml = 150, mr = 30, mt = 20, mb = 30;
     const rh = (svg.getAttribute("height") - mt - mb) / agents.length;
     const nH = hops.length;
     const x = i => ml + (nH <= 1 ? 0 : (i / (nH - 1)) * (W - ml - mr));
@@ -159,6 +174,9 @@
   function drawSys(inc) {
     const src = inc.source_doc;
     const cf = inc.create_file;
+    const payloadMeta = cf
+      ? `${cf.size_hint.toLocaleString()} B${cf.word_count ? " · " + cf.word_count.toLocaleString() + " words" : ""}`
+      : "无 create_file 记录";
     document.getElementById("sysflow").innerHTML = `
     <div class="flow">
       <div class="fbox src"><div class="k">① 内部文档层</div>
@@ -167,7 +185,7 @@
       <div class="farrow">→</div>
       <div class="fbox pay"><div class="k">② 文件系统层 payload</div>
         <div class="v">${inc.code}.txt</div>
-        <div class="s">${cf ? cf.size_hint.toLocaleString() + " B · " + (cf.word_count || "?") + " words" : "无 create_file 记录"}</div></div>
+        <div class="s">${payloadMeta}</div></div>
       <div class="farrow">→</div>
       <div class="fbox agent"><div class="k">③ Agent 传播层</div>
         <div class="v">${inc.hop_count} × queue_subordinate_task</div>
@@ -185,4 +203,3 @@
 
   render();
 })();
-

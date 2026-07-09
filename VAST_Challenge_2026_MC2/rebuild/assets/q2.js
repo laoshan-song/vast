@@ -21,6 +21,9 @@
   /* A. provenance rows */
   const rows = ["SwiftWren", "MellowOtter", "HiddenOrca"].map(c => {
     const I = inc[c], m = META[c], src = I.source_doc, cf = I.create_file;
+    const payloadMeta = cf
+      ? `${cf.size_hint.toLocaleString()} B${cf.word_count ? " · " + cf.word_count.toLocaleString() + " words" : ""}<br>by ${name(cf.by)} · ${cf.when}`
+      : "无 create_file";
     const cell = (badge, title, sub, dashed) => `
       <div class="fbox" style="${dashed ? "border-style:dashed;opacity:.75" : ""}">
         <div class="k">${badge}</div>
@@ -36,7 +39,7 @@
         <div class="farrow">→</div>
         ${cell(cf ? `<span class="tag-obs">② 打包 · observed</span>` : `<span class="tag-unk">② 打包 · unknown</span>`,
           `${c}.txt`,
-          cf ? `${cf.size_hint.toLocaleString()} B · ${cf.word_count || "?"} words<br>by ${name(cf.by)} · ${cf.when}` : "无 create_file",
+          payloadMeta,
           !cf)}
         <div class="farrow">→</div>
         ${cell(`<span class="tag-obs">③ 外发 · observed</span>`, `saidit_post`,

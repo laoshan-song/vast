@@ -1,11 +1,15 @@
 const path = require("path");
-const pw = "/home/laoshansong/.npm/_npx/e41f203b7505f1fb/node_modules/playwright";
-const { chromium } = require(pw);
+const fs = require("fs");
+const { chromium } = require("playwright");
 
 const pages = ["overview", "q1", "q2", "q3"];
 
 (async () => {
-  const browser = await chromium.launch({ headless: true });
+  const edgePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE
+    || "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+  const launchOptions = { headless: true };
+  if (fs.existsSync(edgePath)) launchOptions.executablePath = edgePath;
+  const browser = await chromium.launch(launchOptions);
   let bad = false;
   for (const name of pages) {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });

@@ -52,13 +52,16 @@
   /* B. timeline of 3 incidents */
   (() => {
     const svg = document.getElementById("timeline");
+    svg.innerHTML = "";
     const order = ["HiddenOrca", "MellowOtter", "SwiftWren"];
     const posts = order.map(c => ({ c, t: inc[c].post.when, first: inc[c].first_hop_when,
       hops: inc[c].hop_count, col: c === "SwiftWren" ? "#e5484d" : c === "MellowOtter" ? "#a371f7" : "#58a6ff" }));
     const toTs = s => Date.parse(s.replace(" ", "T") + "Z");
     const allT = posts.flatMap(p => [toTs(p.first), toTs(p.t)]);
     const min = Math.min(...allT), max = Math.max(...allT);
-    const W = 1160, ml = 40, mr = 120, y0 = 60, rowH = 46;
+    const W = Math.max(760, Math.floor(svg.parentElement.clientWidth || 1160));
+    svg.setAttribute("viewBox", `0 0 ${W} 230`);
+    const ml = 40, mr = 90, y0 = 60, rowH = 46;
     const x = t => ml + ((t - min) / (max - min)) * (W - ml - mr);
     // axis days
     add(svg, "line", { x1: ml, y1: y0 - 26, x2: W - mr, y2: y0 - 26, stroke: "#22303f" });
@@ -85,7 +88,7 @@
       const rightSide = mx > ml + 0.72 * (W - ml - mr);
       add(svg, "text", { x: rightSide ? mx - 12 : mx + 12, y: y + 4, "font-size": 12.5,
         "font-weight": 700, fill: p.col, "text-anchor": rightSide ? "end" : "start" },
-        `${p.c} · ${p.hops}h`);
+        `${p.c} · ${p.hops} hops`);
     });
     add(svg, "text", { x: ml, y: y0 + rowH * 3 + 6, "font-size": 11.5, fill: "#63748a" },
       "○ 起始跳 → ● 发帖时刻；条带长度 = 传播时长。规模递增：39 → 10 → 186 跳。");
