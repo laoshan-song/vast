@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Q2 · 帖子含义与内容来源 — MC2</title>
+<link rel="stylesheet" href="./assets/app.css">
+</head>
+<body>
+<div id="nav" data-active="q2.html"></div>
+<div class="wrap">
+  <header class="hero">
+    <div class="tag">Question 2 · What do the posts mean? Where does the content come from?</div>
+    <h1>帖子含义与内容溯源</h1>
+    <p class="lead">Q2 不是身份题，是<b>内容溯源题</b>。要说明含义判定<b>依据</b>与合理的内容<b>推断</b>。
+      核心方法：用可见的 <code>read_file → create_file</code> 事件链把每条 payload 追回到真实内部文档，
+      并严格区分 <span class="badge obs">observed</span> <span class="badge inf">inferred</span>
+      <span class="badge unk">unknown</span>。</p>
+  </header>
+
+  <div class="layout">
+    <aside class="side">
+      <div class="card answer">
+        <h2>Q2 答案</h2>
+        <div class="a-body">
+          三条帖子是<b>公司内部敏感文档被外部化</b>（数据外泄），不是普通人工发言。
+          <b>SwiftWren</b> 源自 CFO 的 <code>meeting_notes.doc</code>；
+          <b>MellowOtter</b> 源自 COO 的 <code>strategic_directions.doc</code>；
+          <b>HiddenOrca</b> 的源文档在数据采集窗口之前创建，不可还原。
+        </div>
+        <div class="note" style="margin-top:12px"><b>诚实边界：</b>日志<b>只记录动作，不存文件正文</b>。
+          因此 payload 与指令文件的<b>逐字内容不可得</b>；主题由“源文档名 + 作者职位”推断，非直接读出。</div>
+      </div>
+      <div class="card">
+        <h3>三链溯源强度</h3>
+        <div class="steps" id="strength"></div>
+      </div>
+      <div class="card">
+        <h3>证据类型图例</h3>
+        <div class="legend">
+          <span class="badge obs">observed 可确认</span>
+          <span class="badge inf">inferred 可推断</span>
+          <span class="badge unk">unknown 不可知</span>
+        </div>
+        <div class="note" style="margin-top:10px">这是题面要求的“uncertainty 定义”：
+          observed=数据里直接有的事件；inferred=由可见证据合理推出；unknown=数据无法支持。</div>
+      </div>
+    </aside>
+
+    <main>
+      <section class="panel">
+        <div class="head"><h2>A · 三条帖子的来源链</h2>
+          <span class="sub">source doc → payload → SaidIt，逐条标注证据类型</span></div>
+        <p class="desc">每一行是一条帖子的完整 provenance。绿色实线=数据中可见事件；灰色虚线=窗口外/不可见。</p>
+        <div id="prov"></div>
+      </section>
+
+      <section class="panel">
+        <div class="head"><h2>B · 为什么帖子看起来是“乱码”</h2>
+          <span class="sub">题面：内容杂乱无意义、板块随机</span></div>
+        <div id="gibberish"></div>
+      </section>
+
+      <section class="panel">
+        <div class="head"><h2>C · 含义判定：证据边界表</h2>
+          <span class="sub">observed / inferred / unknown 一览</span></div>
+        <div id="boundary"></div>
+      </section>
+
+      <div class="footer">溯源仅用 <code>read_file/create_file/saidit_post</code> 事件；未引入任何身份或动机推断。</div>
+    </main>
+  </div>
+</div>
+<script src="./mc2_viz_data.js"></script>
+<script src="./assets/app.js"></script>
+<script src="./assets/q2.js"></script>
+</body>
+</html>
