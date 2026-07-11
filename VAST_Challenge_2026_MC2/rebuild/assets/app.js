@@ -22,6 +22,28 @@ const MC2 = (() => {
   }
   function add(parent, tag, attrs, text) { const n = el(tag, attrs, text); parent.appendChild(n); return n; }
 
+  function labelSvg(svg, label) {
+    if (!svg) return;
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", label);
+  }
+
+  function makeInteractive(node, label, handler) {
+    if (!node) return node;
+    node.classList.add("clickable-mark");
+    node.setAttribute("tabindex", "0");
+    node.setAttribute("role", "button");
+    node.setAttribute("aria-label", label);
+    node.addEventListener("click", handler);
+    node.addEventListener("keydown", ev => {
+      if (ev.key === "Enter" || ev.key === " ") {
+        ev.preventDefault();
+        handler(ev);
+      }
+    });
+    return node;
+  }
+
   // shared tooltip
   let _tt;
   function tip() {
@@ -63,7 +85,7 @@ const MC2 = (() => {
   };
   function deptColor(d) { return DEPT_COLOR[d] || "#63748a"; }
 
-  return { load, el, add, showTip, hideTip, nav, name, deptColor, DEPT_COLOR };
+  return { load, el, add, labelSvg, makeInteractive, showTip, hideTip, nav, name, deptColor, DEPT_COLOR };
 })();
 
 // mount nav + mark step interactions after DOM ready

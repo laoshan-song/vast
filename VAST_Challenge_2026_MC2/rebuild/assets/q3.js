@@ -1,8 +1,9 @@
 /* q3.js — baseline vs anomaly, prior occurrences, single intervention */
 (async () => {
   const d = await MC2.load();
-  const { add, showTip, hideTip, name } = MC2;
+  const { add, labelSvg, makeInteractive, showTip, hideTip, name } = MC2;
   const inc = d.incidents;
+  const evidence = document.getElementById("evidence");
 
   /* steps */
   const steps = [["A 基线对比", "正常 vs 异常", "p-base"],
@@ -16,6 +17,45 @@
     b.classList.add("active");
     document.getElementById(b.dataset.id).scrollIntoView({ behavior: "smooth", block: "start" });
   }));
+
+  function esc(v) {
+    return String(v ?? "").replace(/[&<>"']/g, ch => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[ch]));
+  }
+
+  function showEvidence(title, rows, raw) {
+    if (!evidence) return;
+    evidence.innerHTML = `<div class="evidence-title">${esc(title)}</div>
+      <div class="evidence-grid">${rows.map(([k, v]) =>
+        `<div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>`).join("")}</div>
+      <pre class="evidence-pre">${esc(JSON.stringify(raw, null, 2))}</pre>`;
+  }
+
+  function showGateEvidence() {
+    showEvidence("SaidIt boundary gate evidence", [
+      ["rule", "actor is Agent AND saidit_post.details.content_source exists -> block/review"],
+      ["known anomalies covered", "3 / 3"],
+      ["normal human posts affected", "0 / 105"],
+      ["why this point", "irreversible external-publication boundary"],
+      ["limitation", "does not catch a future variant that writes ordinary content directly"],
+    ], { saidit_baseline: d.saidit_baseline, saidit_check: d.saidit_check });
+  }
+
+  function showIncidentEvidence(c) {
+    const I = inc[c];
+    const post = I.recipe ? I.recipe.find(x => x.action === "saidit_post") : null;
+    showEvidence(`${c} recurrence evidence`, [
+      ["post event", post ? `id ${post.id}, ${post.when}` : "not visible"],
+      ["origin / first visible source", name(I.origin)],
+      ["hops", I.hop_count],
+      ["distinct Agents", I.distinct_agent_count],
+      ["departments touched", I.departments_touched.length],
+      ["John arrivals", I.john_arrival_count],
+      ["source document", I.source_doc ? I.source_doc.name : "unknown / outside data window"],
+      ["shared terminal mechanism", "John Agent -> saidit_post(content_source) -> delete files"],
+    ], { post_event: post || null, source_doc: I.source_doc || null, create_file: I.create_file || null, recipe: I.recipe || [] });
+  }
 
   /* A. baseline small-multiples */
   const bl = d.saidit_baseline, ck = d.saidit_check, vir = d.virus;
@@ -53,6 +93,7 @@
   (() => {
     const svg = document.getElementById("timeline");
     svg.innerHTML = "";
+    labelSvg(svg, "Timeline comparing three prior and current anomalous SaidIt incidents with propagation duration and hop counts");
     const order = ["HiddenOrca", "MellowOtter", "SwiftWren"];
     const posts = order.map(c => ({ c, t: inc[c].post.when, first: inc[c].first_hop_when,
       hops: inc[c].hop_count, col: c === "SwiftWren" ? "#e5484d" : c === "MellowOtter" ? "#a371f7" : "#58a6ff" }));
@@ -78,6 +119,7 @@
         height: 12, rx: 6, fill: p.col, opacity: .25 });
       // post marker
       const c = add(svg, "circle", { cx: x(toTs(p.t)), cy: y, r: 7, fill: p.col, stroke: "#0a0e13", "stroke-width": 2 });
+      makeInteractive(c, `${p.c} incident evidence: ${p.hops} hops ending in SaidIt post`, () => showIncidentEvidence(p.c));
       c.addEventListener("mousemove", e => showTip(
         `<div class="tt-h">${p.c} 发帖</div><div class="tt-r">${p.t}</div>
          <div class="tt-r">${p.hops} hops · origin ${name(inc[p.c].origin)}</div>`, e));
@@ -136,6 +178,7 @@
     <div class="stat info"><div class="n">1</div><div class="l">改动点（题面：最多一处）</div></div>
     <div class="stat warn"><div class="n">边界</div><div class="l">最靠近“外部危害”发生处</div></div>
   </div>`;
+  showGateEvidence();
 
   const alts = [
     ["★ SaidIt 边界 content_source 门控", "全部 3 帖必经此动作；字段只在异常帖出现", "对 105 条正常帖零误报；最小改动", "recommended"],

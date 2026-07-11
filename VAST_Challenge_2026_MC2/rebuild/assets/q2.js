@@ -3,6 +3,7 @@
   const d = await MC2.load();
   const { name } = MC2;
   const inc = d.incidents;
+  const evidence = document.getElementById("evidence");
 
   const META = {
     SwiftWren: { theme: "CFO 会议纪要", role: "CFO Emma Harbor", strength: "最强", col: "var(--ok)" },
@@ -13,10 +14,42 @@
   /* sidebar: strength ranking */
   document.getElementById("strength").innerHTML = ["SwiftWren", "MellowOtter", "HiddenOrca"].map((c, i) => {
     const m = META[c], has = inc[c].source_doc;
-    return `<button><span class="idx">${i + 1}</span><span>
+    return `<button data-c="${c}"><span class="idx">${i + 1}</span><span>
       <span class="t">${c} · 溯源${m.strength}</span>
       <span class="d">${has ? has.name : "源文档不在数据集"}</span></span></button>`;
   }).join("");
+
+  function esc(v) {
+    return String(v ?? "").replace(/[&<>"']/g, ch => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[ch]));
+  }
+
+  function renderEvidence(c) {
+    if (!evidence) return;
+    const I = inc[c];
+    const source = I.source_doc || {};
+    const create = I.create_file || {};
+    const post = I.recipe ? I.recipe.find(x => x.action === "saidit_post") : null;
+    const rows = [
+      ["incident", c],
+      ["source doc", source.name || "unknown / outside data window"],
+      ["source event", source.id ? `id ${source.id}, read_by ${name(source.read_by)}, ${source.when}` : "not visible"],
+      ["payload create", create.id ? `id ${create.id}, by ${name(create.by)}, ${create.when}` : "not visible"],
+      ["payload file", `${c}.txt${create.size_hint ? `, ${create.size_hint.toLocaleString()} B` : ""}`],
+      ["public post", post ? `id ${post.id}, ${post.when}, content_source=${post.detail.content_source}` : "not visible"],
+      ["evidence boundary", I.source_doc && I.create_file ? "source and packaging observed; exact file body unknown" : "terminal post observed; source/package origin unknown"],
+    ];
+    evidence.innerHTML = `<div class="btnrow">${["SwiftWren", "MellowOtter", "HiddenOrca"].map(k =>
+        `<button class="btn ${k === c ? "primary" : ""}" data-c="${k}">${k}</button>`).join("")}</div>
+      <div class="evidence-title">${esc(c)} provenance evidence</div>
+      <div class="evidence-grid">${rows.map(([k, v]) =>
+        `<div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>`).join("")}</div>
+      <pre class="evidence-pre">${esc(JSON.stringify({ source_doc: I.source_doc || null, create_file: I.create_file || null, post_event: post || null }, null, 2))}</pre>`;
+    evidence.querySelectorAll("button[data-c]").forEach(b => b.addEventListener("click", () => renderEvidence(b.dataset.c)));
+  }
+
+  document.querySelectorAll("#strength button[data-c]").forEach(b => b.addEventListener("click", () => renderEvidence(b.dataset.c)));
 
   /* A. provenance rows */
   const rows = ["SwiftWren", "MellowOtter", "HiddenOrca"].map(c => {
@@ -101,4 +134,5 @@
       <td style="text-align:center">${i ? '<span class="badge inf">✓</span>' : ''}</td>
       <td style="text-align:center">${u ? '<span class="badge unk">✓</span>' : ''}</td></tr>`).join("")}
   </table>`;
+  renderEvidence("SwiftWren");
 })();

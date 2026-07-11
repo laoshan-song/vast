@@ -16,6 +16,7 @@
       核心方法：用可见的 <code>read_file → create_file</code> 事件链把每条 payload 追回到真实内部文档，
       并严格区分 <span class="badge obs">observed</span> <span class="badge inf">inferred</span>
       <span class="badge unk">unknown</span>。</p>
+    <p class="lead" style="margin-top:8px">English reviewer summary: use the evidence selector to compare observed provenance, inferred meaning, and unknown content limits for each post.</p>
   </header>
 
   <div class="layout">
@@ -51,8 +52,9 @@
       <section class="panel">
         <div class="head"><h2>A · 三条帖子的来源链</h2>
           <span class="sub">source doc → payload → SaidIt，逐条标注证据类型</span></div>
-        <p class="desc">每一行是一条帖子的完整 provenance。绿色实线=数据中可见事件；灰色虚线=窗口外/不可见。</p>
+        <p class="desc">每一行是一条帖子的完整 provenance。绿色实线=数据中可见事件；灰色虚线=窗口外/不可见。下方证据面板可切换三条帖子并查看原始事件摘要。</p>
         <div id="prov"></div>
+        <div id="evidence" class="evidence-box"></div>
       </section>
 
       <section class="panel">

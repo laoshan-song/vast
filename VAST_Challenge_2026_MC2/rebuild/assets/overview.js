@@ -1,7 +1,7 @@
 /* overview.js — system baseline + official Q map */
 (async () => {
   const d = await MC2.load();
-  const { add, showTip, hideTip } = MC2;
+  const { add, labelSvg, showTip, hideTip } = MC2;
 
   /* ---- key stats ---- */
   const ks = [
@@ -54,6 +54,7 @@
   /* ---- event type bar chart ---- */
   (() => {
     const svg = document.getElementById("typebars");
+    labelSvg(svg, "Event type distribution bar chart highlighting rare SaidIt posting actions");
     const W = 1180, H = 470, ml = 190, mr = 90, mt = 10, mb = 20;
     const ents = Object.entries(d.event_type_counts);
     const max = ents[0][1];
@@ -87,6 +88,7 @@
   /* ---- signature bars: person vs agent, content vs content_source ---- */
   (() => {
     const svg = document.getElementById("sigbars");
+    labelSvg(svg, "SaidIt baseline signature chart comparing human versus agent posts and content versus file source");
     const b = d.saidit_baseline;
     const W = 1180, mt = 30, gap = 40, colW = 520, ml = 40;
     const rows = [

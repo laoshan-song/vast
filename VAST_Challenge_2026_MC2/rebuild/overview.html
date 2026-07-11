@@ -15,6 +15,7 @@
     <p class="lead">任务定位（题面原文）：先<b>摸清多智能体系统的整体运行</b>、建立正常基准，再对标目标异常帖，
       最后提出<b>一处</b>整改。全部结论只用原始数据 <code>MC2 data.json</code>（185,147 事件）+ <code>org_chart.json</code>，
       时间统一按<b>挑战本地时区 UTC-7</b>（对齐题面 “John Windward, May 17 04:21am”）。</p>
+    <p class="lead" style="margin-top:8px">English reviewer summary: the system first establishes a normal baseline, then isolates three Agent-initiated file-source SaidIt posts as the anomaly signature.</p>
   </header>
 
   <div class="layout">
@@ -25,7 +26,7 @@
           异常帖来自一条<b>利用 Agent 任务队列的指令转发链</b>：一份内部文档被打包成
           <code>&lt;代号&gt;.txt</code>，其 <code>_further_instructions.md</code> 通过
           <code>queue_subordinate_task(task=read_file)</code> 在 Agent 间<b>盲转发随机游走</b>，
-          直到抵达全公司唯一有公开发帖权的 <b>John Windward Agent</b>，由它执行
+          直到抵达数据中唯一观察到完成文件源公开发帖的终端 <b>John Windward Agent</b>，由它执行
           <code>check → saidit_post(content_source) → delete×2</code>。共发生 <b>3 次</b>。
         </div>
       </div>
@@ -40,6 +41,15 @@
           <a class="pill" href="q2.html" style="justify-content:flex-start">Q2 · 帖子含义与内容来源</a>
           <a class="pill" href="q3.html" style="justify-content:flex-start">Q3 · 会否复发 + 单点干预</a>
         </div>
+      </div>
+      <div class="card">
+        <h3>English reviewer quick start</h3>
+        <ul class="reviewer-list">
+          <li><b>Overview</b> Confirm the baseline: 185,147 events, 108 SaidIt posts, and 3 Agent file-source anomalies.</li>
+          <li><b>Q1</b> Click recipe boxes or relay points to inspect event ids, timestamps, actors, and raw JSON.</li>
+          <li><b>Q2</b> Switch SwiftWren, MellowOtter, and HiddenOrca to compare observed, inferred, and unknown provenance.</li>
+          <li><b>Q3</b> Click recurrence markers or the gate evidence panel; verify the one intervention has 3/3 coverage and 0/105 normal-post false positives.</li>
+        </ul>
       </div>
     </aside>
 

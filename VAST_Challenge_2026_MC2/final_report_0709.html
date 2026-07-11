@@ -14,6 +14,7 @@
       --blue: #1459b8;
       --red: #b42318;
       --green: #137333;
+      --amber: #8a5a00;
     }
     body {
       margin: 0;
@@ -76,6 +77,24 @@
       gap: 12px;
       margin: 16px 0;
     }
+    .quick {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 14px 0 20px;
+    }
+    .quick a {
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 12px;
+      background: white;
+      color: var(--ink);
+      text-decoration: none;
+    }
+    .quick a:hover { border-color: var(--blue); }
+    .quick b { display: block; color: var(--blue); margin-bottom: 4px; }
+    .quick span { display: block; color: var(--muted); font-size: 12.5px; }
     .metric {
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -85,10 +104,33 @@
     .metric b { display: block; font-size: 22px; color: var(--blue); }
     .risk { color: var(--red); font-weight: 700; }
     .ok { color: var(--green); font-weight: 700; }
+    .todo {
+      border-left: 4px solid var(--amber);
+      background: #fff8e6;
+      color: #4b3710;
+      padding: 10px 12px;
+      margin: 12px 0;
+      border-radius: 6px;
+      font-size: 13px;
+    }
     @media print {
       main { max-width: none; padding: 18mm; }
       figure { break-inside: avoid; }
       h2 { break-after: avoid; }
+      .quick { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media screen and (max-width: 760px) {
+      main { padding: 24px 14px 52px; }
+      h1 { font-size: 25px; line-height: 1.18; }
+      h2 { font-size: 19px; margin-top: 28px; }
+      .meta, .callout { padding: 12px; }
+      .meta table, .meta tbody, .meta tr, .meta td { display: block; width: 100%; }
+      .meta td { padding: 6px 0; border-bottom: 0; overflow-wrap: anywhere; }
+      .meta td:first-child { width: auto; padding-top: 10px; border-top: 1px solid #e5ebf3; }
+      .quick { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
+      figure { border-radius: 6px; }
+      figcaption { font-size: 12.5px; }
     }
   </style>
 </head>
@@ -98,43 +140,58 @@
   <p><b>Topic:</b> Anomalous SaidIt Post in Tenant Thread</p>
   <p><b>Core claim:</b> the anomalous posts were generated through an Agent instruction relay that moved internal files to the public SaidIt boundary via John Windward's Agent.</p>
 
+  <div class="todo"><b>Final-submission status:</b> analysis and visuals are ready for review, but team metadata, total hours, public-release permission, and the video URL/file must be filled by the team before PCS/course submission. These fields are not inferable from the dataset and must not be fabricated.</div>
+
   <section class="meta">
     <table>
-      <tr><td>Entry name</td><td>[Fill team entry name]</td></tr>
-      <tr><td>Team members</td><td>[Fill names, affiliations, emails; mark primary contact]</td></tr>
+      <tr><td>Entry name</td><td>TEAM ACTION REQUIRED: official entry name, e.g. &lt;Organization&gt;-&lt;PrimaryContactLastName&gt;-MC2</td></tr>
+      <tr><td>Team members</td><td>TEAM ACTION REQUIRED: names, affiliations, emails; mark one primary contact</td></tr>
       <tr><td>Student team</td><td>YES</td></tr>
-      <tr><td>Tools used</td><td>Python, JavaScript, HTML/CSS/SVG, browser-based visual analytics, GitHub Pages</td></tr>
-      <tr><td>Total hours</td><td>[Fill realistic total team hours]</td></tr>
-      <tr><td>Video link</td><td>[Fill after recording]</td></tr>
+      <tr><td>Tools used</td><td>Python data extraction, JavaScript, HTML/CSS/SVG, browser-based visual analytics, GitHub Pages, browser screenshot verification</td></tr>
+      <tr><td>Total hours</td><td>TEAM ACTION REQUIRED: total team hours for this MC2 entry</td></tr>
+      <tr><td>Video link</td><td>TEAM ACTION REQUIRED: stable <=4 minute narrated video link, or bundled MP4/WMV filename</td></tr>
+      <tr><td>Public repository permission</td><td>TEAM ACTION REQUIRED: choose YES/NO before official submission</td></tr>
       <tr><td>Time convention</td><td>Challenge-local UTC-7, matching the official May 17 04:21am anchor</td></tr>
     </table>
   </section>
 
+  <section class="callout">
+    <h2 style="border-top:0;padding-top:0;margin-top:0">Reviewer Quick Start</h2>
+    <p>For a fast review, open the interactive system and inspect these evidence-backed views in order. The website works offline from the submitted folder and each drill-down panel links visual claims back to raw event records.</p>
+    <div class="quick">
+      <a href="rebuild/index.html"><b>Interactive Index</b><span>Start here; links to all MC2 views.</span></a>
+      <a href="rebuild/overview.html"><b>Overview</b><span>Baseline: 185,147 events, 108 SaidIt posts, 3 file-source anomalies.</span></a>
+      <a href="rebuild/q1.html"><b>Q1 Evidence</b><span>Click recipe boxes or relay points to inspect event ids and raw JSON.</span></a>
+      <a href="rebuild/q2.html"><b>Q2 / Q3 Evidence</b><span>Switch incidents in Q2; click recurrence markers or the gate panel in Q3.</span></a>
+    </div>
+    <p><b>Evidence boundary:</b> observed means directly logged; inferred means derived from linked records; unknown means not present in the data. The submission does not claim exact file bodies, HiddenOrca's source document, human motive, or a proven human attacker identity.</p>
+  </section>
+
   <figure>
     <img src="rebuild/shot-overview.png" alt="Overview page showing answer map and system baseline">
-    <figcaption>Overview: official-question map, event-type baseline, and the clean anomaly signature.</figcaption>
+    <figcaption>Overview: official-question map, event-type baseline, and the clean anomaly signature. The interactive pages add details-on-demand evidence panels for event-level inspection.</figcaption>
   </figure>
 
   <h2>Q1. How was the anomalous SaidIt post made?</h2>
   <div class="answer">
     <p>The anomalous post was not produced by a normal human posting workflow. It was produced by an Agent-mediated instruction relay. An internal document was first packaged as a codename payload file, such as <code>SwiftWren.txt</code>; the corresponding <code>_further_instructions.md</code> task then propagated through <code>queue_subordinate_task(task=read_file)</code> across multiple Agents.</p>
-    <p>The task eventually reached John Windward's Agent, the only observed Agent that completed public SaidIt posts from a file source. In the terminal window, John Agent executed the same five-event sequence in all three incidents: relay arrival, <code>saidit_post_check</code>, <code>saidit_post(content_source=...)</code>, deletion of the instruction file, and deletion of the payload file.</p>
+    <p>The task eventually reached John Windward's Agent, the only observed terminal Agent endpoint that completed public SaidIt posts from a file source in these incidents. In the terminal window, John Agent executed the same five-event sequence in all three incidents: relay arrival, <code>saidit_post_check</code>, <code>saidit_post(content_source=...)</code>, deletion of the instruction file, and deletion of the payload file.</p>
     <p>The most recent target incident, <code>SwiftWren</code>, is the largest chain: 186 relay hops, 18 Agents, 119 cross-department hops, and 5 arrivals at John before the final post at 2046-05-17 04:21:15 UTC-7.</p>
   </div>
   <figure>
     <img src="rebuild/shot-q1.png" alt="Q1 visualizations showing terminal recipe, random-walk chain, and system flow">
-    <figcaption>Q1: exact five-step terminal sequence, unfolded relay path, and system flow from internal document to public SaidIt post.</figcaption>
+    <figcaption>Q1: exact five-step terminal sequence, unfolded relay path, and system flow from internal document to public SaidIt post. In the interactive version, recipe boxes and relay points are clickable evidence records.</figcaption>
   </figure>
 
   <h2>Q2. What do the posts mean? What is the origin of their contents?</h2>
   <div class="answer">
     <p>The posts are best understood as externalized internal documents, not ordinary social posts. The logs do not contain the literal file text, so exact contents cannot be reconstructed. The provenance chain is still strong for two incidents.</p>
-    <p><code>SwiftWren.txt</code> was created by Emma Harbor's Agent immediately after a read of <code>meeting_notes.doc</code>, making it an observed CFO meeting-notes leak. <code>MellowOtter.txt</code> was created by Noah Mariner's Agent immediately after a read of <code>strategic_directions.doc</code>, making it an observed COO strategy-document leak.</p>
+    <p><code>SwiftWren.txt</code> was created by Emma Harbor's Agent immediately after a read of <code>meeting_notes.doc</code>, making an observed provenance chain from a CFO meeting-notes document to a public file-source post. <code>MellowOtter.txt</code> was created by Noah Mariner's Agent immediately after a read of <code>strategic_directions.doc</code>, making an observed provenance chain from a COO strategic-directions document to a public file-source post.</p>
     <p><code>HiddenOrca</code> has weaker provenance: the payload and instruction file already existed before the visible data window, and the first visible relay sender is Gabriel Sonar's Agent. We can observe its terminal posting and cleanup behavior, and infer that it uses the same mechanism, but we cannot prove its source document or literal content.</p>
   </div>
   <figure>
     <img src="rebuild/shot-q2.png" alt="Q2 provenance and uncertainty boundary">
-    <figcaption>Q2: content provenance rows and explicit observed / inferred / unknown boundaries.</figcaption>
+    <figcaption>Q2: content provenance rows and explicit observed / inferred / unknown boundaries. The interactive evidence selector exposes source, payload, and post-event records for each incident.</figcaption>
   </figure>
 
   <h2>Q3. Could this behavior repeat? What one intervention should be made?</h2>
@@ -142,10 +199,11 @@
     <p><span class="risk">Yes, it could repeat.</span> The behavior has already repeated three times: <code>HiddenOrca</code>, <code>MellowOtter</code>, and <code>SwiftWren</code>. The sources differ, the propagation scales differ, and the time spans differ, but all three share the same core mechanism: instruction relay through Agents, final arrival at John Agent, <code>content_source</code> posting to SaidIt, and immediate cleanup.</p>
     <p>The recommended single intervention is a SaidIt boundary gate: block or require human approval for any <code>saidit_post</code> initiated by an Agent when <code>details.content_source</code> is present.</p>
     <p>This control is strong because it sits at the irreversible external-publication boundary. In the observed data, it covers <span class="ok">3/3</span> known anomalous posts and does not affect the 105 normal human SaidIt posts, which use ordinary <code>content</code> rather than file-based <code>content_source</code>.</p>
+    <p>Scope limitation: this gate targets the observed file-source anomaly pattern. A future variant that writes ordinary <code>content</code> directly would require additional detection, but this rule is the most precise single intervention for every observed incident in the data.</p>
   </div>
   <figure>
     <img src="rebuild/shot-q3.png" alt="Q3 repeat-risk and intervention visualizations">
-    <figcaption>Q3: baseline versus anomaly, prior incident comparison, and the recommended SaidIt boundary intervention.</figcaption>
+    <figcaption>Q3: baseline versus anomaly, prior incident comparison, and the recommended SaidIt boundary intervention. Timeline markers and the gate panel provide details-on-demand evidence for recurrence and effectiveness.</figcaption>
   </figure>
 
   <h2>Method and Reproducibility</h2>
@@ -156,6 +214,8 @@
   </div>
   <div class="callout">
     <p>Data sources: <code>MC2 data.json</code> and <code>org_chart.json</code>. Processing script: <code>rebuild/extract_data.py</code>. Visualization data: <code>rebuild/mc2_viz_data.json</code> and <code>rebuild/mc2_viz_data.js</code>. The website is dependency-free and can run directly from <code>rebuild/index.html</code>.</p>
+    <p>Algorithmic extraction sequence: filter all <code>saidit_post</code> events; separate ordinary <code>content</code> posts from file-backed <code>content_source</code> posts; identify the three codename payloads; trace related <code>queue_subordinate_task(task=read_file)</code> hops; reconstruct hop-ordered relay paths; link visible <code>read_file -> create_file -> saidit_post</code> provenance; aggregate baseline counts for actor type, post type, and candidate interventions.</p>
+    <p>Interaction design: the report screenshots are static, but the packaged website supports details-on-demand. Q1 exposes raw event records for chain steps and relay hops; Q2 exposes provenance records by incident; Q3 exposes recurrence and intervention evidence.</p>
     <p>Uncertainty discipline: exact file bodies, HiddenOrca's source document, and actor motive are not claimed as observed facts.</p>
   </div>
 </main>

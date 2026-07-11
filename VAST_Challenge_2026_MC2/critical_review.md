@@ -28,9 +28,9 @@ This file records the current quality audit. Treat unchecked or weak items as ri
 | False positive argument | 3 content_source anomalies vs 105 normal human posts | Strong if numbers stay verified |
 | Visual figures | Four-page HTML website and regenerated screenshots | Strong; Q1/Q3 clipping issues fixed in fresh screenshots |
 | Official packaging | `final_answer_sheet.md` draft exists | Incomplete until copied into answer sheet and screenshots added |
-| Demo/video | `presentation_script.md` exists | Incomplete until recorded or rehearsed |
+| Demo/video | `video_script_4min_zh.md` and `video_recording_checklist.md` exist | Incomplete until recorded and linked |
 | Self-contained package | `final_submission/` and `final_submission.zip` | Strong; browser-verified |
-| Chinese presentation support | `presentation_script_zh.md` and `slides.html` | Strong; browser-verified |
+| Chinese presentation support | `video_script_4min_zh.md`, `video_recording_checklist.md`, and `slides.html` | Strong; final script aligns to evidence drill-down interactions |
 | PDF report | `final_report.pdf` | Strong; 9-page A4 PDF rendered and visually checked |
 
 ## Claims To Avoid Or Qualify
@@ -45,7 +45,7 @@ This file records the current quality audit. Treat unchecked or weak items as ri
 
 1. **Submission-format risk:** The current deliverable is a website and Markdown drafts. The official answer sheet still needs final screenshots and metadata.
 2. **Language-density risk:** The website is information-rich. For the official report, use the concise answer draft instead of copying full page text.
-3. **Recording risk:** The video/demo is not recorded yet. Use `presentation_script.md` and the regenerated website screenshots.
+3. **Recording risk:** The video/demo is not recorded yet. Use `video_script_4min_zh.md`, demonstrate the live website, and follow `video_recording_checklist.md`.
 
 ## Current Verification Performed
 
@@ -84,4 +84,4 @@ This file records the current quality audit. Treat unchecked or weak items as ri
 ## Next Verification Needed
 
 - Fill personal/team metadata, total hours, and video link in the submitted answer form.
-- Record or rehearse the demo using `presentation_script.md` or `presentation_script_zh.md`.
+- Record or rehearse the demo using `video_script_4min_zh.md`; keep the video <=4 minutes and demonstrate Q1/Q2/Q3 evidence drill-down interactions.

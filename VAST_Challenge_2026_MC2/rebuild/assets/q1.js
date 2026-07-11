@@ -1,12 +1,13 @@
 /* q1.js — detailed chain + random-walk trace + system overview */
 (async () => {
   const d = await MC2.load();
-  const { add, showTip, hideTip, name, deptColor } = MC2;
+  const { add, labelSvg, makeInteractive, showTip, hideTip, name, deptColor } = MC2;
   const CODES = ["SwiftWren", "MellowOtter", "HiddenOrca"];
   let cur = "SwiftWren";
 
   const incStats = document.getElementById("incstats");
   const incSel = document.getElementById("incsel");
+  const evidence = document.getElementById("evidence");
   incSel.innerHTML = CODES.map(c =>
     `<button class="btn ${c === cur ? "primary" : ""}" data-c="${c}">${c}</button>`).join("");
   incSel.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
@@ -30,6 +31,31 @@
     document.getElementById(b.dataset.id).scrollIntoView({ behavior: "smooth", block: "start" });
   }));
 
+  function esc(v) {
+    return String(v ?? "").replace(/[&<>"']/g, ch => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[ch]));
+  }
+
+  function showEvidence(title, rows, raw) {
+    if (!evidence) return;
+    evidence.innerHTML = `<div class="evidence-title">${esc(title)}</div>
+      <div class="evidence-grid">${rows.map(([k, v]) =>
+        `<div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>`).join("")}</div>
+      <pre class="evidence-pre">${esc(JSON.stringify(raw, null, 2))}</pre>`;
+  }
+
+  function eventRows(r) {
+    return [
+      ["event id", r.id],
+      ["time UTC-7", r.when],
+      ["action", r.action || "queue_subordinate_task"],
+      ["from", name(r.from)],
+      ["to", name(r.to)],
+      ["details", JSON.stringify(r.detail || {})],
+    ];
+  }
+
   function render() {
     const inc = d.incidents[cur];
     /* incident stat chips */
@@ -44,12 +70,15 @@
     drawRecipe(inc);
     drawWalk(inc);
     drawSys(inc);
+    const first = inc.recipe && inc.recipe[2] ? inc.recipe[2] : inc.hops[inc.hops.length - 1];
+    if (first) showEvidence(`${cur}: selected evidence`, eventRows(first), first);
   }
 
   /* ================= A. recipe timeline ================= */
   function drawRecipe(inc) {
     const svg = document.getElementById("recipe");
     svg.innerHTML = "";
+    labelSvg(svg, `${cur} terminal event chain from payload file to John Agent SaidIt post and cleanup`);
     const rec = inc.recipe || [];
     const W = Math.max(760, Math.floor(svg.parentElement.clientWidth || 1160));
     svg.setAttribute("viewBox", `0 0 ${W} 260`);
@@ -71,6 +100,8 @@
         stroke: "#2c3d4f", "stroke-width": 2, "marker-end": "url(#ar)" });
       const col = COLORS[r.action] || "#58a6ff";
       const g = add(svg, "g", {});
+      makeInteractive(g, `${cur} terminal step ${i + 1}: ${r.action}`, () =>
+        showEvidence(`${cur}: terminal step ${i + 1}`, eventRows(r), r));
       add(g, "rect", { x: cx - boxW / 2, y: y - boxH / 2, width: boxW, height: boxH, rx: 8,
         fill: "#18212e", stroke: col, "stroke-width": r.action === "saidit_post" ? 2.5 : 1.5 });
       add(g, "text", { x: cx, y: y - 16, "text-anchor": "middle", "font-size": 12.5, "font-weight": 700, fill: col },
@@ -103,6 +134,7 @@
   function drawWalk(inc) {
     const svg = document.getElementById("walk");
     svg.innerHTML = "";
+    labelSvg(svg, `${cur} queue_subordinate_task relay walk across agents ending at John Windward`);
     const hops = inc.hops;
     // build ordered agent list: origin first, John last, others between (by dept)
     const agents = inc.distinct_agents.slice();
@@ -147,6 +179,10 @@
       const isArr = h.to === "john_windward";
       const c = add(svg, "circle", { cx: px, cy: py, r: isArr ? 5 : 2.6,
         fill: isArr ? "#e5484d" : "#8bb7e8", stroke: isArr ? "#fff" : "none", "stroke-width": isArr ? 1 : 0 });
+      makeInteractive(c, `${cur} relay hop ${i + 1}: ${name(h.from)} to ${name(h.to)}`, () => showEvidence(`${cur}: relay hop ${i + 1}`, eventRows({
+        id: h.id, when: h.when, action: "queue_subordinate_task", from: h.from, to: h.to,
+        detail: { task: "read_file", hop: i + 1, arrival_at_john: isArr }
+      }), h));
       c.addEventListener("mousemove", e => showTip(
         `<div class="tt-h">hop ${i + 1}${isArr ? " · 到达 John" : ""}</div>
          <div class="tt-r">${name(h.from)} → ${name(h.to)}</div>

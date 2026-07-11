@@ -14,6 +14,7 @@
     <h1>异常帖如何产生：精确链路 + 系统总图</h1>
     <p class="lead">Q1 要两样东西：<b>目标帖的精确事件链</b>，以及把它<b>放回整个系统的总图</b>。
       下面先看 John Agent 每次发帖都完全相同的 5 步“配方”，再看指令在 Agent 网络里的真实游走轨迹，最后是分层系统图。</p>
+    <p class="lead" style="margin-top:8px">English reviewer summary: click any recipe box or relay point to inspect the raw event evidence behind the reconstructed chain.</p>
   </header>
 
   <div class="layout">
@@ -21,9 +22,9 @@
       <div class="card answer">
         <h2>Q1 答案</h2>
         <div class="a-body">
-          攻击者利用框架内置、正常业务从不使用的 <code>task=read_file</code> 传播机制，
+          观察到的异常任务链利用框架内置、正常业务从不使用的 <code>task=read_file</code> 传播机制，
           把 <code>&lt;code&gt;_further_instructions.md</code> 在 Agent 间盲转发，
-          直到抵达唯一有公开发帖权的 John Windward Agent。John Agent 随后 4 秒内完成
+          直到抵达数据中唯一观察到完成文件源公开发帖的终端 John Windward Agent。John Agent 随后 4 秒内完成
           <code>saidit_post_check → saidit_post(content_source) → delete×2</code>。
           三帖 100% 同一配方。
         </div>
@@ -47,8 +48,9 @@
         <div class="head"><h2>A · 精确链路：终点 5 步配方</h2>
           <span class="sub" id="recipe-sub"></span></div>
         <p class="desc">这是 John Agent 收到 relay 任务后发生的确切事件序列（含 event id 与本地时间）。
-          三次泄露的这 5 步逐字相同，时间精确到秒。</p>
+          三次泄露的这 5 步逐字相同，时间精确到秒。点击任一步或传播点，下方会保留原始证据。</p>
         <div class="svg-wrap"><svg id="recipe" width="100%" height="260"></svg></div>
+        <div id="evidence" class="evidence-box"></div>
       </section>
 
       <section class="panel" id="p-walk">

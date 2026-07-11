@@ -14,6 +14,7 @@
     <h1>复发风险与单点干预</h1>
     <p class="lead">Q3 分两步：先<b>用历史数据证明这不是第一次</b>（建立基线、对比先例），
       再<b>只选一处</b>做整改，并用数据论证它为何有效、且不误伤正常业务。</p>
+    <p class="lead" style="margin-top:8px">English reviewer summary: click a timeline marker to inspect prior-incident evidence; the intervention panel states the exact rule, coverage, false positives, and limitation.</p>
   </header>
 
   <div class="layout">
@@ -26,7 +27,7 @@
           任何 <b>Agent 发起且带 <code>content_source</code></b> 的发帖。
         </div>
         <div class="note" style="margin-top:12px">该门控 <b>3/3</b> 覆盖已知异常，对 <b>105</b> 条正常人工帖
-          <b>0 误报</b>——因为正常帖从不使用 content_source。</div>
+          <b>0 误报</b>——因为正常帖从不使用 content_source。局限：如果未来异常链改用普通 <code>content</code> 直接写正文，该单点门控需要配合新的内容/行为检测。</div>
       </div>
       <div class="card">
         <h3>三段论证</h3>
@@ -46,7 +47,7 @@
         <div class="head"><h2>B · 先例对比：这是第三次，不是第一次</h2>
           <span class="sub">三次同机制事件的时间线与规模</span></div>
         <p class="desc">三次事件机制完全相同：<code>指令 relay → John Agent → content_source 发帖 → 清理</code>。
-          规模从 39 跳递增到 186 跳，传播越久越难追溯。</p>
+          规模从 39 跳递增到 186 跳，传播越久越难追溯。点击时间线圆点可查看每次事件的复发证据。</p>
         <div class="svg-wrap"><svg id="timeline" width="100%" height="230"></svg></div>
         <div id="priortable" style="margin-top:16px"></div>
       </section>
@@ -55,11 +56,12 @@
         <div class="head"><h2>C · 单点干预：为什么选 SaidIt 边界</h2>
           <span class="sub">覆盖率 vs 误伤，逐点评估</span></div>
         <div id="gate"></div>
+        <div id="evidence" class="evidence-box"></div>
         <h3 style="margin-top:20px">候选干预点评估</h3>
         <div id="alts"></div>
       </section>
 
-      <div class="footer">干预评估基于全量计数：content_source 命中 3/3 异常、0/105 正常帖；qst 总量 17,038。</div>
+      <div class="footer">干预评估基于全量计数：content_source 命中 3/3 异常、0/105 正常帖；qst 总量 17,038。该规则只声称覆盖当前观察到的 file-source 异常模式。</div>
     </main>
   </div>
 </div>
