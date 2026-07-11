@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VAST Challenge 2026 MC2 Final Report</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17202a;
+      --muted: #5c6978;
+      --border: #d8e0ea;
+      --panel: #f7f9fc;
+      --blue: #1459b8;
+      --red: #b42318;
+      --green: #137333;
+    }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background: white;
+      line-height: 1.65;
+      font-size: 15px;
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 36px 28px 70px;
+    }
+    h1 { font-size: 32px; margin: 0 0 8px; }
+    h2 { font-size: 22px; margin: 34px 0 10px; border-top: 2px solid var(--border); padding-top: 22px; }
+    h3 { font-size: 16px; margin: 18px 0 8px; color: var(--blue); }
+    p { margin: 8px 0; }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #eef3f9;
+      border: 1px solid #d8e4f2;
+      border-radius: 4px;
+      padding: 1px 4px;
+      font-size: 0.9em;
+    }
+    .meta, .callout {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 14px 0;
+    }
+    .meta table { width: 100%; border-collapse: collapse; }
+    .meta td { padding: 5px 8px; border-bottom: 1px solid #e5ebf3; }
+    .meta td:first-child { width: 190px; color: var(--muted); font-weight: 700; }
+    .answer {
+      border-left: 4px solid var(--blue);
+      padding-left: 14px;
+      margin: 12px 0 18px;
+    }
+    figure {
+      margin: 18px 0 28px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #0a0e13;
+    }
+    figure img { width: 100%; display: block; }
+    figcaption {
+      background: white;
+      color: var(--muted);
+      padding: 9px 12px;
+      font-size: 13px;
+      border-top: 1px solid var(--border);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .metric {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--panel);
+    }
+    .metric b { display: block; font-size: 22px; color: var(--blue); }
+    .risk { color: var(--red); font-weight: 700; }
+    .ok { color: var(--green); font-weight: 700; }
+    @media print {
+      main { max-width: none; padding: 18mm; }
+      figure { break-inside: avoid; }
+      h2 { break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>VAST Challenge 2026 Mini-Challenge 2</h1>
+  <p><b>Topic:</b> Anomalous SaidIt Post in Tenant Thread</p>
+  <p><b>Core claim:</b> the anomalous posts were generated through an Agent instruction relay that moved internal files to the public SaidIt boundary via John Windward's Agent.</p>
+
+  <section class="meta">
+    <table>
+      <tr><td>Entry name</td><td>[Fill team entry name]</td></tr>
+      <tr><td>Team members</td><td>[Fill names, affiliations, emails; mark primary contact]</td></tr>
+      <tr><td>Student team</td><td>YES</td></tr>
+      <tr><td>Tools used</td><td>Python, JavaScript, HTML/CSS/SVG, browser-based visual analytics, GitHub Pages</td></tr>
+      <tr><td>Total hours</td><td>[Fill realistic total team hours]</td></tr>
+      <tr><td>Video link</td><td>[Fill after recording]</td></tr>
+      <tr><td>Time convention</td><td>Challenge-local UTC-7, matching the official May 17 04:21am anchor</td></tr>
+    </table>
+  </section>
+
+  <figure>
+    <img src="rebuild/shot-overview.png" alt="Overview page showing answer map and system baseline">
+    <figcaption>Overview: official-question map, event-type baseline, and the clean anomaly signature.</figcaption>
+  </figure>
+
+  <h2>Q1. How was the anomalous SaidIt post made?</h2>
+  <div class="answer">
+    <p>The anomalous post was not produced by a normal human posting workflow. It was produced by an Agent-mediated instruction relay. An internal document was first packaged as a codename payload file, such as <code>SwiftWren.txt</code>; the corresponding <code>_further_instructions.md</code> task then propagated through <code>queue_subordinate_task(task=read_file)</code> across multiple Agents.</p>
+    <p>The task eventually reached John Windward's Agent, the only observed Agent that completed public SaidIt posts from a file source. In the terminal window, John Agent executed the same five-event sequence in all three incidents: relay arrival, <code>saidit_post_check</code>, <code>saidit_post(content_source=...)</code>, deletion of the instruction file, and deletion of the payload file.</p>
+    <p>The most recent target incident, <code>SwiftWren</code>, is the largest chain: 186 relay hops, 18 Agents, 119 cross-department hops, and 5 arrivals at John before the final post at 2046-05-17 04:21:15 UTC-7.</p>
+  </div>
+  <figure>
+    <img src="rebuild/shot-q1.png" alt="Q1 visualizations showing terminal recipe, random-walk chain, and system flow">
+    <figcaption>Q1: exact five-step terminal sequence, unfolded relay path, and system flow from internal document to public SaidIt post.</figcaption>
+  </figure>
+
+  <h2>Q2. What do the posts mean? What is the origin of their contents?</h2>
+  <div class="answer">
+    <p>The posts are best understood as externalized internal documents, not ordinary social posts. The logs do not contain the literal file text, so exact contents cannot be reconstructed. The provenance chain is still strong for two incidents.</p>
+    <p><code>SwiftWren.txt</code> was created by Emma Harbor's Agent immediately after a read of <code>meeting_notes.doc</code>, making it an observed CFO meeting-notes leak. <code>MellowOtter.txt</code> was created by Noah Mariner's Agent immediately after a read of <code>strategic_directions.doc</code>, making it an observed COO strategy-document leak.</p>
+    <p><code>HiddenOrca</code> has weaker provenance: the payload and instruction file already existed before the visible data window, and the first visible relay sender is Gabriel Sonar's Agent. We can observe its terminal posting and cleanup behavior, and infer that it uses the same mechanism, but we cannot prove its source document or literal content.</p>
+  </div>
+  <figure>
+    <img src="rebuild/shot-q2.png" alt="Q2 provenance and uncertainty boundary">
+    <figcaption>Q2: content provenance rows and explicit observed / inferred / unknown boundaries.</figcaption>
+  </figure>
+
+  <h2>Q3. Could this behavior repeat? What one intervention should be made?</h2>
+  <div class="answer">
+    <p><span class="risk">Yes, it could repeat.</span> The behavior has already repeated three times: <code>HiddenOrca</code>, <code>MellowOtter</code>, and <code>SwiftWren</code>. The sources differ, the propagation scales differ, and the time spans differ, but all three share the same core mechanism: instruction relay through Agents, final arrival at John Agent, <code>content_source</code> posting to SaidIt, and immediate cleanup.</p>
+    <p>The recommended single intervention is a SaidIt boundary gate: block or require human approval for any <code>saidit_post</code> initiated by an Agent when <code>details.content_source</code> is present.</p>
+    <p>This control is strong because it sits at the irreversible external-publication boundary. In the observed data, it covers <span class="ok">3/3</span> known anomalous posts and does not affect the 105 normal human SaidIt posts, which use ordinary <code>content</code> rather than file-based <code>content_source</code>.</p>
+  </div>
+  <figure>
+    <img src="rebuild/shot-q3.png" alt="Q3 repeat-risk and intervention visualizations">
+    <figcaption>Q3: baseline versus anomaly, prior incident comparison, and the recommended SaidIt boundary intervention.</figcaption>
+  </figure>
+
+  <h2>Method and Reproducibility</h2>
+  <div class="grid">
+    <div class="metric"><b>185,147</b> events analyzed from <code>MC2 data.json</code></div>
+    <div class="metric"><b>3 / 108</b> SaidIt posts use <code>content_source</code></div>
+    <div class="metric"><b>0 / 105</b> normal human SaidIt posts affected by the proposed gate</div>
+  </div>
+  <div class="callout">
+    <p>Data sources: <code>MC2 data.json</code> and <code>org_chart.json</code>. Processing script: <code>rebuild/extract_data.py</code>. Visualization data: <code>rebuild/mc2_viz_data.json</code> and <code>rebuild/mc2_viz_data.js</code>. The website is dependency-free and can run directly from <code>rebuild/index.html</code>.</p>
+    <p>Uncertainty discipline: exact file bodies, HiddenOrca's source document, and actor motive are not claimed as observed facts.</p>
+  </div>
+</main>
+</body>
+</html>
