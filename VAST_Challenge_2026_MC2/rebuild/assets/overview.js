@@ -1,114 +1,192 @@
-/* overview.js — system baseline + official Q map */
+/* overview.js - system baseline, signature small multiples, method pipeline */
 (async () => {
   const d = await MC2.load();
   const { add, labelSvg, showTip, hideTip } = MC2;
 
-  /* ---- key stats ---- */
-  const ks = [
-    ["3", "文件源异常帖 content_source", "anom"],
-    ["105", "正常人工 SaidIt 帖", "ok"],
-    ["71→3", "post_check 中真正发帖", "warn"],
-    ["235", "read_file 型 relay 跳（=39+10+186）", "info"],
-    ["18", "SwiftWren 链涉及 Agent", "purple"],
-    ["5", "SwiftWren 到达 John 次数", "anom"],
-  ];
-  document.getElementById("keystats").innerHTML = ks.map(([n, l, c]) =>
-    `<div class="stat ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+  const b = d.saidit_baseline;
+  const ck = d.saidit_check;
+  const swift = d.incidents.SwiftWren;
 
-  /* ---- official Q map ---- */
-  const inc = d.incidents;
+  document.getElementById("keystats").innerHTML = [
+    ["185,147", "total logged events", "info"],
+    ["108", "SaidIt posts", "ok"],
+    ["3", "Agent file-source anomalies", "anom"],
+    ["105", "normal human SaidIt posts", "ok"],
+    ["235", "codename relay hops", "info"],
+    ["5", "SwiftWren arrivals at John", "warn"],
+  ].map(([n, l, c]) => `<div class="stat ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+
   document.getElementById("qmap").innerHTML = `
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
-    <div class="card" style="border-top:3px solid var(--info)">
-      <h2>Q1 · 如何产生</h2>
-      <p style="color:var(--muted);font-size:13.5px;margin:.2em 0 10px">people + system interactions</p>
-      <div style="font-size:13.5px;line-height:1.6">
-        内部文档 → <code>&lt;code&gt;.txt</code> payload → <code>queue_subordinate_task</code> 盲转发
-        → John Agent → <code>saidit_post(content_source)</code> → <code>delete×2</code>。
-        SwiftWren 走了 <b>${inc.SwiftWren.hop_count} 跳 / ${inc.SwiftWren.distinct_agent_count} 人</b>。
-      </div>
-      <a class="pill" href="q1.html" style="margin-top:12px">看链路 + 系统图 →</a>
+  <div class="cards3">
+    <div class="card qcard info">
+      <h2>Q1: How was it made?</h2>
+      <p>Internal document -> codename payload -> Agent relay -> John Agent -> <code>saidit_post(content_source)</code> -> cleanup.</p>
+      <div class="metricline"><b>${swift.hop_count}</b> SwiftWren relay hops / <b>${swift.distinct_agent_count}</b> Agents / <b>${swift.john_arrival_count}</b> John arrivals</div>
+      <a class="pill" href="q1.html">Open chain view</a>
     </div>
-    <div class="card" style="border-top:3px solid var(--ok)">
-      <h2>Q2 · 帖子含义</h2>
-      <p style="color:var(--muted);font-size:13.5px;margin:.2em 0 10px">content provenance, not identity</p>
-      <div style="font-size:13.5px;line-height:1.6">
-        帖子是<b>内部机密文件被外部化</b>。SwiftWren←CFO <code>meeting_notes.doc</code>；
-        MellowOtter←COO <code>strategic_directions.doc</code>；HiddenOrca 源在数据窗口外。
-        <span class="badge inf">inferred</span> 主题，<span class="badge unk">unknown</span> 逐字正文。
-      </div>
-      <a class="pill" href="q2.html" style="margin-top:12px">看来源链 →</a>
+    <div class="card qcard ok">
+      <h2>Q2: What does it mean?</h2>
+      <p>The posts are probably internal company documents externalized as file-backed posts. Exact payload wording is unknown.</p>
+      <div class="metricline"><b>2</b> visible source documents / <b>1</b> source outside the window</div>
+      <a class="pill" href="q2.html">Open provenance view</a>
     </div>
-    <div class="card" style="border-top:3px solid var(--anom)">
-      <h2>Q3 · 会否复发</h2>
-      <p style="color:var(--muted);font-size:13.5px;margin:.2em 0 10px">prior issues + one intervention</p>
-      <div style="font-size:13.5px;line-height:1.6">
-        <b>已重复 3 次</b>（HiddenOrca→MellowOtter→SwiftWren），机制相同、规模递增。
-        最佳单点干预：在 SaidIt 边界拦截 Agent 发起的 <code>content_source</code> 发帖
-        —— <b>3/3</b> 覆盖、<b>0/105</b> 误报。
-      </div>
-      <a class="pill" href="q3.html" style="margin-top:12px">看基线 + 干预 →</a>
+    <div class="card qcard anom">
+      <h2>Q3: Could it repeat?</h2>
+      <p>Yes. HiddenOrca, MellowOtter, and SwiftWren share the same terminal mechanism. Use one boundary gate.</p>
+      <div class="metricline"><b>3/3</b> covered / <b>0/105</b> normal-post false positives</div>
+      <a class="pill" href="q3.html">Open intervention view</a>
     </div>
   </div>`;
 
-  /* ---- event type bar chart ---- */
-  (() => {
+  function drawEventBars() {
     const svg = document.getElementById("typebars");
-    labelSvg(svg, "Event type distribution bar chart highlighting rare SaidIt posting actions");
-    const W = 1180, H = 470, ml = 190, mr = 90, mt = 10, mb = 20;
-    const ents = Object.entries(d.event_type_counts);
-    const max = ents[0][1];
-    const bh = (H - mt - mb) / ents.length;
-    const x = v => ml + (v / max) * (W - ml - mr);
-    const POST = new Set(["saidit_post", "saidit_post_check", "post_saidit", "flex_post", "post_flex"]);
-    ents.forEach(([k, v], i) => {
-      const y = mt + i * bh;
-      const isPost = POST.has(k);
-      const isAnom = k === "saidit_post";
-      const col = isAnom ? "var(--anom)" : isPost ? "var(--warn)" : "var(--info)";
-      add(svg, "text", { x: ml - 10, y: y + bh / 2 + 4, "text-anchor": "end",
-        "font-size": 12, fill: isPost ? "#e6edf3" : "#93a1b0", "font-weight": isPost ? 700 : 400 }, k);
-      const r = add(svg, "rect", { x: ml, y: y + 2, width: Math.max(1, x(v) - ml), height: bh - 5,
-        rx: 3, fill: col, opacity: isPost ? .95 : .55 });
-      add(svg, "text", { x: x(v) + 8, y: y + bh / 2 + 4, "font-size": 11.5,
-        fill: "#93a1b0", "font-family": "var(--mono)" }, v.toLocaleString());
-      r.addEventListener("mousemove", e => showTip(
-        `<div class="tt-h">${k}</div><div class="tt-r">${v.toLocaleString()} events${isAnom ? " · 含 3 条异常帖" : ""}</div>`, e));
-      r.addEventListener("mouseleave", hideTip);
-    });
-    // legend
-    const lg = add(svg, "g", {});
-    [["异常 saidit_post", "var(--anom)"], ["其他发帖/检查", "var(--warn)"], ["常规运营动作", "var(--info)"]]
-      .forEach(([t, c], i) => {
-        add(lg, "rect", { x: W - mr - 150, y: mt + 6 + i * 20, width: 11, height: 11, rx: 2, fill: c, opacity: .8 });
-        add(lg, "text", { x: W - mr - 134, y: mt + 16 + i * 20, "font-size": 11.5, fill: "#93a1b0" }, t);
-      });
-  })();
+    svg.innerHTML = "";
+    labelSvg(svg, "Sorted event type distribution. SaidIt actions are highlighted.");
+    const W = 1180, H = 470, ml = 198, mr = 96, mt = 12, mb = 24;
+    const entries = Object.entries(d.event_type_counts).sort((a, b) => b[1] - a[1]);
+    const max = Math.max(...entries.map((x) => x[1]));
+    const bh = (H - mt - mb) / entries.length;
+    const x = (v) => ml + (v / max) * (W - ml - mr);
+    const postActions = new Set(["saidit_post", "saidit_post_check", "post_saidit", "flex_post", "post_flex"]);
 
-  /* ---- signature bars: person vs agent, content vs content_source ---- */
-  (() => {
-    const svg = document.getElementById("sigbars");
-    labelSvg(svg, "SaidIt baseline signature chart comparing human versus agent posts and content versus file source");
-    const b = d.saidit_baseline;
-    const W = 1180, mt = 30, gap = 40, colW = 520, ml = 40;
-    const rows = [
-      { title: "发帖者：谁按下发布", a: ["人 person", b.by_person, "var(--ok)"], z: ["Agent", b.by_agent, "var(--anom)"] },
-      { title: "正文来源：主题字符串 vs 文件", a: ["content（主题）", b.with_content_topic, "var(--ok)"], z: ["content_source（文件）", b.with_content_source, "var(--anom)"] },
-    ];
-    const total = b.total;
-    rows.forEach((row, i) => {
-      const gy = mt + i * 110;
-      add(svg, "text", { x: ml, y: gy, "font-size": 13, "font-weight": 700, fill: "#e6edf3" }, row.title);
-      const bx = ml, by = gy + 16, bw = W - ml - 300, bh = 34;
-      const wA = (row.a[1] / total) * bw;
-      add(svg, "rect", { x: bx, y: by, width: wA, height: bh, rx: 4, fill: row.a[2], opacity: .8 });
-      add(svg, "rect", { x: bx + wA, y: by, width: Math.max(3, (row.z[1] / total) * bw), height: bh, rx: 4, fill: row.z[2] });
-      add(svg, "text", { x: bx + 10, y: by + bh / 2 + 4, "font-size": 12.5, fill: "#061018", "font-weight": 700 },
-        `${row.a[0]} · ${row.a[1]}`);
-      add(svg, "text", { x: bx + bw + 14, y: by + bh / 2 + 4, "font-size": 13, fill: row.z[2], "font-weight": 800 },
-        `${row.z[0]} · ${row.z[1]}`);
+    entries.forEach(([k, v], i) => {
+      const y = mt + i * bh;
+      const isSaidIt = postActions.has(k);
+      const col = k === "saidit_post" ? "var(--anom)" : isSaidIt ? "var(--warn)" : "var(--info)";
+      add(svg, "text", { x: ml - 10, y: y + bh / 2 + 4, "text-anchor": "end", "font-size": 12,
+        fill: isSaidIt ? "#172033" : "#526174", "font-weight": isSaidIt ? 700 : 400 }, k);
+      const bar = add(svg, "rect", { x: ml, y: y + 2, width: Math.max(1, x(v) - ml), height: bh - 5,
+        rx: 3, fill: col, opacity: isSaidIt ? 0.96 : 0.55 });
+      add(svg, "text", { x: x(v) + 8, y: y + bh / 2 + 4, "font-size": 11.5, fill: "#526174",
+        "font-family": "var(--mono)" }, v.toLocaleString());
+      bar.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${k}</div><div class="tt-r">${v.toLocaleString()} events</div>`, e));
+      bar.addEventListener("mouseleave", hideTip);
     });
-    add(svg, "text", { x: ml, y: mt + 2 * 110 + 6, "font-size": 12, fill: "#63748a" },
-      "108 条 saidit_post 中，只有 3 条同时是「Agent 发起」且「content_source 文件」——即三条异常泄露帖。");
-  })();
+
+    [["anomalous post action", "var(--anom)"], ["SaidIt check/post actions", "var(--warn)"], ["other event types", "var(--info)"]]
+      .forEach(([t, c], i) => {
+        add(svg, "rect", { x: W - mr - 190, y: mt + 8 + i * 21, width: 12, height: 12, rx: 2, fill: c, opacity: .85 });
+        add(svg, "text", { x: W - mr - 172, y: mt + 18 + i * 21, "font-size": 11.5, fill: "#526174" }, t);
+      });
+  }
+
+  function drawSignatureBars() {
+    const svg = document.getElementById("sigbars");
+    svg.innerHTML = "";
+    labelSvg(svg, "Small multiples comparing normal SaidIt behavior with anomaly signatures.");
+    const W = 1180, H = 310, ml = 58, mt = 34, barW = 820, rowH = 86;
+    const rows = [
+      {
+        title: "Actor type among 108 saidit_post events",
+        denom: b.total,
+        parts: [["person", b.by_person, "var(--ok)"], ["Agent", b.by_agent, "var(--anom)"]],
+      },
+      {
+        title: "Post source field among 108 saidit_post events",
+        denom: b.total,
+        parts: [["content topic", b.with_content_topic, "var(--ok)"], ["content_source file", b.with_content_source, "var(--anom)"]],
+      },
+      {
+        title: "Outcome after 71 saidit_post_check events",
+        denom: ck.total_checks,
+        parts: [["no public post", ck.checks_not_posting, "var(--warn)"], ["led to post", ck.checks_leading_to_post, "var(--anom)"]],
+      },
+    ];
+
+    rows.forEach((row, i) => {
+      const y = mt + i * rowH;
+      add(svg, "text", { x: ml, y, "font-size": 13, "font-weight": 700 }, row.title);
+      let acc = 0;
+      row.parts.forEach(([lab, v, col]) => {
+        const w = (v / row.denom) * barW;
+        const r = add(svg, "rect", { x: ml + acc, y: y + 16, width: Math.max(3, w), height: 32,
+          rx: 4, fill: col, opacity: lab.includes("content") && !lab.includes("source") ? .65 : .82 });
+        r.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${lab}</div><div class="tt-r">${v} of ${row.denom}</div>`, e));
+        r.addEventListener("mouseleave", hideTip);
+        if (w > 118) {
+          add(svg, "text", { x: ml + acc + 10, y: y + 37, "font-size": 12, "font-weight": 700, fill: "#fff" }, `${lab}: ${v}`);
+        } else {
+          add(svg, "text", { x: ml + acc + w + 10, y: y + 37, "font-size": 12, "font-weight": 700, fill: col }, `${lab}: ${v}`);
+        }
+        acc += w;
+      });
+      add(svg, "text", { x: ml + barW + 22, y: y + 37, "font-size": 12, fill: "#526174" },
+        `denominator = ${row.denom}`);
+    });
+
+    add(svg, "text", { x: ml, y: H - 16, "font-size": 12, fill: "#526174" },
+      "The anomaly is defined by the intersection of Agent actor and content_source file, not by post count alone.");
+  }
+
+  function drawQstBars() {
+    const svg = document.getElementById("qstbars");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "queue_subordinate_task composition showing virus, access email, relay, and read file tasks.");
+    const W = 560, H = 300, ml = 150, mr = 28, mt = 34, mb = 34;
+    const entries = Object.entries(d.qst_overview.task_types).sort((a, b) => b[1] - a[1]);
+    const max = Math.max(...entries.map((x) => x[1]));
+    add(svg, "text", { x: 18, y: 18, "font-size": 13, "font-weight": 800 }, "Task composition");
+    add(svg, "text", { x: 18, y: 36, "font-size": 11.5, fill: "#526174" }, `${d.qst_overview.total.toLocaleString()} queue_subordinate_task records`);
+    const bh = (H - mt - mb) / entries.length;
+    entries.forEach(([k, v], i) => {
+      const y = mt + i * bh + 14;
+      const isCodename = k === "queue_subordinate_task" || k === "read_file";
+      const col = k === "virus" ? "var(--dim)" : isCodename ? "var(--anom)" : "var(--info)";
+      add(svg, "text", { x: ml - 10, y: y + bh / 2 + 4, "text-anchor": "end", "font-size": 12, fill: "#526174" }, k);
+      const bar = add(svg, "rect", { x: ml, y: y + 4, width: (v / max) * (W - ml - mr), height: bh - 12, rx: 4, fill: col, opacity: k === "virus" ? .48 : .82 });
+      add(svg, "text", { x: ml + (v / max) * (W - ml - mr) + 8, y: y + bh / 2 + 4, "font-size": 11.5, fill: "#526174", "font-family": "var(--mono)" }, v.toLocaleString());
+      bar.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${k}</div><div class="tt-r">${v.toLocaleString()} task records</div>`, e));
+      bar.addEventListener("mouseleave", hideTip);
+    });
+    add(svg, "text", { x: 18, y: H - 12, "font-size": 11.5, fill: "#526174" }, "Virus tasks are large background volume; codename read-file relay is the relevant path subset.");
+  }
+
+  function drawActorBars() {
+    const svg = document.getElementById("actorbars");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Named-party activity baseline, with John highlighted.");
+    const W = 560, H = 300, ml = 160, mr = 28, mt = 34, mb = 24;
+    const aggregate = new Set(["person", "Agent/person", "system", "world", "agent"]);
+    const named = Object.entries(d.party_type_counts)
+      .filter(([k]) => !aggregate.has(k))
+      .sort((a, b) => b[1] - a[1]);
+    const john = named.find(([k]) => k === "John Windward");
+    const top = named.slice(0, 10);
+    if (john && !top.some(([k]) => k === "John Windward")) top.push(john);
+    top.sort((a, b) => b[1] - a[1]);
+    const max = Math.max(...top.map((x) => x[1]));
+    add(svg, "text", { x: 18, y: 18, "font-size": 13, "font-weight": 800 }, "Named actor activity");
+    add(svg, "text", { x: 18, y: 36, "font-size": 11.5, fill: "#526174" }, "Raw event counts; John highlighted for context");
+    const bh = (H - mt - mb) / top.length;
+    top.forEach(([k, v], i) => {
+      const y = mt + i * bh + 8;
+      const isJohn = k === "John Windward";
+      add(svg, "text", { x: ml - 10, y: y + bh / 2 + 4, "text-anchor": "end", "font-size": 11.3,
+        fill: isJohn ? "var(--anom)" : "#526174", "font-weight": isJohn ? 800 : 400 }, k);
+      const bar = add(svg, "rect", { x: ml, y: y + 3, width: (v / max) * (W - ml - mr), height: bh - 7, rx: 4,
+        fill: isJohn ? "var(--anom)" : "var(--info)", opacity: isJohn ? .86 : .48 });
+      add(svg, "text", { x: ml + (v / max) * (W - ml - mr) + 7, y: y + bh / 2 + 4, "font-size": 10.8, fill: "#526174", "font-family": "var(--mono)" }, v.toLocaleString());
+      bar.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${k}</div><div class="tt-r">${v.toLocaleString()} events</div>`, e));
+      bar.addEventListener("mouseleave", hideTip);
+    });
+    add(svg, "text", { x: 18, y: H - 12, "font-size": 11.5, fill: "#526174" }, "This baseline argues against blaming raw activity volume alone.");
+  }
+
+  document.getElementById("pipeline").innerHTML = `
+    <div class="method-grid">
+      ${[
+        ["1", "Filter", "isolate SaidIt and codename relay actions"],
+        ["2", "Trace", "unfold the route by hop order"],
+        ["3", "Link", "connect source, payload, post, and cleanup"],
+        ["4", "Compare", "contrast normal posts with anomaly signatures"],
+        ["5", "Intervene", "choose the single boundary gate with coverage evidence"],
+      ].map(([n, t, s]) => `<div class="method-step"><div class="method-num">${n}</div><div><b>${t}</b><span>${s}</span></div></div>`).join("")}
+    </div>`;
+
+  drawEventBars();
+  drawSignatureBars();
+  drawQstBars();
+  drawActorBars();
 })();

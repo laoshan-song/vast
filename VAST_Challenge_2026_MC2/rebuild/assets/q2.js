@@ -1,138 +1,130 @@
-/* q2.js — content provenance with observed/inferred/unknown */
+/* q2.js - provenance rows, evidence matrix, and interpretation boundaries */
 (async () => {
   const d = await MC2.load();
-  const { name } = MC2;
+  const { name, esc, evidenceBox } = MC2;
   const inc = d.incidents;
   const evidence = document.getElementById("evidence");
+  const CODES = ["SwiftWren", "MellowOtter", "HiddenOrca"];
 
   const META = {
-    SwiftWren: { theme: "CFO 会议纪要", role: "CFO Emma Harbor", strength: "最强", col: "var(--ok)" },
-    MellowOtter: { theme: "COO 战略方向文档", role: "COO Noah Mariner", strength: "强", col: "var(--ok)" },
-    HiddenOrca: { theme: "未知（源在窗口外）", role: "首个可见转发者 Gabriel Sonar", strength: "弱", col: "var(--warn)" },
+    SwiftWren: {
+      theme: "probable CFO meeting notes",
+      role: "CFO Emma Harbor",
+      sourceStrength: "strong",
+      claim: "source read and payload creation are visible",
+    },
+    MellowOtter: {
+      theme: "probable COO strategic directions",
+      role: "COO Noah Mariner",
+      sourceStrength: "strong",
+      claim: "source read and payload creation are visible",
+    },
+    HiddenOrca: {
+      theme: "unknown source theme",
+      role: "first visible relay from Gabriel Sonar",
+      sourceStrength: "partial",
+      claim: "terminal post is visible, but source is outside the data window",
+    },
   };
 
-  /* sidebar: strength ranking */
-  document.getElementById("strength").innerHTML = ["SwiftWren", "MellowOtter", "HiddenOrca"].map((c, i) => {
-    const m = META[c], has = inc[c].source_doc;
+  document.getElementById("strength").innerHTML = CODES.map((c, i) => {
+    const I = inc[c];
     return `<button data-c="${c}"><span class="idx">${i + 1}</span><span>
-      <span class="t">${c} · 溯源${m.strength}</span>
-      <span class="d">${has ? has.name : "源文档不在数据集"}</span></span></button>`;
+      <span class="t">${c} / ${META[c].sourceStrength}</span>
+      <span class="d">${I.source_doc ? I.source_doc.name : "source unknown"}</span></span></button>`;
   }).join("");
+  document.querySelectorAll("#strength button[data-c]").forEach((b) => b.addEventListener("click", () => renderEvidence(b.dataset.c)));
 
-  function esc(v) {
-    return String(v ?? "").replace(/[&<>"']/g, ch => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-    }[ch]));
+  function postEvent(I) {
+    return I.recipe?.find((x) => x.action === "saidit_post") || null;
   }
 
   function renderEvidence(c) {
-    if (!evidence) return;
     const I = inc[c];
-    const source = I.source_doc || {};
-    const create = I.create_file || {};
-    const post = I.recipe ? I.recipe.find(x => x.action === "saidit_post") : null;
-    const rows = [
-      ["incident", c],
-      ["source doc", source.name || "unknown / outside data window"],
-      ["source event", source.id ? `id ${source.id}, read_by ${name(source.read_by)}, ${source.when}` : "not visible"],
-      ["payload create", create.id ? `id ${create.id}, by ${name(create.by)}, ${create.when}` : "not visible"],
-      ["payload file", `${c}.txt${create.size_hint ? `, ${create.size_hint.toLocaleString()} B` : ""}`],
+    const src = I.source_doc;
+    const cf = I.create_file;
+    const post = postEvent(I);
+    evidenceBox(evidence, `${c}: provenance evidence`, [
+      ["source document", src ? src.name : "unknown / outside data window"],
+      ["source event", src ? `id ${src.id}, read by ${name(src.read_by)}, ${src.when}` : "not visible"],
+      ["payload create", cf ? `id ${cf.id}, by ${name(cf.by)}, ${cf.when}` : "not visible"],
+      ["payload file", `${c}.txt${cf?.size_hint ? `, ${cf.size_hint.toLocaleString()} B` : ""}`],
       ["public post", post ? `id ${post.id}, ${post.when}, content_source=${post.detail.content_source}` : "not visible"],
-      ["evidence boundary", I.source_doc && I.create_file ? "source and packaging observed; exact file body unknown" : "terminal post observed; source/package origin unknown"],
-    ];
-    evidence.innerHTML = `<div class="btnrow">${["SwiftWren", "MellowOtter", "HiddenOrca"].map(k =>
-        `<button class="btn ${k === c ? "primary" : ""}" data-c="${k}">${k}</button>`).join("")}</div>
-      <div class="evidence-title">${esc(c)} provenance evidence</div>
-      <div class="evidence-grid">${rows.map(([k, v]) =>
-        `<div class="k">${esc(k)}</div><div class="v">${esc(v)}</div>`).join("")}</div>
-      <pre class="evidence-pre">${esc(JSON.stringify({ source_doc: I.source_doc || null, create_file: I.create_file || null, post_event: post || null }, null, 2))}</pre>`;
-    evidence.querySelectorAll("button[data-c]").forEach(b => b.addEventListener("click", () => renderEvidence(b.dataset.c)));
+      ["probable meaning", META[c].theme],
+      ["evidence boundary", META[c].claim],
+    ], { source_doc: src || null, create_file: cf || null, post_event: post });
+    document.querySelectorAll("#strength button").forEach((b) => b.classList.toggle("active", b.dataset.c === c));
   }
 
-  document.querySelectorAll("#strength button[data-c]").forEach(b => b.addEventListener("click", () => renderEvidence(b.dataset.c)));
+  function cell(badgeClass, badgeText, title, sub, dashed = false) {
+    return `<div class="fbox" style="${dashed ? "border-style:dashed;opacity:.76" : ""}">
+      <div class="k"><span class="badge ${badgeClass}">${badgeText}</span></div>
+      <div class="v" style="font-size:14px">${title}</div>
+      <div class="s">${sub}</div>
+    </div>`;
+  }
 
-  /* A. provenance rows */
-  const rows = ["SwiftWren", "MellowOtter", "HiddenOrca"].map(c => {
-    const I = inc[c], m = META[c], src = I.source_doc, cf = I.create_file;
-    const payloadMeta = cf
-      ? `${cf.size_hint.toLocaleString()} B${cf.word_count ? " · " + cf.word_count.toLocaleString() + " words" : ""}<br>by ${name(cf.by)} · ${cf.when}`
-      : "无 create_file";
-    const cell = (badge, title, sub, dashed) => `
-      <div class="fbox" style="${dashed ? "border-style:dashed;opacity:.75" : ""}">
-        <div class="k">${badge}</div>
-        <div class="v" style="font-size:14px">${title}</div>
-        <div class="s">${sub}</div></div>`;
-    return `<div style="margin-bottom:18px">
-      <div style="font-weight:700;margin-bottom:8px;font-size:15px">${c}
-        <span class="badge" style="margin-left:8px">${m.theme}</span></div>
+  document.getElementById("prov").innerHTML = CODES.map((c) => {
+    const I = inc[c], src = I.source_doc, cf = I.create_file, post = postEvent(I);
+    return `<div class="provenance-row">
+      <div class="prov-title">${c}<span class="badge ${src ? "obs" : "unk"}">${src ? "source observed" : "source unknown"}</span></div>
       <div class="flow">
-        ${cell(src ? `<span class="tag-obs">① 源文档 · observed</span>` : `<span class="tag-unk">① 源文档 · unknown</span>`,
-          src ? src.name : "创建于数据窗口前",
-          src ? `read_by ${name(src.read_by)}<br>${src.when} · id ${src.id}` : "无 read/create 记录", !src)}
-        <div class="farrow">→</div>
-        ${cell(cf ? `<span class="tag-obs">② 打包 · observed</span>` : `<span class="tag-unk">② 打包 · unknown</span>`,
+        ${cell(src ? "obs" : "unk", src ? "observed" : "unknown",
+          src ? src.name : "created before visible window",
+          src ? `read by ${name(src.read_by)}<br>${src.when} / id ${src.id}` : "no read/create source record", !src)}
+        <div class="farrow">-></div>
+        ${cell(cf ? "obs" : "unk", cf ? "observed" : "unknown",
           `${c}.txt`,
-          payloadMeta,
-          !cf)}
-        <div class="farrow">→</div>
-        ${cell(`<span class="tag-obs">③ 外发 · observed</span>`, `saidit_post`,
-          `content_source=${c}.txt<br>by John Agent · ${I.post ? I.post.when : ""} · id ${I.post ? I.post.id : ""}`, false)}
-        <div class="farrow">→</div>
-        ${cell(`<span class="tag-inf">④ 含义 · inferred</span>`, m.theme,
-          `来自 ${m.role}<br>${src ? "职位+源文档名推断主题" : "主题不可还原"}`, false)}
-      </div></div>`;
-  }).join("");
-  document.getElementById("prov").innerHTML = rows +
-    `<div class="note"><b>读法：</b>SwiftWren / MellowOtter 有完整 ①→②→③ 可见事件链（绿色），源文档只被读过一次、
-     且分别由 CFO / COO 的 Agent 读取，因此“内部机密外泄”是<b>可确认</b>的；只有具体主题是<b>推断</b>。
-     HiddenOrca 的 ① 是灰色虚线——源在窗口外，属 <span class="tag-unk">unknown</span>。</div>`;
-
-  /* B. gibberish explanation */
-  document.getElementById("gibberish").innerHTML = `
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-    <div class="card">
-      <h3>为什么是乱码</h3>
-      <div style="font-size:13.5px;line-height:1.7">
-        源文档是 <code>.doc</code>（Word 二进制）。Agent 读取后<b>约 1 秒内</b>直接写成
-        <code>.txt</code>（见 create_file 时间戳），<b>没有格式转换</b>。
-        纯文本里保留了二进制/格式残余，于是在阅读器中呈现“乱码”。
-        <b>这不是加密，是原始字节直出的副作用。</b>
+          cf ? `${cf.size_hint.toLocaleString()} B<br>created by ${name(cf.by)} / ${cf.when}` : "payload existed when terminal chain ran", !cf)}
+        <div class="farrow">-></div>
+        ${cell("obs", "observed",
+          "saidit_post",
+          post ? `content_source=${post.detail.content_source}<br>John Agent / ${post.when} / id ${post.id}` : "not visible")}
+        <div class="farrow">-></div>
+        ${cell("inf", "inferred",
+          META[c].theme,
+          `${META[c].role}<br>${src ? "theme inferred from role and source filename" : "theme cannot be reconstructed"}`)}
       </div>
-      <div class="note" style="margin-top:10px">含义：攻击目的是<b>把原始内部文件公开</b>，
-        而不是写一篇通顺的爆料文——与“系统被诱导执行”而非“人类精心撰稿”一致。</div>
-    </div>
-    <div class="card">
-      <h3>为什么板块“随机”</h3>
-      <div style="font-size:13.5px;line-height:1.7">
-        三帖都发在 <code>forum=general</code>。发帖动作由 <b>Agent 自动</b>完成，
-        套用固定参数（general 论坛 + content_source 文件），并非人工按主题选板块，
-        所以从人的视角看板块“毫无规律”。
-      </div>
-      <div class="note" style="margin-top:10px">题面把它初判为“agent 故障”；数据显示它其实是
-        <b>被驱动的自动化行为</b>——机制正常，被利用了。</div>
-    </div>
-  </div>`;
+    </div>`;
+  }).join("") + `<div class="note"><b>Reading rule:</b> SwiftWren and MellowOtter have visible source and payload events. HiddenOrca has the same terminal posting mechanism, but its source/package origin is outside the available time window.</div>`;
 
-  /* C. boundary table */
-  const B = [
-    ["read/create/saidit_post/delete 事件序列", "obs", "", ""],
-    ["SwiftWren、MellowOtter 的源文档与打包过程", "obs", "", ""],
-    ["三帖均由 John Agent 用 content_source 外发", "obs", "", ""],
-    ["payload 由对应源文档派生", "", "inf", ""],
-    ["内容主题=财务/运营/战略等公司机密", "", "inf", ""],
-    ["HiddenOrca 与另两者同一机制", "", "inf", ""],
-    [".txt / .doc 文件逐字正文", "", "", "unk"],
-    ["具体泄露了哪些决策、数字", "", "", "unk"],
-    ["HiddenOrca 的源文档与创建者", "", "", "unk"],
-    ["动机是 whistleblowing 还是恶意破坏", "", "", "unk"],
+  const boundaryRows = [
+    ["read_file / create_file / saidit_post / delete_file event order", "obs", "", ""],
+    ["SwiftWren source document and payload packaging", "obs", "", ""],
+    ["MellowOtter source document and payload packaging", "obs", "", ""],
+    ["All three posts use John Agent with content_source", "obs", "", ""],
+    ["Payload file derived from the visible source document", "", "inf", ""],
+    ["Probable themes: meeting notes and strategic directions", "", "inf", ""],
+    ["HiddenOrca follows the same terminal mechanism", "", "inf", ""],
+    ["Exact body text of each posted file", "", "", "unk"],
+    ["Specific confidential sentences or decisions exposed", "", "", "unk"],
+    ["HiddenOrca source document and creator", "", "", "unk"],
+    ["Human motive or attacker identity", "", "", "unk"],
   ];
-  document.getElementById("boundary").innerHTML = `<table class="grid">
-    <tr><th>命题</th><th style="text-align:center">observed</th>
-      <th style="text-align:center">inferred</th><th style="text-align:center">unknown</th></tr>
-    ${B.map(([t, o, i, u]) => `<tr><td>${t}</td>
-      <td style="text-align:center">${o ? '<span class="badge obs">✓</span>' : ''}</td>
-      <td style="text-align:center">${i ? '<span class="badge inf">✓</span>' : ''}</td>
-      <td style="text-align:center">${u ? '<span class="badge unk">✓</span>' : ''}</td></tr>`).join("")}
+
+  document.getElementById("boundary").innerHTML = `<table class="grid evidence-matrix">
+    <tr><th>Claim</th><th>Observed</th><th>Inferred</th><th>Unknown</th></tr>
+    ${boundaryRows.map(([claim, o, i, u]) => `<tr>
+      <td>${esc(claim)}</td>
+      <td>${o ? '<span class="badge obs">yes</span>' : ""}</td>
+      <td>${i ? '<span class="badge inf">yes</span>' : ""}</td>
+      <td>${u ? '<span class="badge unk">yes</span>' : ""}</td>
+    </tr>`).join("")}
   </table>`;
+
+  document.getElementById("gibberish").innerHTML = `
+    <div class="cards2">
+      <div class="card">
+        <h3>Why gibberish is plausible</h3>
+        <p class="tight">The visible source files are <code>.doc</code> documents, while the public posts point to <code>.txt</code> payload files. The logs show file handling and posting, not a clean human-authored forum message. A format or byte-level mismatch can explain unreadable text without proving encryption.</p>
+        <div class="note">Evidence supports "file content was posted where forum text was expected." It does not support a verbatim reconstruction of the content.</div>
+      </div>
+      <div class="card">
+        <h3>Why the forum choice looks random</h3>
+        <p class="tight">All three terminal post events use <code>forum=general</code>. The action was automated by an Agent with a fixed posting path, not a human selecting a semantically appropriate forum.</p>
+        <div class="note">This supports an automation failure or misuse pattern. It does not prove intent.</div>
+      </div>
+    </div>`;
+
   renderEvidence("SwiftWren");
 })();

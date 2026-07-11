@@ -1,87 +1,83 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MC2 总览 — Anomalous SaidIt Post</title>
+<title>MC2 Overview - Anomalous SaidIt Post</title>
 <link rel="stylesheet" href="./assets/app.css">
 </head>
 <body>
 <div id="nav" data-active="overview.html"></div>
 <div class="wrap">
   <header class="hero">
-    <div class="tag">VAST Challenge 2026 · Mini-Challenge 2 · System Overview</div>
-    <h1>一条乱码帖，如何从内部文档走到公开论坛</h1>
-    <p class="lead">任务定位（题面原文）：先<b>摸清多智能体系统的整体运行</b>、建立正常基准，再对标目标异常帖，
-      最后提出<b>一处</b>整改。全部结论只用原始数据 <code>MC2 data.json</code>（185,147 事件）+ <code>org_chart.json</code>，
-      时间统一按<b>挑战本地时区 UTC-7</b>（对齐题面 “John Windward, May 17 04:21am”）。</p>
-    <p class="lead" style="margin-top:8px">English reviewer summary: the system first establishes a normal baseline, then isolates three Agent-initiated file-source SaidIt posts as the anomaly signature.</p>
+    <div class="tag">VAST Challenge 2026 / Mini-Challenge 2 / System Overview</div>
+    <h1>How a file-backed Agent workflow escaped to SaidIt</h1>
+    <p class="lead">This overview establishes normal behavior before isolating the target anomaly: John Windward's Agent posted a file-backed message to SaidIt on <b>May 17, 2046 04:21 UTC-7</b>. The page uses counts, ratios, and linked evidence from <code>MC2 data.json</code> and <code>org_chart.json</code>.</p>
+    <p class="lead" style="margin-top:8px"><b>Conclusion:</b> an internal document was packaged as a codename text file, relayed as an Agent <code>read_file</code> task, posted through <code>saidit_post(content_source)</code>, then cleaned up. The same mechanism appears three times.</p>
   </header>
 
   <div class="layout">
     <aside class="side">
       <div class="card answer">
-        <h2>一句话结论</h2>
-        <div class="a-body">
-          异常帖来自一条<b>利用 Agent 任务队列的指令转发链</b>：一份内部文档被打包成
-          <code>&lt;代号&gt;.txt</code>，其 <code>_further_instructions.md</code> 通过
-          <code>queue_subordinate_task(task=read_file)</code> 在 Agent 间<b>盲转发随机游走</b>，
-          直到抵达数据中唯一观察到完成文件源公开发帖的终端 <b>John Windward Agent</b>，由它执行
-          <code>check → saidit_post(content_source) → delete×2</code>。共发生 <b>3 次</b>。
-        </div>
+        <h2>Investigation Finding</h2>
+        <div class="a-body">The anomaly is not a normal human forum post. It is the rare combination <code>Agent actor</code> + <code>saidit_post</code> + <code>details.content_source</code>, which occurs in exactly three SaidIt posts in this data.</div>
       </div>
       <div class="card">
-        <h3>关键数字（全部可核）</h3>
+        <h3>Auditable Numbers</h3>
         <div class="stats" id="keystats"></div>
       </div>
       <div class="card">
-        <h3>阅读顺序</h3>
+        <h3>Read In This Order</h3>
         <div class="steps">
-          <a class="pill" href="q1.html" style="justify-content:flex-start">Q1 · 异常帖如何产生（链路 + 系统图）</a>
-          <a class="pill" href="q2.html" style="justify-content:flex-start">Q2 · 帖子含义与内容来源</a>
-          <a class="pill" href="q3.html" style="justify-content:flex-start">Q3 · 会否复发 + 单点干预</a>
+          <a class="pill" href="q1.html" style="justify-content:flex-start">Q1: mechanism and exact chain</a>
+          <a class="pill" href="q2.html" style="justify-content:flex-start">Q2: meaning and content origin</a>
+          <a class="pill" href="q3.html" style="justify-content:flex-start">Q3: recurrence and one intervention</a>
         </div>
       </div>
       <div class="card">
-        <h3>English reviewer quick start</h3>
+        <h3>Visual Methods Used</h3>
         <ul class="reviewer-list">
-          <li><b>Overview</b> Confirm the baseline: 185,147 events, 108 SaidIt posts, and 3 Agent file-source anomalies.</li>
-          <li><b>Q1</b> Click recipe boxes or relay points to inspect event ids, timestamps, actors, and raw JSON.</li>
-          <li><b>Q2</b> Switch SwiftWren, MellowOtter, and HiddenOrca to compare observed, inferred, and unknown provenance.</li>
-          <li><b>Q3</b> Click recurrence markers or the gate evidence panel; verify the one intervention has 3/3 coverage and 0/105 normal-post false positives.</li>
+          <li><b>Baseline first</b> Bar charts and ratio bars define normal behavior before anomaly claims.</li>
+          <li><b>Details on demand</b> Clickable marks reveal event ids, timestamps, actors, and raw JSON.</li>
+          <li><b>Linked reasoning</b> The same incident selection drives recipe, route, source, and recurrence views.</li>
+          <li><b>Anti-deception</b> Counts use length and position, not 3D, rainbow color, or area for exact comparison.</li>
         </ul>
       </div>
     </aside>
 
     <main>
       <section class="panel">
-        <div class="head"><h2>MC2 官方三问 · 答案地图</h2>
-          <span class="sub">how it was made / what it means / could it repeat + one fix</span></div>
+        <div class="head"><h2>Answer Map</h2><span class="sub">official questions mapped to evidence views</span></div>
         <div id="qmap"></div>
       </section>
 
       <section class="panel">
-        <div class="head"><h2>系统基线 A：全系统在做什么</h2>
-          <span class="sub">24 种动作类型，人机各半的活动</span></div>
-        <p class="desc">建立“正常”的第一步是看系统整体行为分布。绝大多数是邮件、任务派发、文件读写等常规运营；
-          真正的外发帖（<code>saidit_post</code>）只有 108 条，其中异常帖仅 3 条。</p>
+        <div class="head"><h2>Baseline A: System Event Mix</h2><span class="sub">bar chart sorted by event count</span></div>
+        <p class="desc">This view shows scale. SaidIt posting is a small part of the full system, so the anomaly must be judged against the normal operational background.</p>
         <div class="svg-wrap"><svg id="typebars" width="1180" height="470"></svg></div>
       </section>
 
       <section class="panel">
-        <div class="head"><h2>系统基线 B：异常帖的“签名”</h2>
-          <span class="sub">正常 vs 异常，一眼可分</span></div>
-        <p class="desc">正常 SaidIt 帖由<b>人</b>发出、正文是一句工作主题（<code>content</code>）；
-          3 条异常帖由 <b>Agent</b> 发出、正文是一个<b>文件</b>（<code>content_source</code>）。
-          这个字段在 185,147 条事件里只出现 3 次——它本身就是异常探针。</p>
-        <div class="svg-wrap"><svg id="sigbars" width="1180" height="260"></svg></div>
+        <div class="head"><h2>Baseline B: SaidIt Signature</h2><span class="sub">small multiples for actor, field, and post-check outcome</span></div>
+        <p class="desc">The anomalous signature is visually separated from normal posting: Agent-initiated posts with <code>content_source</code>. The chart uses shared denominators and explicit counts to avoid misleading ratios.</p>
+        <div class="svg-wrap"><svg id="sigbars" width="1180" height="310"></svg></div>
       </section>
 
-      <div class="footer">
-        数据来源 <code>MC2 data.json</code> + <code>org_chart.json</code>；
-        提取脚本 <code>rebuild/extract_data.py</code> → <code>rebuild/mc2_viz_data.json</code>。
-        时间口径：挑战本地 UTC-7。
-      </div>
+      <section class="panel">
+        <div class="head"><h2>Baseline C: Relay Tasks and Actor Activity</h2><span class="sub">task composition + named-party activity</span></div>
+        <p class="desc">These additional baselines use more of the provided data. They show that codename relays sit inside a much larger task system, and that John is not globally unusual by raw activity count.</p>
+        <div class="viz-two">
+          <div class="svg-wrap"><svg id="qstbars" width="560" height="300"></svg></div>
+          <div class="svg-wrap"><svg id="actorbars" width="560" height="300"></svg></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="head"><h2>Method Pipeline</h2><span class="sub">how the dashboard supports analysis</span></div>
+        <div id="pipeline"></div>
+      </section>
+
+      <div class="footer">Data: <code>MC2 data.json</code> + <code>org_chart.json</code>. Pipeline: <code>rebuild/extract_data.py</code> to <code>rebuild/mc2_viz_data.json</code>. Timezone: challenge-local UTC-7.</div>
     </main>
   </div>
 </div>
