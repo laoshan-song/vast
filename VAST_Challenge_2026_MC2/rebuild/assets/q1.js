@@ -31,6 +31,7 @@
     ["File lifecycle", "source to cleanup", "p-life"],
     ["Relay path", "hop-expanded trace", "p-walk"],
     ["Departments", "propagation matrix", "p-dept"],
+    ["Flow ribbons", "top department flows", "p-flow"],
     ["System context", "boundary crossing", "p-sys"],
   ];
   document.getElementById("steps").innerHTML = guide.map(([t, dd, id], i) =>
@@ -66,6 +67,7 @@
     drawLifecycle(I);
     drawWalk(I);
     drawDeptMatrix(I);
+    drawDeptFlow(I);
     drawSys(I);
     const selected = I.recipe?.find((r) => r.action === "saidit_post") || I.recipe?.[0];
     if (selected) showRecEvidence(`${cur}: selected terminal evidence`, selected);
@@ -315,6 +317,54 @@
     add(svg, "text", { x: lx + 18, y: ly + 34, "font-size": 11.5, fill: "#526174" }, "within-dept flow");
     add(svg, "text", { x: ml, y: H - 14, "font-size": 11.5, fill: "#526174" },
       "This aggregation complements the hop path: the path explains order; the matrix explains organizational spread.");
+  }
+
+  function drawDeptFlow(I) {
+    const svg = document.getElementById("deptflow");
+    if (!svg || !I.department_flow) return;
+    svg.innerHTML = "";
+    labelSvg(svg, `${cur} top department relay directions as flow ribbons`);
+    const W = Math.max(760, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 380, ml = 170, mr = 170, mt = 54, mb = 44;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const flows = I.department_flow
+      .filter((f) => f.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12);
+    const depts = [...new Set(flows.flatMap((f) => [f.from, f.to]))].filter((x) => x !== "unknown");
+    const yOf = {};
+    depts.forEach((dp, i) => yOf[dp] = mt + 32 + i * ((H - mt - mb - 40) / Math.max(1, depts.length - 1)));
+    const max = Math.max(...flows.map((f) => f.count), 1);
+    const x1 = ml, x2 = W - mr;
+    add(svg, "text", { x: ml, y: 24, "font-size": 13, "font-weight": 800 }, `${cur}: strongest department relay directions`);
+    add(svg, "text", { x: ml, y: 43, "font-size": 11.5, fill: "#526174" },
+      "Curved ribbons show top aggregated directions only. Width encodes hop count; omitted low-count flows remain in the matrix.");
+    depts.forEach((dp) => {
+      const y = yOf[dp];
+      add(svg, "circle", { cx: x1, cy: y, r: 5, fill: deptColor(dp) });
+      add(svg, "circle", { cx: x2, cy: y, r: 5, fill: deptColor(dp) });
+      add(svg, "text", { x: x1 - 10, y: y + 4, "text-anchor": "end", "font-size": 11.5, fill: "#526174" }, name(dp));
+      add(svg, "text", { x: x2 + 10, y: y + 4, "font-size": 11.5, fill: "#526174" }, name(dp));
+    });
+    add(svg, "text", { x: x1, y: mt + 8, "text-anchor": "middle", "font-size": 11.5, "font-weight": 800, fill: "#526174" }, "from department");
+    add(svg, "text", { x: x2, y: mt + 8, "text-anchor": "middle", "font-size": 11.5, "font-weight": 800, fill: "#526174" }, "to department");
+    flows.forEach((f, i) => {
+      const yA = yOf[f.from], yB = yOf[f.to];
+      if (yA == null || yB == null) return;
+      const sw = 1.5 + 9 * Math.sqrt(f.count / max);
+      const path = `M${x1},${yA} C${x1 + 180},${yA} ${x2 - 180},${yB} ${x2},${yB}`;
+      const p = add(svg, "path", { d: path, fill: "none", stroke: f.from === f.to ? "rgba(37,111,184,.42)" : "rgba(201,59,69,.45)",
+        "stroke-width": sw, "stroke-linecap": "round", opacity: .72 });
+      p.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${name(f.from)} -> ${name(f.to)}</div><div class="tt-r">${f.count} relay hops</div><div class="tt-r">rank ${i + 1} of top ${flows.length}</div>`, e));
+      p.addEventListener("mouseleave", hideTip);
+      if (i < 3) {
+        const xm = (x1 + x2) / 2;
+        const ym = (yA + yB) / 2 + [-18, 0, 18][i];
+        add(svg, "text", { x: xm, y: ym, "text-anchor": "middle", "font-size": 10.8, fill: "#526174", "font-family": "var(--mono)" }, f.count);
+      }
+    });
+    add(svg, "text", { x: ml, y: H - 14, "font-size": 11.5, fill: "#526174" },
+      "This view uses aggregation to avoid a force-directed hairball while still showing directional structure.");
   }
 
   function drawSys(I) {

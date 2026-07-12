@@ -67,8 +67,14 @@
         <div class="svg-wrap"><svg id="deptmatrix" width="100%" height="420"></svg></div>
       </section>
 
+      <section class="panel" id="p-flow">
+        <div class="head"><h2>E: Department Flow Ribbons</h2><span class="sub">top relay directions between departments</span></div>
+        <p class="desc">This alluvial-style view shows the strongest department-to-department relay directions for the selected incident. Width encodes hop count; low-count flows are omitted to avoid clutter.</p>
+        <div class="svg-wrap"><svg id="deptflow" width="100%" height="380"></svg></div>
+      </section>
+
       <section class="panel" id="p-sys">
-        <div class="head"><h2>E: System Boundary Context</h2><span class="sub">source document to payload to relay to public post</span></div>
+        <div class="head"><h2>F: System Boundary Context</h2><span class="sub">source document to payload to relay to public post</span></div>
         <p class="desc">This flow separates internal operations from the external publishing boundary. The public boundary is where the harm becomes irreversible.</p>
         <div id="sysflow"></div>
       </section>

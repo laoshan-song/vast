@@ -49,10 +49,19 @@
         <div class="svg-wrap"><svg id="scaleplot" width="100%" height="420"></svg></div>
       </section>
 
+      <section class="panel" id="p-parallel">
+        <div class="head"><h2>D: Intervention Parallel Coordinates</h2><span class="sub">multi-criteria comparison of candidate rules</span></div>
+        <p class="desc">Each line is one possible single intervention. Axes compare coverage, blast radius, affected records, cost, and timing; the recommended boundary gate should remain high coverage with low collateral impact.</p>
+        <div class="svg-wrap"><svg id="parallel" width="100%" height="400"></svg></div>
+      </section>
+
       <section class="panel" id="p-fix">
-        <div class="head"><h2>D: One Intervention</h2><span class="sub">decision matrix and coverage-vs-cost view</span></div>
+        <div class="head"><h2>E: One Intervention</h2><span class="sub">decision matrix and coverage-vs-cost view</span></div>
         <div id="gate"></div>
         <div id="evidence" class="evidence-box"></div>
+        <h3 style="margin-top:20px">Recommended Gate Confusion Matrix</h3>
+        <p class="desc">This 2x2 matrix shows what the selected rule would block or allow in the observed SaidIt posts. It separates detected anomalies from normal human posts instead of relying on prose.</p>
+        <div class="svg-wrap"><svg id="confusion" width="100%" height="320"></svg></div>
         <h3 style="margin-top:20px">Rule Coverage Matrix</h3>
         <p class="desc">Rows are possible single intervention rules. Columns separate anomaly coverage, non-anomaly blast radius, affected records, and timing. This keeps the recommendation auditable.</p>
         <div id="rulematrix"></div>

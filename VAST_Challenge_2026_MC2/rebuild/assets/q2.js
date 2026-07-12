@@ -157,6 +157,195 @@
     });
   }
 
+  function drawGlyphGrid() {
+    const svg = document.getElementById("glyphgrid");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Evidence glyph grid showing compact certainty fingerprints for each anomalous post.");
+    const W = Math.max(780, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 310, ml = 150, mt = 70, mr = 36;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const fields = [
+      ["source", "S", "source"],
+      ["payload", "P", "payload"],
+      ["relay", "R", "relay"],
+      ["post", "O", "post"],
+      ["theme", "T", "theme"],
+      ["body", "B", "body"],
+      ["cleanup", "C", "cleanup"],
+    ];
+    const cellW = (W - ml - mr) / fields.length;
+    const rowH = 54;
+    add(svg, "text", { x: ml, y: 24, "font-size": 13, "font-weight": 800 }, "Evidence glyph fingerprints");
+    add(svg, "text", { x: ml, y: 43, "font-size": 11.5, fill: "#526174" },
+      "Shape identifies evidence type; fill color identifies certainty. Click glyphs for exact support.");
+    fields.forEach(([key, short, label], i) => {
+      const x = ml + i * cellW + cellW / 2;
+      add(svg, "text", { x, y: mt - 18, "text-anchor": "middle", "font-size": 10.8, "font-weight": 800, fill: "#526174" }, short);
+      add(svg, "text", { x, y: mt - 4, "text-anchor": "middle", "font-size": 9.5, fill: "#7a8797" }, label);
+    });
+    function drawShape(parent, x, y, field, fill, stroke) {
+      if (field === "source") return add(parent, "path", { d: `M${x},${y - 13} L${x + 13},${y} L${x},${y + 13} L${x - 13},${y} Z`, fill, stroke, "stroke-width": 1.4 });
+      if (field === "payload") return add(parent, "rect", { x: x - 12, y: y - 12, width: 24, height: 24, rx: 4, fill, stroke, "stroke-width": 1.4 });
+      if (field === "relay") return add(parent, "path", { d: `M${x - 15},${y + 10} L${x},${y - 14} L${x + 15},${y + 10} Z`, fill, stroke, "stroke-width": 1.4 });
+      if (field === "post") return add(parent, "circle", { cx: x, cy: y, r: 13, fill, stroke, "stroke-width": 1.4 });
+      if (field === "theme") return add(parent, "path", { d: `M${x - 13},${y - 11} H${x + 13} V${y + 7} H${x - 3} L${x - 10},${y + 13} V${y + 7} H${x - 13} Z`, fill, stroke, "stroke-width": 1.4 });
+      if (field === "body") return add(parent, "line", { x1: x - 13, y1: y - 13, x2: x + 13, y2: y + 13, stroke, "stroke-width": 4, "stroke-linecap": "round" });
+      return add(parent, "path", { d: `M${x - 12},${y - 12} H${x + 12} V${y + 12} H${x - 12} Z M${x - 6},${y - 16} H${x + 6}`, fill, stroke, "stroke-width": 1.4 });
+    }
+    CODES.forEach((c, r) => {
+      const y = mt + r * rowH + 30;
+      add(svg, "text", { x: ml - 14, y: y + 4, "text-anchor": "end", "font-size": 12.5,
+        "font-weight": 800, fill: c === "SwiftWren" ? "var(--anom)" : "#172033" }, c);
+      const cells = new Map(confidenceCells(c).map((x) => [x.key, x]));
+      fields.forEach(([key], i) => {
+        const cell = cells.get(key);
+        const x = ml + i * cellW + cellW / 2;
+        const fill = cell.status === "observed" ? "rgba(32,134,90,.80)" : cell.status === "inferred" ? "rgba(166,106,0,.72)" : "rgba(122,135,151,.20)";
+        const stroke = cell.status === "observed" ? "var(--ok)" : cell.status === "inferred" ? "var(--warn)" : "#7a8797";
+        const mark = drawShape(svg, x, y, key, fill, stroke);
+        makeInteractive(mark, `${c} ${cell.label}: ${cell.status}`, () => evidenceBox(evidence, `${c}: ${cell.label}`, [
+          ["status", cell.status],
+          ["value", cell.value],
+          ["evidence boundary", META[c].claim],
+        ], { incident: c, cell }));
+        mark.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c}: ${cell.label}</div><div class="tt-r">${cell.status}</div><div class="tt-r">${esc(cell.value)}</div>`, e));
+        mark.addEventListener("mouseleave", hideTip);
+      });
+    });
+    [["observed", "var(--ok)"], ["inferred", "var(--warn)"], ["unknown", "var(--dim)"]].forEach(([lab, col], i) => {
+      const x = ml + i * 132;
+      add(svg, "rect", { x, y: H - 22, width: 12, height: 12, rx: 2, fill: col, opacity: lab === "unknown" ? .38 : .9 });
+      add(svg, "text", { x: x + 18, y: H - 12, "font-size": 11.5, fill: "#526174" }, lab);
+    });
+  }
+
+  function drawProvFlow() {
+    const svg = document.getElementById("provflow");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Sankey-like provenance flow from source certainty to payload to public SaidIt post to inferred meaning.");
+    const W = Math.max(780, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 390, mt = 70, mb = 44;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const cols = [
+      { key: "source", x: 120, label: "source evidence" },
+      { key: "payload", x: W * .38, label: "payload file" },
+      { key: "post", x: W * .64, label: "public post" },
+      { key: "meaning", x: W - 140, label: "probable meaning" },
+    ];
+    const y = (i) => mt + 42 + i * 76;
+    const band = 14;
+    add(svg, "text", { x: 36, y: 24, "font-size": 13, "font-weight": 800 }, "Provenance Sankey-style flow");
+    add(svg, "text", { x: 36, y: 43, "font-size": 11.5, fill: "#526174" },
+      "Each band is one anomalous post. Color follows evidence certainty; gray source means the source is not visible in the logs.");
+    cols.forEach((c) => {
+      add(svg, "text", { x: c.x, y: mt - 20, "text-anchor": "middle", "font-size": 11.5,
+        "font-weight": 800, fill: "#526174" }, c.label);
+      add(svg, "line", { x1: c.x, y1: mt - 8, x2: c.x, y2: H - mb, stroke: "#d8e1ec", "stroke-dasharray": "2 3" });
+    });
+    CODES.forEach((c, i) => {
+      const I = inc[c];
+      const rowY = y(i);
+      const srcKnown = !!I.source_doc;
+      const col = c === "SwiftWren" ? "var(--anom)" : c === "MellowOtter" ? "var(--purple)" : "var(--info)";
+      const sourceCol = srcKnown ? "var(--ok)" : "var(--dim)";
+      const nodes = [
+        { k: "source", label: srcKnown ? I.source_doc.name : "source unknown", sub: srcKnown ? `id ${I.source_doc.id}` : "outside window", fill: sourceCol, status: srcKnown ? "observed" : "unknown" },
+        { k: "payload", label: `${c}.txt`, sub: I.create_file ? `${I.create_file.size_hint.toLocaleString()} B` : "payload existed", fill: srcKnown ? "var(--ok)" : "var(--dim)", status: I.create_file ? "observed" : "unknown" },
+        { k: "post", label: "saidit_post", sub: I.post ? `id ${I.post.id}` : "not visible", fill: col, status: "observed" },
+        { k: "meaning", label: META[c].theme, sub: META[c].sourceStrength, fill: srcKnown ? "var(--warn)" : "var(--dim)", status: srcKnown ? "inferred" : "unknown" },
+      ];
+      for (let j = 0; j < cols.length - 1; j++) {
+        const x1 = cols[j].x + 72, x2 = cols[j + 1].x - 72;
+        const p = `M${x1},${rowY - band / 2} C${x1 + 80},${rowY - band / 2} ${x2 - 80},${rowY - band / 2} ${x2},${rowY - band / 2}
+          L${x2},${rowY + band / 2} C${x2 - 80},${rowY + band / 2} ${x1 + 80},${rowY + band / 2} ${x1},${rowY + band / 2} Z`;
+        add(svg, "path", { d: p, fill: j === 2 ? "rgba(166,106,0,.22)" : "rgba(37,111,184,.18)", stroke: "none" });
+      }
+      add(svg, "text", { x: 34, y: rowY + 4, "font-size": 12.5, "font-weight": 800, fill: col }, c);
+      nodes.forEach((n, j) => {
+        const cx = cols[j].x;
+        const rect = add(svg, "rect", { x: cx - 70, y: rowY - 22, width: 140, height: 44, rx: 7,
+          fill: "#f8fafc", stroke: n.fill, "stroke-width": n.status === "unknown" ? 1.2 : 1.8,
+          "stroke-dasharray": n.status === "unknown" ? "4 3" : "none" });
+        makeInteractive(rect, `${c} ${cols[j].label}: ${n.status}`, () => renderEvidence(c));
+        rect.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c}: ${cols[j].label}</div><div class="tt-r">${esc(n.label)}</div><div class="tt-r">${n.status}</div>`, e));
+        rect.addEventListener("mouseleave", hideTip);
+        add(svg, "text", { x: cx, y: rowY - 3, "text-anchor": "middle", "font-size": 11.2,
+          "font-weight": 800, fill: n.fill }, n.label.length > 20 ? n.label.slice(0, 19) + "..." : n.label);
+        add(svg, "text", { x: cx, y: rowY + 13, "text-anchor": "middle", "font-size": 9.7,
+          fill: "#63748a", "font-family": "var(--mono)" }, n.sub);
+      });
+    });
+    [["observed", "var(--ok)"], ["public boundary", "var(--anom)"], ["inferred", "var(--warn)"], ["unknown", "var(--dim)"]].forEach(([lab, col], i) => {
+      const x = 36 + i * 150;
+      add(svg, "rect", { x, y: H - 20, width: 12, height: 12, rx: 2, fill: col, opacity: lab === "unknown" ? .45 : .9 });
+      add(svg, "text", { x: x + 18, y: H - 10, "font-size": 11.5, fill: "#526174" }, lab);
+    });
+  }
+
+  function drawPayloadScale() {
+    const svg = document.getElementById("payloadscale");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Payload size and relay-hop lollipop comparison for the three anomalous posts.");
+    const W = Math.max(780, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 340, mt = 86, mb = 40;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const left = { ml: 150, mr: W * .52, title: "payload size (bytes)" };
+    const right = { ml: W * .60, mr: W - 56, title: "relay hops" };
+    const rowH = 58;
+    const maxSize = Math.max(...CODES.map((c) => inc[c].create_file?.size_hint || 0), 1);
+    const maxHops = Math.max(...CODES.map((c) => inc[c].hop_count), 1);
+    const xSize = (v) => left.ml + (v / maxSize) * (left.mr - left.ml);
+    const xHop = (v) => right.ml + (v / maxHops) * (right.mr - right.ml);
+    add(svg, "text", { x: 36, y: 24, "font-size": 13, "font-weight": 800 }, "Payload size and propagation scale");
+    add(svg, "text", { x: 36, y: 43, "font-size": 11.5, fill: "#526174" },
+      "Two separate axes prevent a false comparison between bytes and hops. Unknown payload size is shown as missing.");
+    [
+      [left, maxSize.toLocaleString()],
+      [right, maxHops.toLocaleString()],
+    ].forEach(([p, maxLabel]) => {
+      add(svg, "text", { x: (p.ml + p.mr) / 2, y: mt - 30, "text-anchor": "middle", "font-size": 11.5,
+        "font-weight": 800, fill: "#526174" }, p.title);
+      add(svg, "line", { x1: p.ml, y1: mt - 14, x2: p.mr, y2: mt - 14, stroke: "#bdc9d8" });
+      add(svg, "text", { x: p.ml, y: mt - 20, "text-anchor": "middle", "font-size": 10, fill: "#63748a" }, "0");
+      add(svg, "text", { x: p.mr, y: mt - 20, "text-anchor": "middle", "font-size": 10, fill: "#63748a" }, maxLabel);
+    });
+    CODES.forEach((c, i) => {
+      const I = inc[c];
+      const y = mt + 38 + i * rowH;
+      const col = c === "SwiftWren" ? "var(--anom)" : c === "MellowOtter" ? "var(--purple)" : "var(--info)";
+      add(svg, "text", { x: 36, y: y + 4, "font-size": 12.5, "font-weight": 800, fill: col }, c);
+      add(svg, "line", { x1: left.ml, y1: y, x2: left.mr, y2: y, stroke: "#eef3f8" });
+      add(svg, "line", { x1: right.ml, y1: y, x2: right.mr, y2: y, stroke: "#eef3f8" });
+      if (I.create_file?.size_hint) {
+        const xs = xSize(I.create_file.size_hint);
+        const l1 = add(svg, "line", { x1: left.ml, y1: y, x2: xs, y2: y, stroke: "var(--ok)", "stroke-width": 4, "stroke-linecap": "round" });
+        const d1 = add(svg, "circle", { cx: xs, cy: y, r: 7, fill: "var(--ok)", stroke: "#fff", "stroke-width": 2 });
+        [l1, d1].forEach((m) => {
+          m.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c} payload</div><div class="tt-r">${I.create_file.size_hint.toLocaleString()} bytes</div><div class="tt-r">create_file id ${I.create_file.id}</div>`, e));
+          m.addEventListener("mouseleave", hideTip);
+        });
+        add(svg, "text", { x: xs + 10, y: y + 4, "font-size": 10.8, "font-family": "var(--mono)", fill: "#526174" }, I.create_file.size_hint.toLocaleString());
+      } else {
+        add(svg, "line", { x1: left.ml, y1: y, x2: left.mr, y2: y, stroke: "#bdc9d8", "stroke-dasharray": "4 3" });
+        add(svg, "text", { x: left.ml + 12, y: y - 8, "font-size": 10.8, fill: "#63748a" }, "payload size unknown");
+      }
+      const xh = xHop(I.hop_count);
+      const l2 = add(svg, "line", { x1: right.ml, y1: y, x2: xh, y2: y, stroke: col, "stroke-width": 4, "stroke-linecap": "round" });
+      const d2 = add(svg, "circle", { cx: xh, cy: y, r: c === "SwiftWren" ? 8 : 6.5, fill: col, stroke: "#fff", "stroke-width": 2 });
+      [l2, d2].forEach((m) => {
+        m.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c} relay scale</div><div class="tt-r">${I.hop_count} hops / ${I.distinct_agent_count} Agents</div><div class="tt-r">${I.departments_touched.length} departments</div>`, e));
+        m.addEventListener("mouseleave", hideTip);
+      });
+      add(svg, "text", { x: Math.min(xh + 10, right.mr - 16), y: y + 4, "font-size": 10.8,
+        "font-family": "var(--mono)", "font-weight": c === "SwiftWren" ? 800 : 400, fill: col }, I.hop_count.toLocaleString());
+    });
+    add(svg, "text", { x: 36, y: H - 12, "font-size": 11.2, fill: "#526174" },
+      "Interpretation: file size does not explain propagation by itself; SwiftWren is the largest relay chain even though only two payload sizes are visible.");
+  }
+
   function drawSourceTimeline() {
     const svg = document.getElementById("sourcetimeline");
     if (!svg) return;
@@ -249,6 +438,9 @@
     </div>`;
 
   drawConfidenceMatrix();
+  drawGlyphGrid();
+  drawProvFlow();
+  drawPayloadScale();
   drawSourceTimeline();
   renderEvidence("SwiftWren");
 })();

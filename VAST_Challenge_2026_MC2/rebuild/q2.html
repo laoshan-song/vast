@@ -53,19 +53,37 @@
       </section>
 
       <section class="panel">
-        <div class="head"><h2>C: Source-to-Post Evidence Timeline</h2><span class="sub">small multiples for the three posts</span></div>
+        <div class="head"><h2>C: Evidence Glyph Grid</h2><span class="sub">compact visual fingerprint for each post</span></div>
+        <p class="desc">Each glyph encodes source, payload, relay, post, theme, body, and cleanup evidence. Shape distinguishes evidence type; color distinguishes certainty.</p>
+        <div class="svg-wrap"><svg id="glyphgrid" width="100%" height="310"></svg></div>
+      </section>
+
+      <section class="panel">
+        <div class="head"><h2>D: Provenance Sankey Flow</h2><span class="sub">source certainty, payload, public post, and meaning</span></div>
+        <p class="desc">This flow view summarizes the three posts as bands. Width is not used for exact comparison; incident metrics remain in the table and matrix.</p>
+        <div class="svg-wrap"><svg id="provflow" width="100%" height="390"></svg></div>
+      </section>
+
+      <section class="panel">
+        <div class="head"><h2>E: Payload Scale Lollipop</h2><span class="sub">visible payload size and relay hops</span></div>
+        <p class="desc">This chart separates payload size from relay length. HiddenOrca's payload creation is unknown, so its size is not invented.</p>
+        <div class="svg-wrap"><svg id="payloadscale" width="100%" height="320"></svg></div>
+      </section>
+
+      <section class="panel">
+        <div class="head"><h2>F: Source-to-Post Evidence Timeline</h2><span class="sub">small multiples for the three posts</span></div>
         <p class="desc">Each row shows the visible evidence chain for one post. The x-axis is stage order rather than duration, because the terminal post and cleanup events occur within seconds.</p>
         <div class="svg-wrap"><svg id="sourcetimeline" width="100%" height="360"></svg></div>
       </section>
 
       <section class="panel">
-        <div class="head"><h2>D: Evidence Boundary Matrix</h2><span class="sub">observed / inferred / unknown</span></div>
+        <div class="head"><h2>G: Evidence Boundary Matrix</h2><span class="sub">observed / inferred / unknown</span></div>
         <p class="desc">This matrix prevents overclaiming. The answer distinguishes event facts from content interpretation and unknown file bodies.</p>
         <div id="boundary"></div>
       </section>
 
       <section class="panel">
-        <div class="head"><h2>E: Why the Posts Look Like Gibberish</h2><span class="sub">format mismatch, not proof of encryption</span></div>
+        <div class="head"><h2>H: Why the Posts Look Like Gibberish</h2><span class="sub">format mismatch, not proof of encryption</span></div>
         <div id="gibberish"></div>
       </section>
 

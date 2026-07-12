@@ -189,6 +189,186 @@
     });
   }
 
+  function drawCalendarHeatmap() {
+    const svg = document.getElementById("calendarheat");
+    if (!svg || !d.time_density) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Date by hour activity heatmap with anomaly post markers.");
+    const rows = d.time_density;
+    const days = [...new Set(rows.map((r) => r.hour.slice(0, 10)))];
+    const dayIndex = new Map(days.map((x, i) => [x, i]));
+    const byKey = new Map(rows.map((r) => [`${r.hour.slice(0, 10)}|${Number(r.hour.slice(11, 13))}`, r]));
+    const W = 1180, H = 560, ml = 86, mr = 28, mt = 82, mb = 46;
+    const cw = (W - ml - mr) / 24;
+    const rh = Math.min(7, (H - mt - mb) / days.length);
+    const maxLog = Math.log1p(Math.max(...rows.map((r) => r.total)));
+    const y0 = mt;
+    const color = (r) => {
+      if (!r) return "#f7f9fc";
+      if (r.content_source_post) return "var(--anom)";
+      if (r.virus) return `rgba(166,106,0,${.18 + .68 * Math.log1p(r.total) / maxLog})`;
+      return `rgba(37,111,184,${.08 + .55 * Math.log1p(r.total) / maxLog})`;
+    };
+    add(svg, "text", { x: ml, y: 24, "font-size": 13, "font-weight": 800 }, "Date-hour activity heatmap");
+    add(svg, "text", { x: ml, y: 43, "font-size": 11.5, fill: "#526174" },
+      "Rows are dates and columns are hours. Color encodes log-scaled event volume; red marks file-source SaidIt post hours.");
+    for (let h = 0; h < 24; h += 3) {
+      const x = ml + h * cw + cw / 2;
+      add(svg, "text", { x, y: mt - 16, "text-anchor": "middle", "font-size": 10.5, fill: "#63748a" }, `${String(h).padStart(2, "0")}:00`);
+    }
+    days.forEach((day, i) => {
+      const y = y0 + i * rh;
+      if (i % 5 === 0 || day.endsWith("-10") || day.endsWith("-17")) {
+        add(svg, "text", { x: ml - 8, y: y + rh - 1, "text-anchor": "end", "font-size": 9.5,
+          fill: day.endsWith("-17") ? "var(--anom)" : "#63748a", "font-weight": day.endsWith("-17") ? 800 : 400 }, day.slice(5));
+      }
+      for (let h = 0; h < 24; h++) {
+        const r = byKey.get(`${day}|${h}`);
+        const rect = add(svg, "rect", { x: ml + h * cw + 1, y, width: cw - 1.5, height: Math.max(2, rh - .8),
+          rx: 1, fill: color(r), stroke: r?.content_source_post ? "#fff" : "transparent", "stroke-width": r?.content_source_post ? 1.2 : 0 });
+        rect.addEventListener("mousemove", (e) => showTip(
+          `<div class="tt-h">${day} ${String(h).padStart(2, "0")}:00</div><div class="tt-r">total ${(r?.total || 0).toLocaleString()}</div><div class="tt-r">virus ${(r?.virus || 0).toLocaleString()} / content_source posts ${(r?.content_source_post || 0)}</div>`, e));
+        rect.addEventListener("mouseleave", hideTip);
+      }
+    });
+    [
+      ["regular activity", "rgba(37,111,184,.45)"],
+      ["virus-heavy hour", "rgba(166,106,0,.70)"],
+      ["file-source post hour", "var(--anom)"],
+    ].forEach(([lab, col], i) => {
+      const x = ml + i * 190;
+      add(svg, "rect", { x, y: H - 20, width: 12, height: 12, rx: 2, fill: col });
+      add(svg, "text", { x: x + 18, y: H - 10, "font-size": 11.5, fill: "#526174" }, lab);
+    });
+  }
+
+  function drawEventStream() {
+    const svg = document.getElementById("eventstream");
+    if (!svg || !d.time_density) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Daily stacked event composition stream.");
+    const byDay = new Map();
+    d.time_density.forEach((r) => {
+      const day = r.hour.slice(0, 10);
+      if (!byDay.has(day)) byDay.set(day, { day, total: 0, virus: 0, qst: 0, codename: 0, saidit: 0 });
+      const v = byDay.get(day);
+      v.total += r.total;
+      v.virus += r.virus;
+      v.qst += r.queue_subordinate_task;
+      v.codename += r.codename_related;
+      v.saidit += r.saidit_post;
+    });
+    const days = [...byDay.values()];
+    days.forEach((r) => r.other = Math.max(0, r.total - r.virus - r.qst - r.codename - r.saidit));
+    const W = 1180, H = 340, ml = 60, mr = 34, mt = 50, mb = 54;
+    const plotH = H - mt - mb;
+    const x = (i) => ml + (i / Math.max(1, days.length - 1)) * (W - ml - mr);
+    const max = Math.max(...days.map((r) => r.total));
+    const y = (v) => mt + plotH - (v / max) * plotH;
+    const keys = [
+      ["other", "other events", "rgba(99,116,138,.32)"],
+      ["qst", "queue tasks", "rgba(37,111,184,.52)"],
+      ["virus", "virus:true", "rgba(166,106,0,.58)"],
+      ["codename", "codename-related", "rgba(201,59,69,.50)"],
+      ["saidit", "SaidIt posts", "rgba(8,127,140,.70)"],
+    ];
+    add(svg, "text", { x: ml, y: 22, "font-size": 13, "font-weight": 800 }, "Daily event stream composition");
+    add(svg, "text", { x: ml, y: 41, "font-size": 11.5, fill: "#526174" },
+      "Stacked daily totals show background volume versus task, virus, codename, and SaidIt activity.");
+    add(svg, "line", { x1: ml, y1: mt + plotH, x2: W - mr, y2: mt + plotH, stroke: "#bdc9d8" });
+    keys.forEach(([key, label, col], ki) => {
+      const ptsTop = [];
+      const ptsBot = [];
+      days.forEach((r, i) => {
+        const before = keys.slice(0, ki).reduce((s, [k]) => s + r[k], 0);
+        ptsBot.push([x(i), y(before)]);
+        ptsTop.push([x(i), y(before + r[key])]);
+      });
+      const dpath = [...ptsTop, ...ptsBot.reverse()].map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ") + " Z";
+      const area = add(svg, "path", { d: dpath, fill: col, stroke: "rgba(255,255,255,.75)", "stroke-width": .7 });
+      area.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${label}</div><div class="tt-r">daily stacked area; hover bars in heatmap for exact hours</div>`, e));
+      area.addEventListener("mouseleave", hideTip);
+    });
+    days.forEach((r, i) => {
+      if (i % 7 === 0 || r.day.endsWith("-10") || r.day.endsWith("-17")) {
+        add(svg, "line", { x1: x(i), y1: mt, x2: x(i), y2: mt + plotH + 5, stroke: "#eef3f8" });
+        add(svg, "text", { x: x(i), y: H - 28, "text-anchor": "middle", "font-size": 10.5,
+          fill: r.day.endsWith("-17") ? "var(--anom)" : "#63748a" }, r.day.slice(5));
+      }
+    });
+    keys.forEach(([, label, col], i) => {
+      const x0 = ml + i * 168;
+      add(svg, "rect", { x: x0, y: H - 16, width: 12, height: 12, rx: 2, fill: col });
+      add(svg, "text", { x: x0 + 18, y: H - 6, "font-size": 11.5, fill: "#526174" }, label);
+    });
+  }
+
+  function drawSignalSmallMultiples() {
+    const svg = document.getElementById("signalsmall");
+    if (!svg || !d.time_density) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Daily small multiples for total events, queue tasks, virus events, codename activity, SaidIt posts, and content-source posts.");
+    const byDay = new Map();
+    d.time_density.forEach((r) => {
+      const day = r.hour.slice(0, 10);
+      if (!byDay.has(day)) byDay.set(day, { day, total: 0, qst: 0, virus: 0, codename: 0, saidit: 0, contentSource: 0 });
+      const v = byDay.get(day);
+      v.total += r.total;
+      v.qst += r.queue_subordinate_task;
+      v.virus += r.virus;
+      v.codename += r.codename_related;
+      v.saidit += r.saidit_post;
+      v.contentSource += r.content_source_post;
+    });
+    const days = [...byDay.values()];
+    const W = 1180, H = 460, ml = 148, mr = 34, mt = 44, mb = 48;
+    const rowH = (H - mt - mb) / 6;
+    const x = (i) => ml + (i / Math.max(1, days.length - 1)) * (W - ml - mr);
+    const series = [
+      { key: "total", label: "all events", color: "rgba(99,116,138,.78)", scale: "log" },
+      { key: "qst", label: "queue tasks", color: "var(--info)", scale: "log" },
+      { key: "virus", label: "virus:true", color: "var(--warn)", scale: "log" },
+      { key: "codename", label: "codename events", color: "var(--anom)", scale: "linear" },
+      { key: "saidit", label: "SaidIt posts", color: "var(--cyan)", scale: "linear" },
+      { key: "contentSource", label: "content_source posts", color: "var(--anom)", scale: "linear" },
+    ];
+    add(svg, "text", { x: ml, y: 22, "font-size": 13, "font-weight": 800 }, "Daily signal small multiples");
+    add(svg, "text", { x: ml + 210, y: 22, "font-size": 11.5, fill: "#526174" },
+      "Each row has its own scale; red dots mark the three file-source post days.");
+    series.forEach((s, si) => {
+      const y0 = mt + si * rowH;
+      const vals = days.map((r) => r[s.key]);
+      const max = Math.max(...vals, 1);
+      const y = (v) => {
+        const t = s.scale === "log" ? Math.log1p(v) / Math.log1p(max) : v / max;
+        return y0 + rowH - 18 - t * (rowH - 28);
+      };
+      add(svg, "text", { x: ml - 12, y: y0 + 22, "text-anchor": "end", "font-size": 11.5,
+        "font-weight": 800, fill: s.color }, s.label);
+      add(svg, "line", { x1: ml, y1: y0 + rowH - 18, x2: W - mr, y2: y0 + rowH - 18, stroke: "#d8e1ec" });
+      add(svg, "text", { x: W - mr + 4, y: y(max) + 4, "font-size": 10, fill: "#63748a", "font-family": "var(--mono)" },
+        max.toLocaleString());
+      const path = days.map((r, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(r[s.key]).toFixed(1)}`).join(" ");
+      add(svg, "path", { d: path, fill: "none", stroke: s.color, "stroke-width": s.key === "contentSource" ? 2.6 : 1.7, opacity: .86 });
+      days.forEach((r, i) => {
+        const active = r.contentSource > 0 || (s.key !== "contentSource" && r[s.key] > 0 && (s.key === "saidit" || s.key === "codename"));
+        const dot = add(svg, "circle", { cx: x(i), cy: y(r[s.key]), r: r.contentSource > 0 ? 4.6 : active ? 2.8 : 1.5,
+          fill: r.contentSource > 0 ? "var(--anom)" : s.color, opacity: r[s.key] > 0 ? .86 : .18, stroke: r.contentSource > 0 ? "#fff" : "none", "stroke-width": 1.2 });
+        dot.addEventListener("mousemove", (e) => showTip(
+          `<div class="tt-h">${r.day}</div><div class="tt-r">${s.label}: ${r[s.key].toLocaleString()}</div><div class="tt-r">content_source posts: ${r.contentSource}</div>`, e));
+        dot.addEventListener("mouseleave", hideTip);
+      });
+    });
+    days.forEach((r, i) => {
+      if (i % 7 === 0 || r.day.endsWith("-10") || r.day.endsWith("-17")) {
+        add(svg, "text", { x: x(i), y: H - 22, "text-anchor": "middle", "font-size": 10.5,
+          fill: r.day.endsWith("-17") ? "var(--anom)" : "#63748a" }, r.day.slice(5));
+      }
+    });
+    add(svg, "text", { x: ml, y: H - 6, "font-size": 11.2, fill: "#526174" },
+      "Small multiples are used instead of one shared axis because the signals differ by orders of magnitude.");
+  }
+
   function drawQstBars() {
     const svg = document.getElementById("qstbars");
     if (!svg) return;
@@ -258,6 +438,9 @@
 
   drawEventBars();
   drawTimeDensity();
+  drawCalendarHeatmap();
+  drawEventStream();
+  drawSignalSmallMultiples();
   drawSignatureBars();
   drawQstBars();
   drawActorBars();

@@ -10,6 +10,7 @@
     ["Baseline comparison", "normal vs anomaly", "p-base"],
     ["Prior occurrences", "three incidents", "p-prior"],
     ["Scale comparison", "dot plot metrics", "p-scale"],
+    ["Rule tradeoffs", "parallel coordinates", "p-parallel"],
     ["Single intervention", "SaidIt boundary", "p-fix"],
   ];
   document.getElementById("steps").innerHTML = guide.map(([t, dd, id], i) =>
@@ -271,6 +272,112 @@
     </tr>`).join("")}
   </table>`;
 
+  function drawConfusion() {
+    const svg = document.getElementById("confusion");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Two by two confusion matrix for the recommended SaidIt content-source boundary gate.");
+    const W = Math.max(720, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 320, ml = 220, mt = 70, cw = Math.min(260, (W - ml - 80) / 2), rh = 82;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const cells = [
+      { row: 0, col: 0, title: "blocked / reviewed", value: 3, label: "known anomalies", fill: "rgba(201,59,69,.82)", good: true },
+      { row: 0, col: 1, title: "allowed", value: 0, label: "missed anomalies", fill: "rgba(122,135,151,.14)", good: true },
+      { row: 1, col: 0, title: "blocked / reviewed", value: 0, label: "normal human false positives", fill: "rgba(122,135,151,.14)", good: true },
+      { row: 1, col: 1, title: "allowed", value: 105, label: "normal human posts", fill: "rgba(32,134,90,.80)", good: true },
+    ];
+    add(svg, "text", { x: 34, y: 24, "font-size": 13, "font-weight": 800 }, "Recommended gate confusion matrix");
+    add(svg, "text", { x: 34, y: 43, "font-size": 11.5, fill: "#526174" },
+      "Rule: Agent saidit_post with details.content_source -> block or require approval.");
+    ["Rule blocks / reviews", "Rule allows"].forEach((t, i) => {
+      add(svg, "text", { x: ml + i * cw + cw / 2, y: mt - 18, "text-anchor": "middle",
+        "font-size": 12, "font-weight": 800, fill: "#526174" }, t);
+    });
+    [
+      ["Actual anomaly", "Agent + content_source"],
+      ["Normal post", "human + content"],
+    ].forEach(([t, s], i) => {
+      add(svg, "text", { x: ml - 18, y: mt + i * rh + rh / 2 - 4, "text-anchor": "end",
+        "font-size": 12.5, "font-weight": 800, fill: i === 0 ? "var(--anom)" : "var(--ok)" }, t);
+      add(svg, "text", { x: ml - 18, y: mt + i * rh + rh / 2 + 14, "text-anchor": "end",
+        "font-size": 10.5, fill: "#63748a", "font-family": "var(--mono)" }, s);
+    });
+    cells.forEach((c) => {
+      const x = ml + c.col * cw, y = mt + c.row * rh;
+      const rect = add(svg, "rect", { x: x + 6, y: y + 6, width: cw - 12, height: rh - 12, rx: 8,
+        fill: c.fill, stroke: c.value === 0 ? "#bdc9d8" : "transparent" });
+      makeInteractive(rect, `${c.label}: ${c.value}`, () => showGateEvidence());
+      rect.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c.label}</div><div class="tt-r">${c.value.toLocaleString()} SaidIt posts</div><div class="tt-r">${c.title}</div>`, e));
+      rect.addEventListener("mouseleave", hideTip);
+      add(svg, "text", { x: x + cw / 2, y: y + 36, "text-anchor": "middle", "font-size": 25,
+        "font-weight": 900, fill: c.value === 0 ? "#526174" : "#fff", "font-family": "var(--mono)" }, c.value.toLocaleString());
+      add(svg, "text", { x: x + cw / 2, y: y + 58, "text-anchor": "middle", "font-size": 11.3,
+        "font-weight": 700, fill: c.value === 0 ? "#63748a" : "#fff" }, c.label);
+    });
+    add(svg, "text", { x: ml, y: H - 34, "font-size": 11.5, fill: "#526174" },
+      `Observed SaidIt denominator: ${b.total} posts = ${b.with_content_source} content_source anomalies + ${b.with_content_topic} normal human content posts.`);
+    add(svg, "text", { x: ml, y: H - 14, "font-size": 11.2, fill: "#526174" },
+      "The matrix is not a guarantee against future variants; it validates the selected rule against the observed dataset.");
+  }
+
+  function drawParallel() {
+    const svg = document.getElementById("parallel");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Parallel coordinates comparing candidate intervention rules.");
+    const W = Math.max(760, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 400, ml = 78, mr = 58, mt = 88, mb = 66;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const axes = [
+      { key: "coverage", label: "coverage", min: 0, max: 3, goodHigh: true, get: (c) => c.coverage, fmt: (v) => `${v}/3` },
+      { key: "fp", label: "blast radius", min: 0, max: Math.max(...candidates.map((c) => c.fp), 1), goodHigh: false, get: (c) => c.fp, fmt: (v) => Math.round(v).toLocaleString() },
+      { key: "affected", label: "records affected", min: 0, max: Math.max(...candidates.map((c) => c.affected), 1), goodHigh: false, get: (c) => c.affected, fmt: (v) => Math.round(v).toLocaleString() },
+      { key: "cost", label: "cost", min: 1, max: 5, goodHigh: false, get: (c) => c.cost, fmt: (v) => v.toFixed(0) },
+      { key: "timing", label: "prevention timing", min: 0, max: 2, goodHigh: true, get: (c) => c.timing === "pre-publication" ? 2 : c.timing === "post-exposure" ? 0 : 1, fmt: (v) => v === 2 ? "pre" : v === 1 ? "during" : "post" },
+    ];
+    const x = (i) => ml + i * ((W - ml - mr) / (axes.length - 1));
+    const y = (a, v) => {
+      const t = (v - a.min) / Math.max(1e-9, a.max - a.min);
+      const oriented = a.goodHigh ? t : 1 - t;
+      return mt + (1 - oriented) * (H - mt - mb);
+    };
+    add(svg, "text", { x: ml, y: 24, "font-size": 13, "font-weight": 800 }, "Intervention tradeoff parallel coordinates");
+    add(svg, "text", { x: ml, y: 43, "font-size": 11.5, fill: "#526174" },
+      "Higher is better on every displayed axis after orientation: high coverage, low blast radius, low affected records, low cost, earlier timing.");
+    axes.forEach((a, i) => {
+      const xx = x(i);
+      add(svg, "line", { x1: xx, y1: mt, x2: xx, y2: H - mb, stroke: "#bdc9d8" });
+      add(svg, "text", { x: xx, y: H - 34, "text-anchor": "middle", "font-size": 11.2, "font-weight": 800, fill: "#526174" }, a.label);
+      add(svg, "text", { x: xx, y: mt - 8, "text-anchor": "middle", "font-size": 10.2, fill: "#63748a" }, a.goodHigh ? a.fmt(a.max) : a.fmt(a.min));
+      add(svg, "text", { x: xx, y: H - mb + 16, "text-anchor": "middle", "font-size": 10.2, fill: "#63748a" }, a.goodHigh ? a.fmt(a.min) : a.fmt(a.max));
+    });
+    candidates.forEach((c) => {
+      const pts = axes.map((a, i) => [x(i), y(a, a.get(c))]);
+      const dpath = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+      const rec = c.verdict === "recommended";
+      const line = add(svg, "path", { d: dpath, fill: "none", stroke: rec ? "var(--ok)" : c.verdict === "forensics only" ? "var(--warn)" : "#7a8797",
+        "stroke-width": rec ? 3.2 : 1.8, opacity: rec ? .95 : .56 });
+      makeInteractive(line, `${c.name}: ${c.verdict}`, () => evidenceBox(evidence, `${c.name}`, [
+        ["coverage", `${c.coverage}/3`],
+        ["blast radius", c.fp],
+        ["records affected", c.affected],
+        ["cost", c.cost],
+        ["timing", c.timing],
+        ["decision", c.verdict],
+      ], c));
+      line.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c.name}</div><div class="tt-r">${c.verdict}</div><div class="tt-r">coverage ${c.coverage}/3, cost ${c.cost}</div>`, e));
+      line.addEventListener("mouseleave", hideTip);
+      if (rec) {
+        add(svg, "text", { x: pts[0][0] + 8, y: pts[0][1] - 8, "font-size": 11.5, "font-weight": 800, fill: "var(--ok)" }, "recommended");
+      }
+    });
+    [["recommended", "var(--ok)"], ["forensics only", "var(--warn)"], ["rejected", "#7a8797"]].forEach(([lab, col], i) => {
+      const xx = ml + i * 142;
+      add(svg, "line", { x1: xx, y1: H - 16, x2: xx + 26, y2: H - 16, stroke: col, "stroke-width": lab === "recommended" ? 3 : 2 });
+      add(svg, "text", { x: xx + 34, y: H - 12, "font-size": 11.5, fill: "#526174" }, lab);
+    });
+  }
+
   function drawDecision() {
     const svg = document.getElementById("decision");
     svg.innerHTML = "";
@@ -337,5 +444,7 @@
   }
 
   drawScalePlot();
+  drawParallel();
+  drawConfusion();
   drawDecision();
 })();
