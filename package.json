@@ -1,0 +1,13 @@
+{
+  "name": "vast-challenge-2026-mc2",
+  "private": true,
+  "scripts": {
+    "verify:accessibility": "node VAST_Challenge_2026_MC2/accessibility_verify.js",
+    "verify:responsive": "node VAST_Challenge_2026_MC2/responsive_verify.js",
+    "verify:rebuild": "node VAST_Challenge_2026_MC2/rebuild/verify.js",
+    "verify": "npm run verify:accessibility && npm run verify:responsive && npm run verify:rebuild"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.55.0"
+  }
+}

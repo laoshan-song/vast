@@ -1,66 +1,69 @@
 # GitHub 最终版本冻结指南
 
-如果最终提交表里写了 GitHub Pages 或 GitHub 仓库链接，建议给最终 commit 打 tag 或创建 GitHub Release。这样评委看到的是一个冻结版本，而不是截止后可能继续变化的页面。
+如果最终答案中包含 GitHub Pages 或仓库链接，应使用 tag 或 GitHub Release 固定评委看到的版本。
 
-## 什么时候打 tag
+## 打 tag 前必须满足
 
-只在下面条件都满足后打 tag：
+- `final_report_0709.html` 已填入真实团队信息；
+- 视频链接或包内视频已准备好；
+- `node pre_submission_validator.js` 通过；
+- `npm run verify` 通过；
+- 正式 ZIP 已构建并从新目录人工检查；
+- 所有最终修改已经 commit；
+- 团队确认不再修改提交内容。
 
-- `final_report_0709.html` 或最终 zip 的 `index.htm` 真实团队信息已填。
-- 视频链接或视频文件已填。
-- `node pre_submission_validator.js` 通过。
-- 最终修改已经 commit。
-- 小组确认不再改最终内容。
+## 只读就绪检查
 
-## 本地检查
-
-在项目根目录运行：
+在 `vast` 仓库根目录运行：
 
 ```powershell
-.\check_github_release_readiness.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\check_github_release_readiness.ps1
 ```
 
-这个脚本只读 git 状态，不会创建 tag，也不会 push。
+该脚本不会创建 tag，也不会 push。它只检查：
 
-它会检查：
+- `origin` 是否为 `https://github.com/laoshan-song/vast.git`；
+- 当前分支和 HEAD commit；
+- 工作区是否干净；
+- HEAD 是否已有 tag。
 
-- 当前远端是不是 `laoshan-song/vast.git`。
-- 当前分支和 HEAD commit。
-- 工作区是否干净。
-- HEAD 是否已经有 tag。
+在工作区不干净或提交校验失败时，不要创建最终 tag。
 
-如果工作区不干净，不要打 tag。先 commit。
+## 创建冻结版本
 
-## 打 tag 的基本命令
-
-在 `vast_push_sparse` 仓库目录里：
+确认最终修改后，根据团队流程提交：
 
 ```powershell
 git status
-git add VAST_Challenge_2026_MC2
+git add .gitignore package.json package-lock.json VAST_Challenge_2026_MC2 build_final_submission_zip.ps1 check_github_release_readiness.ps1
 git commit -m "Finalize MC2 submission"
-git tag mc2-final-YYYYMMDD
 git push origin master
+```
+
+然后使用真实日期创建并推送 tag：
+
+```powershell
+git tag mc2-final-YYYYMMDD
 git push origin mc2-final-YYYYMMDD
 ```
 
-把 `YYYYMMDD` 改成真实日期，例如 `20260711`。
+如需 GitHub Release，应让 Release 指向同一个 tag，并附上最终 ZIP 的文件名和 SHA-256。
 
-## 不要做的事
+## 不要做
 
-- 不要在验证器失败时打 tag。
-- 不要把 `team_metadata.json` commit 或 push。
-- 不要在截止后继续修改 tag 对应的提交。
-- 不要只提交 GitHub 链接而不上传 PCS/course 要求的 zip。
-- 不要把旧探索笔记当最终答案。
+- 不要提交 `team_metadata.json` 或 `MC2 data.json`；
+- 不要在验证失败时打 tag；
+- 不要修改已经提交给评委的 tag；
+- 不要只提交在线链接而遗漏官方要求的 ZIP；
+- 不要把探索笔记或旧页面当作最终答案。
 
-## 推荐最终记录
+## 团队留档
 
-提交前在队伍共享文档里记录：
+建议记录：
 
-- final zip 文件名
-- final commit hash
-- final tag 名称
-- GitHub Pages URL
-- 视频 URL
-- PCS/course 上传时间
+- 最终 ZIP 文件名和 SHA-256；
+- 最终 commit hash；
+- 最终 tag 和 Release URL；
+- GitHub Pages URL；
+- 视频 URL；
+- PCS 或课程系统上传时间。

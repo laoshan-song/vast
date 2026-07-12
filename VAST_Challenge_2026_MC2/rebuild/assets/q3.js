@@ -1,7 +1,7 @@
 /* q3.js - recurrence timeline, baseline comparison, and one intervention */
 (async () => {
   const d = await MC2.load();
-  const { add, labelSvg, makeInteractive, showTip, hideTip, name, evidenceBox, toTs, daysBetween } = MC2;
+  const { add, labelSvg, makeInteractive, showTip, hideTip, name, evidenceBox, toTs, daysBetween, state, setState } = MC2;
   const inc = d.incidents;
   const evidence = document.getElementById("evidence");
   const CODES = ["HiddenOrca", "MellowOtter", "SwiftWren"];
@@ -10,16 +10,22 @@
     ["Baseline comparison", "normal vs anomaly", "p-base"],
     ["Prior occurrences", "three incidents", "p-prior"],
     ["Scale comparison", "dot plot metrics", "p-scale"],
-    ["Rule tradeoffs", "parallel coordinates", "p-parallel"],
+    ["Shared Agents", "UpSet intersections", "p-upset"],
+    ["Rule tradeoffs", "explore appendix", "p-parallel"],
     ["Single intervention", "SaidIt boundary", "p-fix"],
   ];
-  document.getElementById("steps").innerHTML = guide.map(([t, dd, id], i) =>
-    `<button data-id="${id}"><span class="idx">${i + 1}</span><span><span class="t">${t}</span><span class="d">${dd}</span></span></button>`).join("");
-  document.querySelectorAll("#steps button").forEach((b) => b.addEventListener("click", () => {
-    document.querySelectorAll("#steps button").forEach((x) => x.classList.remove("active"));
-    b.classList.add("active");
-    document.getElementById(b.dataset.id).scrollIntoView({ behavior: "smooth", block: "start" });
-  }));
+  function renderGuide() {
+    const visibleGuide = guide.filter(([, , id]) => state().mode === "explore" || id !== "p-parallel");
+    document.getElementById("steps").innerHTML = visibleGuide.map(([t, dd, id], i) =>
+      `<button data-id="${id}"><span class="idx">${i + 1}</span><span><span class="t">${t}</span><span class="d">${dd}</span></span></button>`).join("");
+    document.querySelectorAll("#steps button").forEach((b) => b.addEventListener("click", () => {
+      document.querySelectorAll("#steps button").forEach((x) => x.classList.remove("active"));
+      b.classList.add("active");
+      document.getElementById(b.dataset.id).scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
+  }
+  document.addEventListener("mc2statechange", renderGuide);
+  renderGuide();
 
   function showGateEvidence() {
     evidenceBox(evidence, "SaidIt boundary gate evidence", [
@@ -32,6 +38,7 @@
   }
 
   function showIncidentEvidence(c) {
+    if (state().incident !== c) setState({ incident: c });
     const I = inc[c];
     const post = I.recipe?.find((x) => x.action === "saidit_post") || null;
     evidenceBox(evidence, `${c}: recurrence evidence`, [
@@ -201,6 +208,65 @@
       const x = ml + i * 166;
       add(svg, "circle", { cx: x, cy: H - 16, r: 5, fill: colors[c] });
       add(svg, "text", { x: x + 10, y: H - 12, "font-size": 11.5, fill: "#526174" }, c);
+    });
+  }
+
+  function drawUpSet() {
+    const svg = document.getElementById("upset");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "UpSet intersection chart of Agent membership across HiddenOrca, MellowOtter, and SwiftWren.");
+    const W = Math.max(760, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 390, ml = 182, mr = 36, mt = 54, barBottom = 205;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const sets = CODES.map((c) => new Set(inc[c].distinct_agents));
+    const allAgents = [...new Set(CODES.flatMap((c) => inc[c].distinct_agents))];
+    const groups = new Map();
+    allAgents.forEach((agent) => {
+      const bits = sets.map((set) => set.has(agent) ? "1" : "0").join("");
+      if (!groups.has(bits)) groups.set(bits, []);
+      groups.get(bits).push(agent);
+    });
+    const combos = [...groups.entries()].sort((a, b) => b[1].length - a[1].length || b[0].localeCompare(a[0]));
+    const max = Math.max(...combos.map(([, agents]) => agents.length), 1);
+    const colW = (W - ml - mr) / combos.length;
+    const x = (i) => ml + i * colW + colW / 2;
+    const yBar = (v) => barBottom - (v / max) * 118;
+    add(svg, "text", { x: ml, y: 22, "font-size": 13.5, "font-weight": 800 }, "Shared-Agent membership intersections");
+    add(svg, "text", { x: ml, y: 42, "font-size": 12, fill: "#46576b" },
+      "Bar height counts Agents with the exact membership pattern shown by connected dots below.");
+    [0, max].forEach((tick) => {
+      const y = yBar(tick);
+      add(svg, "line", { x1: ml, y1: y, x2: W - mr, y2: y, stroke: "#e7edf4" });
+      add(svg, "text", { x: ml - 10, y: y + 4, "text-anchor": "end", "font-size": 11.5, fill: "#66758a" }, tick);
+    });
+    const rowYs = [254, 302, 350];
+    CODES.forEach((code, i) => {
+      add(svg, "text", { x: ml - 16, y: rowYs[i] + 4, "text-anchor": "end", "font-size": 12.5,
+        "font-weight": 800, fill: code === "SwiftWren" ? "var(--anom)" : code === "MellowOtter" ? "var(--purple)" : "var(--info)" }, code);
+      add(svg, "line", { x1: ml, y1: rowYs[i], x2: W - mr, y2: rowYs[i], stroke: "#eef3f8" });
+    });
+    combos.forEach(([bits, agents], i) => {
+      const xx = x(i), yy = yBar(agents.length);
+      const sharedAll = bits === "111";
+      const col = sharedAll ? "var(--anom)" : bits.split("").filter((b) => b === "1").length > 1 ? "var(--purple)" : "var(--info)";
+      const bar = add(svg, "rect", { x: xx - Math.min(30, colW * .32), y: yy,
+        width: Math.min(60, colW * .64), height: barBottom - yy, rx: 4, fill: col, opacity: sharedAll ? .92 : .68 });
+      makeInteractive(bar, `${agents.length} Agents in membership ${bits}`, () => evidenceBox(evidence, `Shared-Agent intersection ${bits}`, [
+        ["HiddenOrca", bits[0] === "1" ? "included" : "not included"],
+        ["MellowOtter", bits[1] === "1" ? "included" : "not included"],
+        ["SwiftWren", bits[2] === "1" ? "included" : "not included"],
+        ["Agent count", agents.length],
+        ["Agents", agents.map(name).join(", ")],
+      ], { membership: bits, agents }));
+      add(svg, "text", { x: xx, y: yy - 8, "text-anchor": "middle", "font-size": 12.5,
+        "font-weight": 900, fill: col }, agents.length);
+      const activeRows = [...bits].map((bit, index) => bit === "1" ? index : -1).filter((index) => index >= 0);
+      if (activeRows.length > 1) add(svg, "line", { x1: xx, y1: rowYs[Math.min(...activeRows)], x2: xx, y2: rowYs[Math.max(...activeRows)], stroke: col, "stroke-width": 3 });
+      rowYs.forEach((rowY, index) => {
+        add(svg, "circle", { cx: xx, cy: rowY, r: bits[index] === "1" ? 7 : 5,
+          fill: bits[index] === "1" ? col : "#fff", stroke: bits[index] === "1" ? col : "#bdc9d8", "stroke-width": 2 });
+      });
     });
   }
 
@@ -444,6 +510,7 @@
   }
 
   drawScalePlot();
+  drawUpSet();
   drawParallel();
   drawConfusion();
   drawDecision();

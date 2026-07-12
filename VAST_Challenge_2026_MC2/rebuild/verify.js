@@ -1,6 +1,6 @@
 const path = require("path");
 const fs = require("fs");
-const { chromium } = require("playwright");
+const { chromium } = require("playwright-core");
 
 const pages = ["overview", "q1", "q2", "q3"];
 
@@ -34,6 +34,62 @@ const pages = ["overview", "q1", "q2", "q3"];
     console.log(`${ok ? "OK " : "FAIL"} ${name}`, JSON.stringify(info), errs.length ? "ERR:" + errs.join("|") : "");
     await page.close();
   }
+
+  const interaction = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const interactionErrors = [];
+  interaction.on("console", m => { if (/error/i.test(m.type())) interactionErrors.push(m.text()); });
+  interaction.on("pageerror", e => interactionErrors.push("PAGEERR: " + e.message));
+  await interaction.goto(`file://${path.resolve(__dirname, "q1.html")}?mode=review&incident=SwiftWren&walk=hop`, { waitUntil: "load" });
+  await interaction.waitForTimeout(500);
+
+  const reviewState = await interaction.evaluate(() => ({
+    mode: document.body.dataset.mode,
+    hiddenExplore: [...document.querySelectorAll(".explore-only")]
+      .every((node) => getComputedStyle(node).display === "none"),
+  }));
+  await interaction.click('[data-view-mode="explore"]');
+  await interaction.click('#incsel button[data-c="MellowOtter"]');
+  await interaction.click("#walk-time");
+  await interaction.locator("#walk text.clickable-mark").first().click();
+  const q1State = await interaction.evaluate(() => MC2.state());
+  await interaction.click('a[data-page="q2.html"]');
+  await interaction.waitForTimeout(500);
+  const q2State = await interaction.evaluate(() => ({
+    state: MC2.state(),
+    mode: document.body.dataset.mode,
+    selectedIncident: document.querySelector("#strength button.active")?.dataset.c,
+  }));
+  await interaction.click("[data-reset-view]");
+  const resetState = await interaction.evaluate(() => ({
+    state: MC2.state(),
+    mode: document.body.dataset.mode,
+    hiddenExplore: [...document.querySelectorAll(".explore-only")]
+      .every((node) => getComputedStyle(node).display === "none"),
+  }));
+  await interaction.goto(`file://${path.resolve(__dirname, "overview.html")}?mode=review`, { waitUntil: "load" });
+  await interaction.waitForTimeout(500);
+  await interaction.locator(".panel.core .tooltip-mark").first().click();
+  const pinned = await interaction.locator(".tooltip.pinned").evaluate((node) => getComputedStyle(node).opacity === "1");
+  await interaction.keyboard.press("Escape");
+  await interaction.waitForTimeout(250);
+  const escaped = await interaction.locator(".tooltip").evaluate((node) => getComputedStyle(node).opacity === "0");
+
+  const interactionOk = interactionErrors.length === 0
+    && reviewState.mode === "review" && reviewState.hiddenExplore
+    && q1State.mode === "explore" && q1State.incident === "MellowOtter"
+    && q1State.walk === "time" && Boolean(q1State.agent)
+    && q2State.mode === "explore" && q2State.state.incident === "MellowOtter"
+    && q2State.state.walk === "time" && q2State.state.agent === q1State.agent
+    && q2State.selectedIncident === "MellowOtter"
+    && resetState.mode === "review" && resetState.hiddenExplore
+    && resetState.state.incident === "SwiftWren" && resetState.state.walk === "hop" && !resetState.state.agent
+    && pinned && escaped;
+  bad ||= !interactionOk;
+  console.log(`${interactionOk ? "OK " : "FAIL"} linked interactions`, JSON.stringify({
+    reviewState, q1State, q2State, resetState, pinned, escaped,
+  }), interactionErrors.length ? "ERR:" + interactionErrors.join("|") : "");
+  await interaction.close();
+
   await browser.close();
   process.exit(bad ? 1 : 0);
 })();

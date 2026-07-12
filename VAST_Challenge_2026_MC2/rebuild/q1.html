@@ -40,40 +40,41 @@
     </aside>
 
     <main>
-      <section class="panel" id="p-recipe">
+      <section class="panel core" id="p-recipe">
         <div class="head"><h2>A: Terminal Five-Step Recipe</h2><span class="sub" id="recipe-sub"></span></div>
         <p class="desc">This sequence is the exact terminal chain after John Agent receives the final relay task. It is shown as a timeline rather than a network hairball.</p>
         <div class="svg-wrap"><svg id="recipe" width="100%" height="270"></svg></div>
         <div id="evidence" class="evidence-box"></div>
       </section>
 
-      <section class="panel" id="p-life">
+      <section class="panel core" id="p-life">
         <div class="head"><h2>B: File Lifecycle Timeline</h2><span class="sub">source read, payload, relay, post, and cleanup</span></div>
         <p class="desc">This view links the macro chain to auditable event ids. Unknown source context is kept visible instead of being filled with unsupported content claims.</p>
         <div class="svg-wrap"><svg id="lifecycle" width="100%" height="250"></svg></div>
         <div id="johnoutcomes" style="margin-top:14px"></div>
       </section>
 
-      <section class="panel" id="p-walk">
-        <div class="head"><h2>C: Hop-Expanded Relay Path</h2><span class="sub">Agents on y-axis, hop order on x-axis</span></div>
-        <p class="desc">Each point is a relay receiver. Repeated visits, self-loops, and arrivals at John remain readable because the path is unfolded over hop order.</p>
+      <section class="panel core" id="p-walk">
+        <div class="head"><h2>C: Agent Relay Swimlane</h2><span class="sub" id="walk-sub">switch between hop order and elapsed time</span></div>
+        <p class="desc">Each point is a relay receiver. Select an Agent to coordinate highlighting across the lane and evidence record.</p>
+        <div class="btnrow"><button class="btn" id="walk-hop" type="button">Hop order</button><button class="btn" id="walk-time" type="button">Elapsed time</button><button class="btn" id="clear-agent" type="button">Clear Agent</button></div>
         <div class="legend" id="walk-legend"></div>
         <div class="svg-wrap"><svg id="walk" width="100%" height="540"></svg></div>
       </section>
 
-      <section class="panel" id="p-dept">
+      <section class="panel explore-only" id="p-dept">
         <div class="head"><h2>D: Department Propagation Matrix</h2><span class="sub">from-department to to-department relay counts</span></div>
         <p class="desc">The matrix aggregates relay hops by organization unit. It shows whether the behavior stayed local or crossed system boundaries inside the company.</p>
         <div class="svg-wrap"><svg id="deptmatrix" width="100%" height="420"></svg></div>
       </section>
 
-      <section class="panel" id="p-flow">
+      <section class="panel explore-only" id="p-flow">
         <div class="head"><h2>E: Department Flow Ribbons</h2><span class="sub">top relay directions between departments</span></div>
         <p class="desc">This alluvial-style view shows the strongest department-to-department relay directions for the selected incident. Width encodes hop count; low-count flows are omitted to avoid clutter.</p>
         <div class="svg-wrap"><svg id="deptflow" width="100%" height="380"></svg></div>
       </section>
 
-      <section class="panel" id="p-sys">
+      <section class="panel core" id="p-sys">
         <div class="head"><h2>F: System Boundary Context</h2><span class="sub">source document to payload to relay to public post</span></div>
         <p class="desc">This flow separates internal operations from the external publishing boundary. The public boundary is where the harm becomes irreversible.</p>
         <div id="sysflow"></div>

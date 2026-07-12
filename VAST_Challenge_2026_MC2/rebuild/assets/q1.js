@@ -1,11 +1,13 @@
 /* q1.js - terminal recipe, hop-expanded route, system boundary context */
 (async () => {
   const d = await MC2.load();
-  const { add, labelSvg, makeInteractive, showTip, hideTip, name, deptColor, evidenceBox, eventRows } = MC2;
+  const { add, labelSvg, makeInteractive, showTip, hideTip, name, deptColor, evidenceBox, eventRows, state, setState, toTs } = MC2;
   const CODES = ["SwiftWren", "MellowOtter", "HiddenOrca"];
   const STAGES = ["all", "relay", "check", "post", "cleanup"];
-  let cur = "SwiftWren";
+  let cur = state().incident;
   let stage = "all";
+  let walkMode = state().walk;
+  let selectedAgent = state().agent;
 
   const incSel = document.getElementById("incsel");
   const incStats = document.getElementById("incstats");
@@ -13,9 +15,7 @@
 
   incSel.innerHTML = CODES.map((c) => `<button class="btn ${c === cur ? "primary" : ""}" data-c="${c}">${c}</button>`).join("");
   incSel.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
-    cur = b.dataset.c;
-    incSel.querySelectorAll("button").forEach((x) => x.classList.toggle("primary", x.dataset.c === cur));
-    render();
+    setState({ incident: b.dataset.c, agent: "" });
   }));
 
   document.getElementById("stagefilter").innerHTML = STAGES.map((s) =>
@@ -34,13 +34,33 @@
     ["Flow ribbons", "top department flows", "p-flow"],
     ["System context", "boundary crossing", "p-sys"],
   ];
-  document.getElementById("steps").innerHTML = guide.map(([t, dd, id], i) =>
-    `<button data-id="${id}"><span class="idx">${i + 1}</span><span><span class="t">${t}</span><span class="d">${dd}</span></span></button>`).join("");
-  document.querySelectorAll("#steps button").forEach((b) => b.addEventListener("click", () => {
-    document.querySelectorAll("#steps button").forEach((x) => x.classList.remove("active"));
-    b.classList.add("active");
-    document.getElementById(b.dataset.id).scrollIntoView({ behavior: "smooth", block: "start" });
-  }));
+  function renderGuide() {
+    const visibleGuide = guide.filter(([, , id]) => state().mode === "explore" || !["p-dept", "p-flow"].includes(id));
+    document.getElementById("steps").innerHTML = visibleGuide.map(([t, dd, id], i) =>
+      `<button data-id="${id}"><span class="idx">${i + 1}</span><span><span class="t">${t}</span><span class="d">${dd}</span></span></button>`).join("");
+    document.querySelectorAll("#steps button").forEach((b) => b.addEventListener("click", () => {
+      document.querySelectorAll("#steps button").forEach((x) => x.classList.remove("active"));
+      b.classList.add("active");
+      document.getElementById(b.dataset.id).scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
+  }
+
+  document.getElementById("walk-hop").addEventListener("click", () => setState({ walk: "hop" }));
+  document.getElementById("walk-time").addEventListener("click", () => setState({ walk: "time" }));
+  document.getElementById("clear-agent").addEventListener("click", () => setState({ agent: "" }));
+  document.addEventListener("mc2statechange", (ev) => {
+    const next = ev.detail;
+    const changed = cur !== next.incident || walkMode !== next.walk || selectedAgent !== next.agent;
+    cur = next.incident;
+    walkMode = next.walk;
+    selectedAgent = next.agent;
+    incSel.querySelectorAll("button").forEach((x) => x.classList.toggle("primary", x.dataset.c === cur));
+    document.getElementById("walk-hop").classList.toggle("primary", walkMode === "hop");
+    document.getElementById("walk-time").classList.toggle("primary", walkMode === "time");
+    document.getElementById("clear-agent").disabled = !selectedAgent;
+    renderGuide();
+    if (changed) render();
+  });
 
   function stageOf(action) {
     if (action === "queue_subordinate_task") return "relay";
@@ -204,7 +224,7 @@
   function drawWalk(I) {
     const svg = document.getElementById("walk");
     svg.innerHTML = "";
-    labelSvg(svg, `${cur} hop-expanded relay route`);
+    labelSvg(svg, `${cur} Agent relay swimlane by ${walkMode === "time" ? "elapsed time" : "hop order"}`);
     const hops = I.hops || [];
     const agents = I.distinct_agents.slice().sort((a, b) => {
       if (a === "john_windward") return 1;
@@ -221,21 +241,31 @@
     svg.setAttribute("viewBox", `0 0 ${W} 540`);
     const ml = 158, mr = 34, mt = 26, mb = 36;
     const rh = (540 - mt - mb) / agents.length;
-    const x = (i) => ml + (hops.length <= 1 ? 0 : (i / (hops.length - 1)) * (W - ml - mr));
+    const times = hops.map((h) => toTs(h.when));
+    const minTime = Math.min(...times), maxTime = Math.max(...times);
+    const x = (i) => walkMode === "time"
+      ? ml + ((times[i] - minTime) / Math.max(1, maxTime - minTime)) * (W - ml - mr)
+      : ml + (hops.length <= 1 ? 0 : (i / (hops.length - 1)) * (W - ml - mr));
     const y = (a) => mt + rowOf[a] * rh + rh / 2;
+    document.getElementById("walk-sub").textContent = walkMode === "time"
+      ? "Agents on y-axis, elapsed challenge time on x-axis"
+      : "Agents on y-axis, hop order on x-axis";
 
     agents.forEach((a) => {
       const isJohn = a === "john_windward";
       const isOrigin = a === I.origin;
-      add(svg, "rect", { x: ml, y: y(a) - rh / 2 + 1, width: W - ml - mr, height: rh - 2,
+      const selected = !selectedAgent || selectedAgent === a;
+      const row = add(svg, "g", { opacity: selected ? 1 : .22 });
+      add(row, "rect", { x: ml, y: y(a) - rh / 2 + 1, width: W - ml - mr, height: rh - 2,
         fill: isJohn ? "rgba(201,59,69,.08)" : isOrigin ? "rgba(37,111,184,.08)" : "transparent" });
-      add(svg, "line", { x1: ml, y1: y(a), x2: W - mr, y2: y(a), stroke: "#d8e1ec", "stroke-width": 1 });
+      add(row, "line", { x1: ml, y1: y(a), x2: W - mr, y2: y(a), stroke: "#d8e1ec", "stroke-width": 1 });
       const dept = d.org.person_dept[a];
-      add(svg, "circle", { cx: ml - 132, cy: y(a), r: 4, fill: deptColor(dept) });
-      add(svg, "text", { x: ml - 122, y: y(a) + 4, "font-size": 11.5,
+      add(row, "circle", { cx: ml - 132, cy: y(a), r: 4, fill: deptColor(dept) });
+      const label = add(row, "text", { x: ml - 122, y: y(a) + 4, "font-size": 11.5,
         fill: isJohn ? "var(--anom)" : isOrigin ? "var(--info)" : "var(--muted)",
         "font-weight": (isJohn || isOrigin) ? 800 : 400 },
         name(a) + (isJohn ? " / terminal endpoint" : isOrigin ? " / origin" : ""));
+      makeInteractive(label, `Filter relay path to ${name(a)}`, () => setState({ agent: selectedAgent === a ? "" : a }));
     });
 
     let prevX = x(0), prevY = y(hops[0]?.from || I.origin);
@@ -244,19 +274,24 @@
       const px = x(i), py = y(h.to);
       const toJohn = h.to === "john_windward";
       const selfLoop = h.from === h.to;
+      const involvesSelected = !selectedAgent || h.from === selectedAgent || h.to === selectedAgent;
       add(svg, "line", { x1: prevX, y1: prevY, x2: px, y2: py,
         stroke: toJohn ? "rgba(201,59,69,.65)" : selfLoop ? "rgba(166,106,0,.72)" : "rgba(37,111,184,.35)",
-        "stroke-width": toJohn ? 2 : selfLoop ? 1.8 : 1.2 });
+        "stroke-width": toJohn ? 2 : selfLoop ? 1.8 : 1.2, opacity: involvesSelected ? 1 : .12 });
       const c = add(svg, "circle", { cx: px, cy: py, r: toJohn ? 5.5 : selfLoop ? 4.2 : 2.7,
-        fill: toJohn ? "var(--anom)" : selfLoop ? "var(--warn)" : "#8bb7e8", stroke: "#fff", "stroke-width": toJohn ? 1.2 : 0 });
-      makeInteractive(c, `${cur} relay hop ${i + 1}: ${name(h.from)} to ${name(h.to)}`, () => evidenceBox(evidence, `${cur}: relay hop ${i + 1}`, [
+        fill: toJohn ? "var(--anom)" : selfLoop ? "var(--warn)" : "#8bb7e8", stroke: "#fff", "stroke-width": toJohn ? 1.2 : 0,
+        opacity: involvesSelected ? 1 : .16 });
+      makeInteractive(c, `${cur} relay hop ${i + 1}: ${name(h.from)} to ${name(h.to)}`, () => {
+        setState({ agent: h.to });
+        evidenceBox(evidence, `${cur}: relay hop ${i + 1}`, [
         ["event id", h.id],
         ["time UTC-7", h.when],
         ["from", name(h.from)],
         ["to", name(h.to)],
         ["task", "read_file"],
         ["arrival at John", toJohn ? "yes" : "no"],
-      ], h));
+      ], h);
+      });
       c.addEventListener("mousemove", (e) => showTip(
         `<div class="tt-h">hop ${i + 1}${toJohn ? " / arrival at John" : ""}</div><div class="tt-r">${name(h.from)} -> ${name(h.to)}</div><div class="tt-r">${h.when} / id ${h.id}</div>`, e));
       c.addEventListener("mouseleave", hideTip);
@@ -265,7 +300,8 @@
 
     [0, Math.floor(hops.length / 4), Math.floor(hops.length / 2), Math.floor(3 * hops.length / 4), hops.length - 1]
       .filter((v, i, a) => v >= 0 && a.indexOf(v) === i)
-      .forEach((i) => add(svg, "text", { x: x(i), y: 525, "text-anchor": "middle", "font-size": 10.5, fill: "#63748a" }, `hop ${i + 1}`));
+      .forEach((i) => add(svg, "text", { x: x(i), y: 525, "text-anchor": "middle", "font-size": 10.5, fill: "#63748a" },
+        walkMode === "time" ? hops[i].when.slice(5, 16) : `hop ${i + 1}`));
 
     const depts = [...new Set(agents.map((a) => d.org.person_dept[a]))].filter(Boolean);
     document.getElementById("walk-legend").innerHTML = depts.map((dp) =>
@@ -391,5 +427,9 @@
       <div class="note" style="margin-top:14px"><b>System interpretation:</b> steps 1-3 remain internal operations. Step 4 is the external publication boundary, which is why Q3 evaluates a single SaidIt boundary gate instead of broad relay blocking.</div>`;
   }
 
+  renderGuide();
+  document.getElementById("walk-hop").classList.toggle("primary", walkMode === "hop");
+  document.getElementById("walk-time").classList.toggle("primary", walkMode === "time");
+  document.getElementById("clear-agent").disabled = !selectedAgent;
   render();
 })();

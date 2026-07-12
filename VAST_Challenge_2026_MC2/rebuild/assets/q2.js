@@ -1,7 +1,7 @@
 /* q2.js - provenance rows, evidence matrix, and interpretation boundaries */
 (async () => {
   const d = await MC2.load();
-  const { add, labelSvg, makeInteractive, showTip, hideTip, name, esc, evidenceBox } = MC2;
+  const { add, labelSvg, makeInteractive, showTip, hideTip, name, esc, evidenceBox, state, setState } = MC2;
   const inc = d.incidents;
   const evidence = document.getElementById("evidence");
   const CODES = ["SwiftWren", "MellowOtter", "HiddenOrca"];
@@ -33,7 +33,7 @@
       <span class="t">${c} / ${META[c].sourceStrength}</span>
       <span class="d">${I.source_doc ? I.source_doc.name : "source unknown"}</span></span></button>`;
   }).join("");
-  document.querySelectorAll("#strength button[data-c]").forEach((b) => b.addEventListener("click", () => renderEvidence(b.dataset.c)));
+  document.querySelectorAll("#strength button[data-c]").forEach((b) => b.addEventListener("click", () => setState({ incident: b.dataset.c })));
 
   function postEvent(I) {
     return I.recipe?.find((x) => x.action === "saidit_post") || null;
@@ -54,6 +54,9 @@
       ["evidence boundary", META[c].claim],
     ], { source_doc: src || null, create_file: cf || null, post_event: post });
     document.querySelectorAll("#strength button").forEach((b) => b.classList.toggle("active", b.dataset.c === c));
+    document.querySelectorAll(".provenance-row[data-c]").forEach((row) => {
+      row.hidden = state().mode === "review" && row.dataset.c !== c;
+    });
   }
 
   function statusColor(status) {
@@ -74,7 +77,7 @@
 
   document.getElementById("prov").innerHTML = CODES.map((c) => {
     const I = inc[c], src = I.source_doc, cf = I.create_file, post = postEvent(I);
-    return `<div class="provenance-row">
+    return `<div class="provenance-row" data-c="${c}">
       <div class="prov-title">${c}<span class="badge ${src ? "obs" : "unk"}">${src ? "source observed" : "source unknown"}</span></div>
       <div class="flow">
         ${cell(src ? "obs" : "unk", src ? "observed" : "unknown",
@@ -224,21 +227,22 @@
     const svg = document.getElementById("provflow");
     if (!svg) return;
     svg.innerHTML = "";
-    labelSvg(svg, "Sankey-like provenance flow from source certainty to payload to public SaidIt post to inferred meaning.");
+    labelSvg(svg, "Evidence provenance directed acyclic graph from source evidence to payload, public post, and inferred meaning.");
     const W = Math.max(780, Math.floor(svg.parentElement.clientWidth || 1160));
-    const H = 390, mt = 70, mb = 44;
+    const H = 410, mt = 88, mb = 44;
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     const cols = [
-      { key: "source", x: 120, label: "source evidence" },
-      { key: "payload", x: W * .38, label: "payload file" },
-      { key: "post", x: W * .64, label: "public post" },
-      { key: "meaning", x: W - 140, label: "probable meaning" },
+      { key: "source", x: Math.max(155, W * .15), label: "source evidence" },
+      { key: "payload", x: W * .40, label: "payload file" },
+      { key: "post", x: W * .66, label: "public post" },
+      { key: "meaning", x: W - 116, label: "probable meaning" },
     ];
     const y = (i) => mt + 42 + i * 76;
-    const band = 14;
-    add(svg, "text", { x: 36, y: 24, "font-size": 13, "font-weight": 800 }, "Provenance Sankey-style flow");
+    add(svg, "text", { x: 36, y: 24, "font-size": 13, "font-weight": 800 }, "Evidence provenance DAG");
     add(svg, "text", { x: 36, y: 43, "font-size": 11.5, fill: "#526174" },
-      "Each band is one anomalous post. Color follows evidence certainty; gray source means the source is not visible in the logs.");
+      "Solid edges connect logged evidence. Dashed edges indicate interpretation or an unavailable link.");
+    add(svg, "text", { x: 36, y: 61, "font-size": 11.5, fill: "#526174" },
+      "Gray dashed nodes remain unknown from the visible logs.");
     cols.forEach((c) => {
       add(svg, "text", { x: c.x, y: mt - 20, "text-anchor": "middle", "font-size": 11.5,
         "font-weight": 800, fill: "#526174" }, c.label);
@@ -258,17 +262,22 @@
       ];
       for (let j = 0; j < cols.length - 1; j++) {
         const x1 = cols[j].x + 72, x2 = cols[j + 1].x - 72;
-        const p = `M${x1},${rowY - band / 2} C${x1 + 80},${rowY - band / 2} ${x2 - 80},${rowY - band / 2} ${x2},${rowY - band / 2}
-          L${x2},${rowY + band / 2} C${x2 - 80},${rowY + band / 2} ${x1 + 80},${rowY + band / 2} ${x1},${rowY + band / 2} Z`;
-        add(svg, "path", { d: p, fill: j === 2 ? "rgba(166,106,0,.22)" : "rgba(37,111,184,.18)", stroke: "none" });
+        const inferred = j === 2;
+        const unknown = j === 0 && !srcKnown;
+        const p = `M${x1},${rowY} C${x1 + 80},${rowY} ${x2 - 80},${rowY} ${x2},${rowY}`;
+        add(svg, "path", { d: p, fill: "none", stroke: inferred ? "var(--warn)" : unknown ? "var(--dim)" : "var(--info)",
+          "stroke-width": inferred ? 2 : 2.6, "stroke-dasharray": inferred || unknown ? "6 5" : "none", opacity: inferred ? .82 : .62 });
+        add(svg, "text", { x: (x1 + x2) / 2, y: rowY - 9, "text-anchor": "middle", "font-size": 10.5,
+          fill: inferred ? "var(--warn)" : unknown ? "var(--dim)" : "#526174" }, inferred ? "inferred" : unknown ? "not visible" : "logged link");
       }
-      add(svg, "text", { x: 34, y: rowY + 4, "font-size": 12.5, "font-weight": 800, fill: col }, c);
+      add(svg, "text", { x: cols[0].x - 80, y: rowY + 4, "text-anchor": "end",
+        "font-size": 12.5, "font-weight": 800, fill: col }, c);
       nodes.forEach((n, j) => {
         const cx = cols[j].x;
         const rect = add(svg, "rect", { x: cx - 70, y: rowY - 22, width: 140, height: 44, rx: 7,
           fill: "#f8fafc", stroke: n.fill, "stroke-width": n.status === "unknown" ? 1.2 : 1.8,
           "stroke-dasharray": n.status === "unknown" ? "4 3" : "none" });
-        makeInteractive(rect, `${c} ${cols[j].label}: ${n.status}`, () => renderEvidence(c));
+        makeInteractive(rect, `${c} ${cols[j].label}: ${n.status}`, () => setState({ incident: c }));
         rect.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c}: ${cols[j].label}</div><div class="tt-r">${esc(n.label)}</div><div class="tt-r">${n.status}</div>`, e));
         rect.addEventListener("mouseleave", hideTip);
         add(svg, "text", { x: cx, y: rowY - 3, "text-anchor": "middle", "font-size": 11.2,
@@ -277,7 +286,7 @@
           fill: "#63748a", "font-family": "var(--mono)" }, n.sub);
       });
     });
-    [["observed", "var(--ok)"], ["public boundary", "var(--anom)"], ["inferred", "var(--warn)"], ["unknown", "var(--dim)"]].forEach(([lab, col], i) => {
+    [["observed node / solid link", "var(--ok)"], ["public boundary", "var(--anom)"], ["inferred / dashed", "var(--warn)"], ["unknown / dashed", "var(--dim)"]].forEach(([lab, col], i) => {
       const x = 36 + i * 150;
       add(svg, "rect", { x, y: H - 20, width: 12, height: 12, rx: 2, fill: col, opacity: lab === "unknown" ? .45 : .9 });
       add(svg, "text", { x: x + 18, y: H - 10, "font-size": 11.5, fill: "#526174" }, lab);
@@ -442,5 +451,6 @@
   drawProvFlow();
   drawPayloadScale();
   drawSourceTimeline();
-  renderEvidence("SwiftWren");
+  document.addEventListener("mc2statechange", (ev) => renderEvidence(ev.detail.incident));
+  renderEvidence(state().incident);
 })();

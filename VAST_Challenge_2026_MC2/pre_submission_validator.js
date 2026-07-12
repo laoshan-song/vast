@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const root = __dirname;
+const repoRoot = path.resolve(root, "..");
 const indexPath = path.join(root, "final_report_0709.html");
 
 const requiredFiles = [
@@ -18,6 +19,8 @@ const requiredFiles = [
   "critical_review.md",
   "video_script_4min_zh.md",
   "video_recording_checklist.md",
+  "SUBMISSION_README.md",
+  "validate_submission_package.js",
   "rebuild/index.html",
   "rebuild/overview.html",
   "rebuild/q1.html",
@@ -35,6 +38,11 @@ const requiredFiles = [
   "rebuild/shot-q1.png",
   "rebuild/shot-q2.png",
   "rebuild/shot-q3.png",
+];
+
+const requiredRepoFiles = [
+  "build_final_submission_zip.ps1",
+  "check_github_release_readiness.ps1",
 ];
 
 const forbiddenPatterns = [
@@ -96,6 +104,25 @@ const warnings = [];
 
 for (const file of requiredFiles) {
   if (!fs.existsSync(path.join(root, file))) errors.push(`Missing required file: ${file}`);
+}
+for (const file of requiredRepoFiles) {
+  if (!fs.existsSync(path.join(repoRoot, file))) errors.push(`Missing repository tool: ${file}`);
+}
+
+const vizDataPath = path.join(root, "rebuild", "mc2_viz_data.json");
+if (fs.existsSync(vizDataPath)) {
+  try {
+    const vizData = JSON.parse(fs.readFileSync(vizDataPath, "utf8"));
+    if (vizData.total_events !== 185147) errors.push(`Unexpected visualization event count: ${vizData.total_events}`);
+    if (!Array.isArray(vizData.anomalous_posts) || vizData.anomalous_posts.length !== 3) {
+      errors.push("Visualization data must contain exactly three anomalous posts.");
+    }
+    if (!vizData.source_files?.events?.sha256 || !vizData.source_files?.organization?.sha256) {
+      errors.push("Visualization data is missing source-file SHA-256 provenance.");
+    }
+  } catch (error) {
+    errors.push(`Invalid rebuild/mc2_viz_data.json: ${error.message}`);
+  }
 }
 
 const allFiles = walk(root);

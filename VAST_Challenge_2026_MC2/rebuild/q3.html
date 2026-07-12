@@ -30,32 +30,38 @@
     </aside>
 
     <main>
-      <section class="panel" id="p-base">
+      <section class="panel core" id="p-base">
         <div class="head"><h2>A: Baseline vs Anomaly</h2><span class="sub">normal post behavior compared with file-source anomalies</span></div>
         <p class="desc">The three anomalous cases are rare but sharply separated across actor type, post source field, and post-check outcome.</p>
         <div id="baseline"></div>
       </section>
 
-      <section class="panel" id="p-prior">
+      <section class="panel core" id="p-prior">
         <div class="head"><h2>B: Prior Occurrences</h2><span class="sub">timeline, scale, and common terminal mechanism</span></div>
         <p class="desc">All three incidents share <code>relay -> John Agent -> content_source post -> cleanup</code>. Their paths differ, which makes this a structural system issue rather than a one-off event.</p>
         <div class="svg-wrap"><svg id="timeline" width="100%" height="240"></svg></div>
         <div id="priortable" style="margin-top:16px"></div>
       </section>
 
-      <section class="panel" id="p-scale">
+      <section class="panel core" id="p-scale">
         <div class="head"><h2>C: Incident Scale Comparison</h2><span class="sub">dot plots for comparable incident metrics</span></div>
         <p class="desc">This view turns the recurrence table into scan-friendly comparisons. Each metric has its own axis, so the chart compares rank and magnitude without mixing incompatible units.</p>
         <div class="svg-wrap"><svg id="scaleplot" width="100%" height="420"></svg></div>
       </section>
 
-      <section class="panel" id="p-parallel">
-        <div class="head"><h2>D: Intervention Parallel Coordinates</h2><span class="sub">multi-criteria comparison of candidate rules</span></div>
+      <section class="panel core" id="p-upset">
+        <div class="head"><h2>D: Shared-Agent UpSet</h2><span class="sub">exact membership intersections across the three incidents</span></div>
+        <p class="desc">This intersection view identifies shared and incident-specific relay participants without an unreadable three-set Venn diagram.</p>
+        <div class="svg-wrap"><svg id="upset" width="100%" height="390"></svg></div>
+      </section>
+
+      <section class="panel explore-only" id="p-parallel">
+        <div class="head"><h2>Appendix: Intervention Parallel Coordinates</h2><span class="sub">multi-criteria comparison of candidate rules</span></div>
         <p class="desc">Each line is one possible single intervention. Axes compare coverage, blast radius, affected records, cost, and timing; the recommended boundary gate should remain high coverage with low collateral impact.</p>
         <div class="svg-wrap"><svg id="parallel" width="100%" height="400"></svg></div>
       </section>
 
-      <section class="panel" id="p-fix">
+      <section class="panel core" id="p-fix">
         <div class="head"><h2>E: One Intervention</h2><span class="sub">decision matrix and coverage-vs-cost view</span></div>
         <div id="gate"></div>
         <div id="evidence" class="evidence-box"></div>
@@ -65,9 +71,11 @@
         <h3 style="margin-top:20px">Rule Coverage Matrix</h3>
         <p class="desc">Rows are possible single intervention rules. Columns separate anomaly coverage, non-anomaly blast radius, affected records, and timing. This keeps the recommendation auditable.</p>
         <div id="rulematrix"></div>
-        <h3 style="margin-top:20px">Candidate Intervention Assessment</h3>
-        <div id="alts"></div>
-        <div class="svg-wrap" style="margin-top:16px"><svg id="decision" width="100%" height="300"></svg></div>
+        <div class="explore-only">
+          <h3 style="margin-top:20px">Candidate Intervention Assessment</h3>
+          <div id="alts"></div>
+          <div class="svg-wrap" style="margin-top:16px"><svg id="decision" width="100%" height="300"></svg></div>
+        </div>
       </section>
 
       <div class="footer">Intervention evaluation uses full-count evidence: <code>content_source</code> covers 3/3 anomalies and 0/105 normal posts. The rule only claims coverage for the observed file-source anomaly pattern.</div>

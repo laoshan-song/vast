@@ -1,10 +1,11 @@
 const fs = require("fs");
 const path = require("path");
-const { chromium } = require("playwright");
+const { chromium } = require("playwright-core");
 
-const root = __dirname;
+const root = path.resolve(process.argv[2] || __dirname);
+const answerPage = fs.existsSync(path.join(root, "index.htm")) ? "index.htm" : "final_report_0709.html";
 const pages = [
-  "final_report_0709.html",
+  answerPage,
   "rebuild/overview.html",
   "rebuild/q1.html",
   "rebuild/q2.html",

@@ -7,7 +7,7 @@ compact mc2_viz_data.json used by the q1/q2/q3/overview pages.
 All display times are CHALLENGE-LOCAL (UTC-7) to match the official anchor
 "John Windward, May 17 2046 4:21am".
 """
-import json, datetime, os
+import json, datetime, hashlib, os
 from collections import Counter, defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -42,6 +42,18 @@ def first_existing(paths):
     raise FileNotFoundError("Could not locate required data file in:\n" + "\n".join(paths))
 
 
+def file_manifest(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return {
+        "name": os.path.basename(path),
+        "bytes": os.path.getsize(path),
+        "sha256": digest.hexdigest().upper(),
+    }
+
+
 RAW = first_existing([
     RAW,
     os.path.join(os.path.dirname(os.path.dirname(ROOT)), "MC2_赛题与数据包_20260712", "02_官方原始数据",
@@ -61,7 +73,12 @@ def main():
     print("events:", len(ev))
 
     out = {"generated_from": "MC2 data.json (185147 events) + org_chart.json",
-           "timezone": "challenge-local UTC-7"}
+           "timezone": "challenge-local UTC-7",
+           "schema_version": 2,
+           "source_files": {
+               "events": file_manifest(RAW),
+               "organization": file_manifest(ORG),
+           }}
 
     # ---- system overview: event type + party type distributions ----
     sn = Counter(e["short_name"] for e in ev)
@@ -154,6 +171,27 @@ def main():
         "checks_not_posting": check_leads_other,
         "checks_by_john": check_by.get("john_windward", 0),
     }
+    compact_posts = []
+    for post in saidit:
+        actor = short(post["parties"][0])
+        actor_events = idx_by_actor[actor]
+        prior_check = any(x["short_name"] == "saidit_post_check"
+                          and 0 < post["when"] - x["when"] <= 5
+                          for x in actor_events)
+        cleanup = any(x["short_name"] == "delete_file"
+                      and 0 < x["when"] - post["when"] <= 10
+                      for x in actor_events)
+        compact_posts.append({
+            "id": post["id"],
+            "when_local": local(post["when"]),
+            "actor": actor,
+            "actor_type": "Agent" if any(p.startswith("Agent/") for p in post["parties"]) else "Human",
+            "source_field": "content_source" if "content_source" in det(post) else "content",
+            "post_check": prior_check,
+            "cleanup": cleanup,
+            "file": det(post).get("content_source"),
+        })
+    out["saidit_posts_compact"] = compact_posts
 
     # ---- queue_subordinate_task overview + task types ----
     qst = [e for e in ev if e["short_name"] == "queue_subordinate_task"]

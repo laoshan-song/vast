@@ -1,7 +1,7 @@
 /* overview.js - system baseline, signature small multiples, method pipeline */
 (async () => {
   const d = await MC2.load();
-  const { add, labelSvg, showTip, hideTip, toTs } = MC2;
+  const { add, labelSvg, bindTooltip, showTip, hideTip, toTs, pageHref } = MC2;
 
   const b = d.saidit_baseline;
   const ck = d.saidit_check;
@@ -22,19 +22,19 @@
       <h2>Q1: How was it made?</h2>
       <p>Internal document -> codename payload -> Agent relay -> John Agent -> <code>saidit_post(content_source)</code> -> cleanup.</p>
       <div class="metricline"><b>${swift.hop_count}</b> SwiftWren relay hops / <b>${swift.distinct_agent_count}</b> Agents / <b>${swift.john_arrival_count}</b> John arrivals</div>
-      <a class="pill" href="q1.html">Open chain view</a>
+      <a class="pill" href="${pageHref("q1.html")}">Open chain view</a>
     </div>
     <div class="card qcard ok">
       <h2>Q2: What does it mean?</h2>
       <p>The posts are probably internal company documents externalized as file-backed posts. Exact payload wording is unknown.</p>
       <div class="metricline"><b>2</b> visible source documents / <b>1</b> source outside the window</div>
-      <a class="pill" href="q2.html">Open provenance view</a>
+      <a class="pill" href="${pageHref("q2.html")}">Open provenance view</a>
     </div>
     <div class="card qcard anom">
       <h2>Q3: Could it repeat?</h2>
       <p>Yes. HiddenOrca, MellowOtter, and SwiftWren share the same terminal mechanism. Use one boundary gate.</p>
       <div class="metricline"><b>3/3</b> covered / <b>0/105</b> normal-post false positives</div>
-      <a class="pill" href="q3.html">Open intervention view</a>
+      <a class="pill" href="${pageHref("q3.html")}">Open intervention view</a>
     </div>
   </div>`;
 
@@ -59,8 +59,7 @@
         rx: 3, fill: col, opacity: isSaidIt ? 0.96 : 0.55 });
       add(svg, "text", { x: x(v) + 8, y: y + bh / 2 + 4, "font-size": 11.5, fill: "#526174",
         "font-family": "var(--mono)" }, v.toLocaleString());
-      bar.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${k}</div><div class="tt-r">${v.toLocaleString()} events</div>`, e));
-      bar.addEventListener("mouseleave", hideTip);
+      bindTooltip(bar, `${k}: ${v.toLocaleString()} events`, `<div class="tt-h">${k}</div><div class="tt-r">${v.toLocaleString()} events</div>`);
     });
 
     [["anomalous post action", "var(--anom)"], ["SaidIt check/post actions", "var(--warn)"], ["other event types", "var(--info)"]]
@@ -101,8 +100,7 @@
         const w = (v / row.denom) * barW;
         const r = add(svg, "rect", { x: ml + acc, y: y + 16, width: Math.max(3, w), height: 32,
           rx: 4, fill: col, opacity: lab.includes("content") && !lab.includes("source") ? .65 : .82 });
-        r.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${lab}</div><div class="tt-r">${v} of ${row.denom}</div>`, e));
-        r.addEventListener("mouseleave", hideTip);
+        bindTooltip(r, `${lab}: ${v} of ${row.denom}`, `<div class="tt-h">${lab}</div><div class="tt-r">${v} of ${row.denom}</div>`);
         if (w > 118) {
           add(svg, "text", { x: ml + acc + 10, y: y + 37, "font-size": 12, "font-weight": 700, fill: "#fff" }, `${lab}: ${v}`);
         } else {
@@ -151,9 +149,8 @@
       if (r.codename_related) {
         add(svg, "rect", { x: xx, y: H - mb - 10, width: barW, height: 10, fill: "rgba(201,59,69,.55)" });
       }
-      rect.addEventListener("mousemove", (e) => showTip(
-        `<div class="tt-h">${r.hour}</div><div class="tt-r">total ${r.total.toLocaleString()}</div><div class="tt-r">virus ${r.virus.toLocaleString()} / codename ${r.codename_related.toLocaleString()}</div>`, e));
-      rect.addEventListener("mouseleave", hideTip);
+      bindTooltip(rect, `${r.hour}: ${r.total.toLocaleString()} events`,
+        `<div class="tt-h">${r.hour}</div><div class="tt-r">total ${r.total.toLocaleString()}</div><div class="tt-r">virus ${r.virus.toLocaleString()} / codename ${r.codename_related.toLocaleString()}</div>`);
     });
 
     const daySeen = new Set();
@@ -172,8 +169,7 @@
       const yy = y(rows.find((r) => r.hour === p.when_local.slice(0, 13) + ":00")?.total || 1) - 10;
       const m = add(svg, "circle", { cx: xx, cy: yy, r: p.file.startsWith("Swift") ? 7 : 5.5,
         fill: "var(--anom)", stroke: "#fff", "stroke-width": 2 });
-      m.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${p.file}</div><div class="tt-r">${p.when_local}</div><div class="tt-r">post id ${p.id} / by ${p.by}</div>`, e));
-      m.addEventListener("mouseleave", hideTip);
+      bindTooltip(m, `${p.file} anomaly post`, `<div class="tt-h">${p.file}</div><div class="tt-r">${p.when_local}</div><div class="tt-r">post id ${p.id} / by ${p.by}</div>`);
       add(svg, "line", { x1: xx, y1: yy + 7, x2: xx, y2: H - mb, stroke: "rgba(201,59,69,.45)", "stroke-dasharray": "3 3" });
       add(svg, "text", { x: xx + 7, y: yy - 7, "font-size": 10.8, "font-weight": 800, fill: "var(--anom)" }, p.file.replace(".txt", ""));
     });
@@ -425,6 +421,124 @@
     add(svg, "text", { x: 18, y: H - 12, "font-size": 11.5, fill: "#526174" }, "This baseline argues against blaming raw activity volume alone.");
   }
 
+  function drawProcessComparison() {
+    const svg = document.getElementById("processflow");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Directly-follows process comparison for normal human and anomalous Agent SaidIt posts.");
+    const W = Math.max(820, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 330, ml = 52, mr = 36;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const lanes = [
+      {
+        y: 104, label: `Normal human posts / ${b.with_content_topic}`,
+        color: "var(--ok)",
+        nodes: [
+          ["Human actor", `${b.by_person} posts`],
+          ["content field", "ordinary text"],
+          ["saidit_post", "public post"],
+        ],
+      },
+      {
+        y: 236, label: `Repeated Agent anomaly / ${b.with_content_source}`,
+        color: "var(--anom)",
+        nodes: [
+          ["relay arrival", "read_file task"],
+          ["post check", "within 1 second"],
+          ["content_source", "file-backed post"],
+          ["cleanup", "two deletes"],
+        ],
+      },
+    ];
+    add(svg, "text", { x: ml, y: 24, "font-size": 13.5, "font-weight": 800 }, "Directly-follows process model");
+    add(svg, "text", { x: ml, y: 44, "font-size": 12, fill: "#46576b" },
+      "The anomaly differs as a process, not only as a rare post: Agent relay, file source, check, and cleanup recur together.");
+    lanes.forEach((lane) => {
+      add(svg, "text", { x: ml, y: lane.y - 42, "font-size": 12.5, "font-weight": 800, fill: lane.color }, lane.label);
+      const start = ml + 26;
+      const usable = W - start - mr;
+      const gap = usable / lane.nodes.length;
+      lane.nodes.forEach(([title, sub], i) => {
+        const cx = start + gap * i + gap / 2;
+        if (i) {
+          const px = start + gap * (i - 1) + gap / 2;
+          add(svg, "line", { x1: px + 66, y1: lane.y, x2: cx - 66, y2: lane.y,
+            stroke: lane.color, "stroke-width": lane === lanes[1] ? 3 : 2, opacity: .58 });
+          add(svg, "path", { d: `M${cx - 72},${lane.y - 5} L${cx - 63},${lane.y} L${cx - 72},${lane.y + 5}`,
+            fill: "none", stroke: lane.color, "stroke-width": 2 });
+        }
+        const box = add(svg, "rect", { x: cx - 66, y: lane.y - 30, width: 132, height: 60, rx: 8,
+          fill: "#f8fafc", stroke: lane.color, "stroke-width": title === "content_source" ? 2.5 : 1.6 });
+        bindTooltip(box, `${lane.label}: ${title}`, `<div class="tt-h">${title}</div><div class="tt-r">${sub}</div><div class="tt-r">${lane.label}</div>`);
+        add(svg, "text", { x: cx, y: lane.y - 3, "text-anchor": "middle", "font-size": 12.2,
+          "font-weight": 800, fill: lane.color }, title);
+        add(svg, "text", { x: cx, y: lane.y + 16, "text-anchor": "middle", "font-size": 11.2, fill: "#46576b" }, sub);
+      });
+    });
+    add(svg, "text", { x: ml, y: H - 18, "font-size": 12, fill: "#46576b" },
+      "Process contrast is derived from 108 SaidIt posts and the three repeated terminal recipes.");
+  }
+
+  function drawRuleSpace() {
+    const svg = document.getElementById("rulespace");
+    if (!svg || !d.saidit_posts_compact) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Rule space of all SaidIt posts by actor type and source field, with check and cleanup rings.");
+    const W = Math.max(820, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 360, ml = 174, mr = 34, mt = 72, mb = 56;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const cellW = (W - ml - mr) / 2;
+    const cellH = (H - mt - mb) / 2;
+    const sourceIndex = { content: 0, content_source: 1 };
+    const actorIndex = { Human: 0, Agent: 1 };
+    add(svg, "text", { x: ml, y: 24, "font-size": 13.5, "font-weight": 800 }, "SaidIt rule-space separation");
+    add(svg, "text", { x: ml, y: 44, "font-size": 12, fill: "#46576b" },
+      "Position encodes actor and source field; a dark ring marks posts preceded by post_check and followed by cleanup.");
+    ["content", "content_source"].forEach((label, i) => {
+      add(svg, "text", { x: ml + i * cellW + cellW / 2, y: mt - 14, "text-anchor": "middle",
+        "font-size": 12.5, "font-weight": 800, fill: i ? "var(--anom)" : "var(--ok)" }, label);
+    });
+    ["Human actor", "Agent actor"].forEach((label, i) => {
+      add(svg, "text", { x: ml - 18, y: mt + i * cellH + cellH / 2 + 4, "text-anchor": "end",
+        "font-size": 12.5, "font-weight": 800, fill: i ? "var(--anom)" : "var(--ok)" }, label);
+    });
+    for (let row = 0; row < 2; row++) for (let col = 0; col < 2; col++) {
+      add(svg, "rect", { x: ml + col * cellW + 4, y: mt + row * cellH + 4,
+        width: cellW - 8, height: cellH - 8, rx: 8, fill: row === col ? "#f3f8f7" : "#f8fafc", stroke: "#d8e1ec" });
+    }
+    const groups = new Map();
+    d.saidit_posts_compact.forEach((post) => {
+      const key = `${post.actor_type}|${post.source_field}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(post);
+    });
+    groups.forEach((posts, key) => {
+      const [actorType, sourceField] = key.split("|");
+      const row = actorIndex[actorType], col = sourceIndex[sourceField];
+      const cols = Math.min(18, Math.ceil(Math.sqrt(posts.length * 2.2)));
+      const dx = Math.min(18, (cellW - 44) / Math.max(cols, 1));
+      const rows = Math.ceil(posts.length / cols);
+      const dy = Math.min(18, (cellH - 42) / Math.max(rows, 1));
+      posts.forEach((post, i) => {
+        const x = ml + col * cellW + 24 + (i % cols) * dx;
+        const y = mt + row * cellH + 24 + Math.floor(i / cols) * dy;
+        const anomaly = post.actor_type === "Agent" && post.source_field === "content_source";
+        const mark = add(svg, "circle", { cx: x, cy: y, r: anomaly ? 6 : 4.2,
+          fill: anomaly ? "var(--anom)" : "var(--ok)", opacity: anomaly ? 1 : .62,
+          stroke: post.post_check && post.cleanup ? "#172033" : "#fff", "stroke-width": post.post_check && post.cleanup ? 2.4 : 1 });
+        bindTooltip(mark, `SaidIt post ${post.id}: ${actorType}, ${sourceField}`,
+          `<div class="tt-h">post id ${post.id}</div><div class="tt-r">${post.when_local}</div><div class="tt-r">${actorType} / ${sourceField}</div><div class="tt-r">post_check ${post.post_check} / cleanup ${post.cleanup}</div>${post.file ? `<div class="tt-r">${post.file}</div>` : ""}`);
+      });
+      add(svg, "text", { x: ml + col * cellW + cellW - 16, y: mt + row * cellH + 24,
+        "text-anchor": "end", "font-size": 18, "font-weight": 900,
+        fill: actorType === "Agent" ? "var(--anom)" : "var(--ok)" }, posts.length);
+    });
+    add(svg, "circle", { cx: ml, cy: H - 20, r: 5, fill: "var(--ok)" });
+    add(svg, "text", { x: ml + 12, y: H - 16, "font-size": 12, fill: "#46576b" }, "ordinary post");
+    add(svg, "circle", { cx: ml + 150, cy: H - 20, r: 6, fill: "var(--anom)", stroke: "#172033", "stroke-width": 2 });
+    add(svg, "text", { x: ml + 164, y: H - 16, "font-size": 12, fill: "#46576b" }, "Agent file-source + check + cleanup");
+  }
+
   document.getElementById("pipeline").innerHTML = `
     <div class="method-grid">
       ${[
@@ -438,10 +552,12 @@
 
   drawEventBars();
   drawTimeDensity();
+  drawProcessComparison();
   drawCalendarHeatmap();
   drawEventStream();
   drawSignalSmallMultiples();
   drawSignatureBars();
+  drawRuleSpace();
   drawQstBars();
   drawActorBars();
 })();

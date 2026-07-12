@@ -11,3 +11,9 @@ __pycache__/
 .DS_Store
 chain_data.json
 MC2_interactive_dashboard.html
+
+# Local submission assembly and private metadata
+final_submission/
+final_submission.zip
+VAST_Challenge_2026_MC2/team_metadata.json
+node_modules/
