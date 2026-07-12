@@ -28,7 +28,9 @@
 
   const guide = [
     ["Terminal chain", "five exact events", "p-recipe"],
+    ["File lifecycle", "source to cleanup", "p-life"],
     ["Relay path", "hop-expanded trace", "p-walk"],
+    ["Departments", "propagation matrix", "p-dept"],
     ["System context", "boundary crossing", "p-sys"],
   ];
   document.getElementById("steps").innerHTML = guide.map(([t, dd, id], i) =>
@@ -61,7 +63,9 @@
     ].map(([l, n, c]) => `<div class="stat ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
     document.getElementById("recipe-sub").textContent = `${cur} / origin ${name(I.origin)} / post id ${I.post?.id || "unknown"} / ${I.post?.when || ""}`;
     drawRecipe(I);
+    drawLifecycle(I);
     drawWalk(I);
+    drawDeptMatrix(I);
     drawSys(I);
     const selected = I.recipe?.find((r) => r.action === "saidit_post") || I.recipe?.[0];
     if (selected) showRecEvidence(`${cur}: selected terminal evidence`, selected);
@@ -124,6 +128,75 @@
 
     add(svg, "text", { x: 34, y: 28, "font-size": 12, fill: "#526174" },
       "Focus filter fades non-selected stages; event ids and times remain visible for audit screenshots.");
+  }
+
+  function drawLifecycle(I) {
+    const svg = document.getElementById("lifecycle");
+    if (!svg || !I.lifecycle) return;
+    svg.innerHTML = "";
+    labelSvg(svg, `${cur} file lifecycle timeline from source read to cleanup`);
+    const W = Math.max(760, Math.floor(svg.parentElement.clientWidth || 1160));
+    svg.setAttribute("viewBox", `0 0 ${W} 250`);
+    const ml = 42, mr = 34, mt = 52, y = 116;
+    const events = I.lifecycle;
+    const shown = events.length;
+    const x = (i) => ml + (shown <= 1 ? 0 : (i / (shown - 1)) * (W - ml - mr));
+    const color = (status, stage) => status === "unknown" ? "var(--dim)" : stage === "public_post" ? "var(--anom)" : stage.startsWith("cleanup") ? "var(--info)" : "var(--ok)";
+    add(svg, "line", { x1: ml, y1: y, x2: W - mr, y2: y, stroke: "#bdc9d8", "stroke-width": 2 });
+    events.forEach((ev, i) => {
+      const xx = x(i);
+      const unknown = ev.status === "unknown";
+      add(svg, "line", { x1: xx, y1: y - 34, x2: xx, y2: y + 34, stroke: "#d8e1ec" });
+      const c = add(svg, "circle", { cx: xx, cy: y, r: ev.stage === "public_post" ? 9 : 7,
+        fill: color(ev.status, ev.stage), opacity: unknown ? .55 : 1, stroke: "#fff", "stroke-width": 2 });
+      makeInteractive(c, `${cur} lifecycle ${ev.label}`, () => evidenceBox(evidence, `${cur}: ${ev.label}`, [
+        ["status", ev.status],
+        ["time UTC-7", ev.when || "not visible"],
+        ["event id", ev.event_id || "not visible"],
+        ["actor", name(ev.actor)],
+        ["target", ev.target || "not visible"],
+      ], ev));
+      c.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${ev.label}</div><div class="tt-r">${ev.status}${ev.event_id ? ` / id ${ev.event_id}` : ""}</div><div class="tt-r">${ev.when || "not visible"}</div>`, e));
+      c.addEventListener("mouseleave", hideTip);
+      const short = {
+        source_read: "source read",
+        payload_create: "payload",
+        first_relay: "first relay",
+        final_arrival: "John arrival",
+        post_check: "post check",
+        public_post: "public post",
+        cleanup_1: "delete 1",
+        cleanup_2: "delete 2",
+      }[ev.stage] || ev.label;
+      add(svg, "text", { x: xx, y: y - 43, "text-anchor": "middle", "font-size": 11.2,
+        "font-weight": ev.stage === "public_post" ? 800 : 600, fill: color(ev.status, ev.stage) }, short);
+      add(svg, "text", { x: xx, y: y + 54, "text-anchor": "middle", "font-size": 10.2,
+        fill: "#63748a", "font-family": "var(--mono)" }, ev.event_id ? `id ${ev.event_id}` : "unknown");
+      add(svg, "text", { x: xx, y: y + 70, "text-anchor": "middle", "font-size": 10,
+        fill: "#7a8797", "font-family": "var(--mono)" }, ev.when ? ev.when.slice(5, 16) : "outside window");
+    });
+    add(svg, "text", { x: ml, y: 24, "font-size": 12.5, fill: "#526174" },
+      "Green = observed internal file/task evidence, red = public SaidIt boundary, gray = unknown from available logs.");
+
+    const outs = I.john_arrival_outcomes || [];
+    const posted = outs.filter((o) => o.outcome === "posted to SaidIt").length;
+    document.getElementById("johnoutcomes").innerHTML = `<div class="cards2">
+      <div class="card">
+        <h3>John arrival outcomes</h3>
+        <table class="grid">
+          <tr><th>#</th><th>Arrival time</th><th>From</th><th>Observed next outcome</th></tr>
+          ${outs.map((o, i) => `<tr>
+            <td class="num">${i + 1}</td><td>${o.arrival_when}</td><td>${name(o.from)}</td>
+            <td><span class="badge ${o.outcome === "posted to SaidIt" ? "obs" : "inf"}">${o.outcome}</span></td>
+          </tr>`).join("")}
+        </table>
+      </div>
+      <div class="card">
+        <h3>Interpretation guardrail</h3>
+        <p class="tight">Arrival at John is necessary in the observed terminal chain, but not sufficient. For ${cur}, <b>${posted}</b> of <b>${outs.length}</b> John arrivals directly produced the public post.</p>
+        <div class="note">This prevents a misleading causal claim that every John arrival automatically posts to SaidIt.</div>
+      </div>
+    </div>`;
   }
 
   function drawWalk(I) {
@@ -197,6 +270,51 @@
       `<span class="pill"><span class="dot" style="background:${deptColor(dp)}"></span>${name(dp)}</span>`).join("")
       + `<span class="pill"><span class="dot" style="background:var(--anom)"></span>arrival at John: ${I.john_arrival_count}</span>`
       + `<span class="pill"><span class="dot" style="background:var(--warn)"></span>self-loop</span>`;
+  }
+
+  function drawDeptMatrix(I) {
+    const svg = document.getElementById("deptmatrix");
+    if (!svg || !I.department_flow) return;
+    svg.innerHTML = "";
+    labelSvg(svg, `${cur} department-to-department relay matrix`);
+    const depts = I.departments_touched.slice();
+    const W = Math.max(760, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 420;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const ml = 172, mt = 90, mr = 150, mb = 44;
+    const size = Math.min((W - ml - mr) / depts.length, (H - mt - mb) / depts.length);
+    const lookup = new Map(I.department_flow.map((e) => [`${e.from}|${e.to}`, e.count]));
+    const max = Math.max(...I.department_flow.map((e) => e.count), 1);
+    add(svg, "text", { x: ml, y: 24, "font-size": 13, "font-weight": 800 }, `${cur}: ${I.cross_dept_hops} cross-department relay hops`);
+    add(svg, "text", { x: ml, y: 44, "font-size": 11.5, fill: "#526174" },
+      "Rows are sender departments; columns are receiver departments. Darker cells mean more relay traffic.");
+    depts.forEach((dp, i) => {
+      const x = ml + i * size + size / 2;
+      const y = mt + i * size + size / 2;
+      add(svg, "text", { x, y: mt - 12, "text-anchor": "middle", "font-size": 10.5, fill: "#526174",
+        transform: `rotate(-35 ${x} ${mt - 12})` }, name(dp));
+      add(svg, "text", { x: ml - 10, y: y + 4, "text-anchor": "end", "font-size": 11, fill: "#526174" }, name(dp));
+    });
+    depts.forEach((from, r) => {
+      depts.forEach((to, c) => {
+        const v = lookup.get(`${from}|${to}`) || 0;
+        const intensity = v ? .18 + .82 * Math.sqrt(v / max) : 0;
+        const fill = from === to ? `rgba(37,111,184,${intensity})` : `rgba(201,59,69,${intensity})`;
+        const rect = add(svg, "rect", { x: ml + c * size + 2, y: mt + r * size + 2,
+          width: size - 4, height: size - 4, rx: 4, fill: v ? fill : "#f4f6fa", stroke: "#d8e1ec" });
+        rect.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${name(from)} -> ${name(to)}</div><div class="tt-r">${v} relay hops</div><div class="tt-r">${from === to ? "within department" : "cross department"}</div>`, e));
+        rect.addEventListener("mouseleave", hideTip);
+        if (v) add(svg, "text", { x: ml + c * size + size / 2, y: mt + r * size + size / 2 + 4,
+          "text-anchor": "middle", "font-size": 11, "font-weight": 800, fill: intensity > .55 ? "#fff" : "#172033" }, v);
+      });
+    });
+    const lx = W - mr + 24, ly = mt + 24;
+    add(svg, "rect", { x: lx, y: ly, width: 12, height: 12, rx: 2, fill: "rgba(201,59,69,.74)" });
+    add(svg, "text", { x: lx + 18, y: ly + 10, "font-size": 11.5, fill: "#526174" }, "cross-dept flow");
+    add(svg, "rect", { x: lx, y: ly + 24, width: 12, height: 12, rx: 2, fill: "rgba(37,111,184,.62)" });
+    add(svg, "text", { x: lx + 18, y: ly + 34, "font-size": 11.5, fill: "#526174" }, "within-dept flow");
+    add(svg, "text", { x: ml, y: H - 14, "font-size": 11.5, fill: "#526174" },
+      "This aggregation complements the hop path: the path explains order; the matrix explains organizational spread.");
   }
 
   function drawSys(I) {

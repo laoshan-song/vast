@@ -1,7 +1,7 @@
 /* overview.js - system baseline, signature small multiples, method pipeline */
 (async () => {
   const d = await MC2.load();
-  const { add, labelSvg, showTip, hideTip } = MC2;
+  const { add, labelSvg, showTip, hideTip, toTs } = MC2;
 
   const b = d.saidit_baseline;
   const ck = d.saidit_check;
@@ -118,6 +118,77 @@
       "The anomaly is defined by the intersection of Agent actor and content_source file, not by post count alone.");
   }
 
+  function drawTimeDensity() {
+    const svg = document.getElementById("timeheat");
+    if (!svg || !d.time_density) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Hourly global event density with virus window and file-source SaidIt anomaly posts.");
+    const W = 1180, H = 330, ml = 58, mr = 36, mt = 36, mb = 58;
+    const rows = d.time_density.map((r) => ({ ...r, ts: toTs(r.hour) }));
+    const min = rows[0].ts, max = rows[rows.length - 1].ts;
+    const x = (t) => ml + ((t - min) / (max - min)) * (W - ml - mr);
+    const maxLog = Math.log1p(Math.max(...rows.map((r) => r.total)));
+    const y = (v) => mt + (1 - Math.log1p(v) / maxLog) * (H - mt - mb);
+    const barW = Math.max(1, (W - ml - mr) / rows.length);
+
+    add(svg, "text", { x: ml, y: 18, "font-size": 13, "font-weight": 800 }, "Hourly event density across the full log");
+    add(svg, "text", { x: ml + 300, y: 18, "font-size": 11.5, fill: "#526174" },
+      "gray = all events, amber = virus:true, red markers = content_source SaidIt posts");
+
+    [1, 10, 100, 1000, 7000].forEach((v) => {
+      const yy = y(v);
+      add(svg, "line", { x1: ml, y1: yy, x2: W - mr, y2: yy, stroke: "#eef3f8" });
+      add(svg, "text", { x: ml - 8, y: yy + 4, "text-anchor": "end", "font-size": 10.5, fill: "#63748a" }, v.toLocaleString());
+    });
+    add(svg, "line", { x1: ml, y1: mt, x2: ml, y2: H - mb, stroke: "#bdc9d8" });
+    add(svg, "line", { x1: ml, y1: H - mb, x2: W - mr, y2: H - mb, stroke: "#bdc9d8" });
+
+    rows.forEach((r) => {
+      const xx = x(r.ts);
+      const h = H - mb - y(r.total);
+      const rect = add(svg, "rect", { x: xx, y: y(r.total), width: barW, height: Math.max(.8, h),
+        fill: r.virus ? "rgba(166,106,0,.52)" : "rgba(37,111,184,.22)" });
+      if (r.codename_related) {
+        add(svg, "rect", { x: xx, y: H - mb - 10, width: barW, height: 10, fill: "rgba(201,59,69,.55)" });
+      }
+      rect.addEventListener("mousemove", (e) => showTip(
+        `<div class="tt-h">${r.hour}</div><div class="tt-r">total ${r.total.toLocaleString()}</div><div class="tt-r">virus ${r.virus.toLocaleString()} / codename ${r.codename_related.toLocaleString()}</div>`, e));
+      rect.addEventListener("mouseleave", hideTip);
+    });
+
+    const daySeen = new Set();
+    rows.forEach((r) => {
+      const day = r.hour.slice(0, 10);
+      if (daySeen.has(day) || !r.hour.endsWith("00:00")) return;
+      daySeen.add(day);
+      const xx = x(r.ts);
+      add(svg, "line", { x1: xx, y1: mt, x2: xx, y2: H - mb + 5, stroke: "#d8e1ec", "stroke-width": .8 });
+      if (daySeen.size % 2 === 1) add(svg, "text", { x: xx + 3, y: H - 28, "font-size": 10.5, fill: "#63748a" }, day.slice(5));
+    });
+
+    d.anomalous_posts.forEach((p) => {
+      const tt = toTs(p.when_local);
+      const xx = x(tt);
+      const yy = y(rows.find((r) => r.hour === p.when_local.slice(0, 13) + ":00")?.total || 1) - 10;
+      const m = add(svg, "circle", { cx: xx, cy: yy, r: p.file.startsWith("Swift") ? 7 : 5.5,
+        fill: "var(--anom)", stroke: "#fff", "stroke-width": 2 });
+      m.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${p.file}</div><div class="tt-r">${p.when_local}</div><div class="tt-r">post id ${p.id} / by ${p.by}</div>`, e));
+      m.addEventListener("mouseleave", hideTip);
+      add(svg, "line", { x1: xx, y1: yy + 7, x2: xx, y2: H - mb, stroke: "rgba(201,59,69,.45)", "stroke-dasharray": "3 3" });
+      add(svg, "text", { x: xx + 7, y: yy - 7, "font-size": 10.8, "font-weight": 800, fill: "var(--anom)" }, p.file.replace(".txt", ""));
+    });
+
+    [
+      ["all events", "rgba(37,111,184,.35)"],
+      ["virus:true burst", "rgba(166,106,0,.62)"],
+      ["codename-related hour", "rgba(201,59,69,.55)"],
+      ["file-source post", "var(--anom)"],
+    ].forEach(([lab, col], i) => {
+      add(svg, "rect", { x: ml + i * 190, y: H - 16, width: 12, height: 12, rx: 2, fill: col });
+      add(svg, "text", { x: ml + i * 190 + 18, y: H - 6, "font-size": 11.5, fill: "#526174" }, lab);
+    });
+  }
+
   function drawQstBars() {
     const svg = document.getElementById("qstbars");
     if (!svg) return;
@@ -186,6 +257,7 @@
     </div>`;
 
   drawEventBars();
+  drawTimeDensity();
   drawSignatureBars();
   drawQstBars();
   drawActorBars();

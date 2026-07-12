@@ -38,6 +38,8 @@
         <h3>Visual Methods Used</h3>
         <ul class="reviewer-list">
           <li><b>Baseline first</b> Bar charts and ratio bars define normal behavior before anomaly claims.</li>
+          <li><b>Temporal context</b> Hourly density places anomalies against the full event stream and virus decoy burst.</li>
+          <li><b>Matrix aggregation</b> Department flows summarize organizational spread without a hairball graph.</li>
           <li><b>Details on demand</b> Clickable marks reveal event ids, timestamps, actors, and raw JSON.</li>
           <li><b>Linked reasoning</b> The same incident selection drives recipe, route, source, and recurrence views.</li>
           <li><b>Anti-deception</b> Counts use length and position, not 3D, rainbow color, or area for exact comparison.</li>
@@ -58,13 +60,19 @@
       </section>
 
       <section class="panel">
-        <div class="head"><h2>Baseline B: SaidIt Signature</h2><span class="sub">small multiples for actor, field, and post-check outcome</span></div>
+        <div class="head"><h2>Baseline B: Global Time Density</h2><span class="sub">hourly activity, decoy window, and anomaly posts</span></div>
+        <p class="desc">This compressed temporal overview places the three file-source posts inside the full log window. Total activity is log-scaled so the virus burst is visible without flattening quieter periods.</p>
+        <div class="svg-wrap"><svg id="timeheat" width="1180" height="330"></svg></div>
+      </section>
+
+      <section class="panel">
+        <div class="head"><h2>Baseline C: SaidIt Signature</h2><span class="sub">small multiples for actor, field, and post-check outcome</span></div>
         <p class="desc">The anomalous signature is visually separated from normal posting: Agent-initiated posts with <code>content_source</code>. The chart uses shared denominators and explicit counts to avoid misleading ratios.</p>
         <div class="svg-wrap"><svg id="sigbars" width="1180" height="310"></svg></div>
       </section>
 
       <section class="panel">
-        <div class="head"><h2>Baseline C: Relay Tasks and Actor Activity</h2><span class="sub">task composition + named-party activity</span></div>
+        <div class="head"><h2>Baseline D: Relay Tasks and Actor Activity</h2><span class="sub">task composition + named-party activity</span></div>
         <p class="desc">These additional baselines use more of the provided data. They show that codename relays sit inside a much larger task system, and that John is not globally unusual by raw activity count.</p>
         <div class="viz-two">
           <div class="svg-wrap"><svg id="qstbars" width="560" height="300"></svg></div>

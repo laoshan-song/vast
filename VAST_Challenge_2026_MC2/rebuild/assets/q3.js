@@ -147,48 +147,33 @@
   </table>
   <div class="note" style="margin-top:12px"><b>Shared mechanism:</b> <code>instruction relay -> John Agent -> content_source post -> cleanup</code>. Three successful occurrences with different origins are sufficient evidence that the behavior is repeatable.</div>`;
 
-  const candidates = [
-    {
-      name: "SaidIt boundary gate for Agent content_source",
-      coverage: 3,
-      fp: 0,
-      cost: 1,
-      verdict: "recommended",
-      rationale: "all three anomalies cross this exact boundary; no normal human content posts are affected",
-    },
-    {
-      name: "Block every queue_subordinate_task",
-      coverage: 3,
-      fp: 17038,
-      cost: 5,
-      verdict: "reject",
-      rationale: "breaks normal automation and creates excessive operational cost",
-    },
-    {
-      name: "Detect *_further_instructions.md filenames",
-      coverage: 3,
-      fp: 0,
-      cost: 2,
-      verdict: "reject",
-      rationale: "easy to bypass by changing filenames",
-    },
-    {
-      name: "Remove John Agent posting permission",
-      coverage: 3,
-      fp: 0,
-      cost: 3,
-      verdict: "reject",
-      rationale: "works for the observed endpoint but can be bypassed by routing to another posting-capable Agent",
-    },
-    {
-      name: "Alert on delete_file after posting",
-      coverage: 3,
-      fp: 0,
-      cost: 2,
-      verdict: "forensics only",
-      rationale: "helps investigation after exposure, but cannot prevent the public post",
-    },
-  ];
+  const rationaleByRule = {
+    "Agent saidit_post with details.content_source": "all three anomalies cross this exact boundary; no normal human content posts are affected",
+    "Block all queue_subordinate_task": "breaks normal automation and creates excessive operational cost",
+    "Detect *_further_instructions.md relay filenames": "works on current filenames, but a small filename change bypasses it",
+    "Remove John Agent SaidIt permission": "works for the observed endpoint but can be bypassed by routing to another posting-capable Agent",
+    "Alert on delete_file immediately after content_source post": "helps investigation after exposure, but cannot prevent the public post",
+  };
+  const costByRule = {
+    "Agent saidit_post with details.content_source": 1,
+    "Block all queue_subordinate_task": 5,
+    "Detect *_further_instructions.md relay filenames": 2,
+    "Remove John Agent SaidIt permission": 3,
+    "Alert on delete_file immediately after content_source post": 2,
+  };
+  const verdictOf = (decision) => decision.startsWith("recommended") ? "recommended"
+    : decision.startsWith("forensics") ? "forensics only" : "reject";
+  const candidates = (d.intervention_rules || []).map((r) => ({
+    name: r.rule,
+    coverage: r.coverage,
+    fp: r.normal_human_false_positives,
+    affected: r.records_affected,
+    timing: r.timing,
+    cost: costByRule[r.rule] || 3,
+    verdict: verdictOf(r.decision),
+    rationale: rationaleByRule[r.rule] || r.decision,
+    raw: r,
+  }));
 
   document.getElementById("gate").innerHTML = `
     <div class="flow">
@@ -206,8 +191,21 @@
     </div>`;
   showGateEvidence();
 
+  document.getElementById("rulematrix").innerHTML = `<table class="grid evidence-matrix">
+    <tr><th>Single rule</th><th>Timing</th><th>Anomaly coverage</th><th>Non-anomaly blast radius</th><th>Records affected</th><th>Decision</th></tr>
+    ${candidates.map((c) => `<tr>
+      <td style="${c.verdict === "recommended" ? "color:var(--ok);font-weight:800" : ""}">${c.name}</td>
+      <td>${c.timing}</td>
+      <td><span class="badge ${c.coverage === 3 ? "obs" : "inf"}">${c.coverage}/3</span></td>
+      <td><span class="badge ${c.fp === 0 ? "obs" : "unk"}">${c.fp.toLocaleString()}</span></td>
+      <td class="num">${c.affected.toLocaleString()}</td>
+      <td><span class="badge ${c.verdict === "recommended" ? "obs" : c.verdict === "forensics only" ? "inf" : "unk"}">${c.verdict}</span></td>
+    </tr>`).join("")}
+  </table>
+  <div class="note" style="margin-top:12px"><b>Why the first rule wins:</b> it is pre-publication, covers all observed file-source anomalies, and affects only the three Agent content_source posts in the data. Broad relay blocking touches ${d.qst_overview.total.toLocaleString()} task records and is not proportionate.</div>`;
+
   document.getElementById("alts").innerHTML = `<table class="grid">
-    <tr><th>Candidate</th><th>Coverage</th><th>False positives / cost</th><th>Reason</th><th>Decision</th></tr>
+    <tr><th>Candidate</th><th>Coverage</th><th>Blast radius / cost</th><th>Reason</th><th>Decision</th></tr>
     ${candidates.map((c) => `<tr>
       <td style="${c.verdict === "recommended" ? "color:var(--ok);font-weight:800" : ""}">${c.name}</td>
       <td>${c.coverage}/3</td>
@@ -244,8 +242,8 @@
         "co-located candidates are slightly nudged for readability");
 
     const jitter = {
-      "Detect *_further_instructions.md filenames": -8,
-      "Alert on delete_file after posting": 8,
+      "Detect *_further_instructions.md relay filenames": -8,
+      "Alert on delete_file immediately after content_source post": 8,
     };
     candidates.forEach((c) => {
       const recommended = c.verdict === "recommended";
@@ -264,11 +262,11 @@
       r.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c.name}</div><div class="tt-r">coverage ${c.coverage}/3 / cost ${c.cost}</div><div class="tt-r">${c.verdict}</div>`, e));
       r.addEventListener("mouseleave", hideTip);
       const short = {
-        "SaidIt boundary gate for Agent content_source": "SaidIt gate",
-        "Block every queue_subordinate_task": "Block tasks",
-        "Detect *_further_instructions.md filenames": "Filename rule",
-        "Remove John Agent posting permission": "John-only",
-        "Alert on delete_file after posting": "Delete alert",
+        "Agent saidit_post with details.content_source": "SaidIt gate",
+        "Block all queue_subordinate_task": "Block tasks",
+        "Detect *_further_instructions.md relay filenames": "Filename rule",
+        "Remove John Agent SaidIt permission": "John-only",
+        "Alert on delete_file immediately after content_source post": "Delete alert",
       }[c.name] || c.name;
       const labelDy = {
         "SaidIt gate": -12,

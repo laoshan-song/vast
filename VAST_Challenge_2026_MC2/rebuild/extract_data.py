@@ -35,6 +35,25 @@ def short(pid):
     return pid.split(":")[-1]
 
 
+def first_existing(paths):
+    for p in paths:
+        if os.path.exists(p):
+            return p
+    raise FileNotFoundError("Could not locate required data file in:\n" + "\n".join(paths))
+
+
+RAW = first_existing([
+    RAW,
+    os.path.join(os.path.dirname(os.path.dirname(ROOT)), "MC2_赛题与数据包_20260712", "02_官方原始数据",
+                 "VAST_Challenge_2026_MC2", "VAST_Challenge_2026_MC2", "MC2 data.json"),
+])
+ORG = first_existing([
+    ORG,
+    os.path.join(os.path.dirname(os.path.dirname(ROOT)), "MC2_赛题与数据包_20260712", "02_官方原始数据",
+                 "VAST_Challenge_2026_MC2", "VAST_Challenge_2026_MC2", "org_chart.json"),
+])
+
+
 def main():
     data = json.load(open(RAW))
     ev = data["events"]
@@ -55,6 +74,42 @@ def main():
     out["party_type_counts"] = dict(pref.most_common())
     out["total_events"] = len(ev)
     out["time_span_local"] = [local(ev[0]["when"]), local(ev[-1]["when"])]
+
+    # ---- global time density for overview context ----
+    codenames = ["HiddenOrca", "MellowOtter", "SwiftWren"]
+    hour_bins = defaultdict(lambda: {
+        "total": 0,
+        "virus": 0,
+        "saidit_post": 0,
+        "content_source_post": 0,
+        "queue_subordinate_task": 0,
+        "codename_related": 0,
+    })
+    day_short = defaultdict(Counter)
+    for e in ev:
+        hr = local(e["when"])[:13] + ":00"
+        dd = local(e["when"])[:10]
+        de = det(e)
+        blob = json.dumps(de)
+        hour_bins[hr]["total"] += 1
+        day_short[dd][e["short_name"]] += 1
+        if de.get("virus") is True:
+            hour_bins[hr]["virus"] += 1
+        if e["short_name"] == "saidit_post":
+            hour_bins[hr]["saidit_post"] += 1
+            if "content_source" in de:
+                hour_bins[hr]["content_source_post"] += 1
+        if e["short_name"] == "queue_subordinate_task":
+            hour_bins[hr]["queue_subordinate_task"] += 1
+        if any(c in blob for c in codenames):
+            hour_bins[hr]["codename_related"] += 1
+    out["time_density"] = [
+        {"hour": k, **v} for k, v in sorted(hour_bins.items())
+    ]
+    out["daily_event_mix"] = [
+        {"day": day, "top": dict(cnt.most_common(6)), "total": sum(cnt.values())}
+        for day, cnt in sorted(day_short.items())
+    ]
 
     # ---- the anomaly signature: content_source posts ----
     cs_posts = sorted([e for e in ev if "content_source" in det(e)], key=lambda x: x["when"])
@@ -106,7 +161,6 @@ def main():
     out["qst_overview"] = {"total": len(qst), "task_types": dict(task_types.most_common(8))}
 
     # ================= per-incident chain reconstruction =================
-    codenames = ["HiddenOrca", "MellowOtter", "SwiftWren"]
     incidents = {}
     for code in codenames:
         inc = {"code": code}
@@ -183,6 +237,34 @@ def main():
         inc["john_arrivals"] = arrivals
         inc["john_arrival_count"] = len(arrivals)
 
+        arrival_outcomes = []
+        for h in arrivals:
+            hw = next((e["when"] for e in hops if e["id"] == h["id"]), None)
+            post_when = post["when"] if post else None
+            after = []
+            if hw is not None:
+                after = [x for x in idx_by_actor["john_windward"] if 0 < x["when"] - hw <= 120]
+                after.sort(key=lambda x: x["when"])
+            nxt = after[0] if after else None
+            if post_when is not None and hw is not None and 0 <= post_when - hw <= 120:
+                outcome = "posted to SaidIt"
+            elif nxt and nxt["short_name"] == "queue_subordinate_task":
+                outcome = "forwarded/continued relay"
+            elif nxt:
+                outcome = nxt["short_name"]
+            else:
+                outcome = "no immediate John action"
+            arrival_outcomes.append({
+                "arrival_id": h["id"],
+                "arrival_when": h["when"],
+                "from": h["from"],
+                "outcome": outcome,
+                "next_event_id": nxt["id"] if nxt else None,
+                "next_action": nxt["short_name"] if nxt else None,
+                "next_when": local(nxt["when"]) if nxt else None,
+            })
+        inc["john_arrival_outcomes"] = arrival_outcomes
+
         incidents[code] = inc
 
     out["incidents"] = incidents
@@ -228,16 +310,95 @@ def main():
     # cross-department hops per incident
     for code, inc in incidents.items():
         cross = 0
+        dept_edges = Counter()
         for h in inc["hops"]:
             df, dt = person_dept.get(h["from"]), person_dept.get(h["to"])
             if df and dt and df != dt:
                 cross += 1
+            dept_edges[(df or "unknown", dt or "unknown")] += 1
         inc["cross_dept_hops"] = cross
         depts = set()
         for a in inc["distinct_agents"]:
             if person_dept.get(a):
                 depts.add(person_dept[a])
         inc["departments_touched"] = sorted(depts)
+        inc["department_flow"] = [
+            {"from": a, "to": b, "count": n}
+            for (a, b), n in sorted(dept_edges.items(), key=lambda x: (-x[1], x[0]))
+        ]
+
+        post_ev = next((r for r in inc.get("recipe", []) if r["action"] == "saidit_post"), None)
+        check_ev = next((r for r in inc.get("recipe", []) if r["action"] == "saidit_post_check"), None)
+        deletes = [r for r in inc.get("recipe", []) if r["action"] == "delete_file"]
+        lifecycle = []
+        src = inc.get("source_doc")
+        cf = inc.get("create_file")
+        lifecycle.append({
+            "stage": "source_read",
+            "label": "source document read",
+            "status": "observed" if src else "unknown",
+            "when": src["when"] if src else None,
+            "event_id": src["id"] if src else None,
+            "actor": src["read_by"] if src else None,
+            "target": src["name"] if src else None,
+        })
+        lifecycle.append({
+            "stage": "payload_create",
+            "label": "payload file created",
+            "status": "observed" if cf else "unknown",
+            "when": cf["when"] if cf else None,
+            "event_id": cf["id"] if cf else None,
+            "actor": cf["by"] if cf else None,
+            "target": f"{code}.txt",
+        })
+        if inc.get("hops"):
+            lifecycle.append({
+                "stage": "first_relay",
+                "label": "first visible relay",
+                "status": "observed",
+                "when": inc["hops"][0]["when"],
+                "event_id": inc["hops"][0]["id"],
+                "actor": inc["hops"][0]["from"],
+                "target": inc["hops"][0]["to"],
+            })
+            lifecycle.append({
+                "stage": "final_arrival",
+                "label": "final arrival at John",
+                "status": "observed" if inc["john_arrivals"] else "unknown",
+                "when": inc["john_arrivals"][-1]["when"] if inc["john_arrivals"] else None,
+                "event_id": inc["john_arrivals"][-1]["id"] if inc["john_arrivals"] else None,
+                "actor": inc["john_arrivals"][-1]["from"] if inc["john_arrivals"] else None,
+                "target": "john_windward",
+            })
+        lifecycle.append({
+            "stage": "post_check",
+            "label": "SaidIt post check",
+            "status": "observed" if check_ev else "unknown",
+            "when": check_ev["when"] if check_ev else None,
+            "event_id": check_ev["id"] if check_ev else None,
+            "actor": "john_windward" if check_ev else None,
+            "target": "system:saidit",
+        })
+        lifecycle.append({
+            "stage": "public_post",
+            "label": "public SaidIt post",
+            "status": "observed" if post_ev else "unknown",
+            "when": post_ev["when"] if post_ev else None,
+            "event_id": post_ev["id"] if post_ev else None,
+            "actor": "john_windward" if post_ev else None,
+            "target": f"{code}.txt",
+        })
+        for i, de in enumerate(deletes, 1):
+            lifecycle.append({
+                "stage": f"cleanup_{i}",
+                "label": "cleanup delete",
+                "status": "observed",
+                "when": de["when"],
+                "event_id": de["id"],
+                "actor": "john_windward",
+                "target": de["detail"].get("target"),
+            })
+        inc["lifecycle"] = lifecycle
 
     # ---- virus (decoy) window + independence proof ----
     vir = [e for e in ev if det(e).get("virus") is True]
@@ -253,6 +414,66 @@ def main():
         "touch_codename_files": vir_touch_codename,
         "touch_saidit": vir_touch_saidit,
     }
+
+    # ---- data-driven intervention summary ----
+    agent_cs = [e for e in saidit if "content_source" in det(e) and any(p.startswith("Agent/") for p in e["parties"])]
+    normal_human_posts = [e for e in saidit if any(p.startswith("person:") for p in e["parties"])
+                          and "content" in det(e) and "content_source" not in det(e)]
+    filename_hits = [e for e in ev if any(f"{c}_further_instructions.md" in json.dumps(det(e)) for c in codenames)]
+    john_posts = [e for e in saidit if any("john_windward" in p for p in e["parties"])]
+    cleanup_after_cs = 0
+    for p in agent_cs:
+        actor = short(p["parties"][0])
+        if any(x["short_name"] == "delete_file" and 0 < x["when"] - p["when"] <= 10
+               for x in idx_by_actor[actor]):
+            cleanup_after_cs += 1
+    out["intervention_rules"] = [
+        {
+            "rule": "Agent saidit_post with details.content_source",
+            "coverage": len(agent_cs),
+            "known_anomalies": len(codenames),
+            "normal_human_false_positives": len([e for e in normal_human_posts if "content_source" in det(e)]),
+            "records_affected": len(agent_cs),
+            "timing": "pre-publication",
+            "decision": "recommended",
+        },
+        {
+            "rule": "Block all queue_subordinate_task",
+            "coverage": len(codenames),
+            "known_anomalies": len(codenames),
+            "normal_human_false_positives": len(qst) - sum(inc["hop_count"] for inc in incidents.values()),
+            "records_affected": len(qst),
+            "timing": "internal relay",
+            "decision": "reject: broad operational blast radius",
+        },
+        {
+            "rule": "Detect *_further_instructions.md relay filenames",
+            "coverage": len(codenames),
+            "known_anomalies": len(codenames),
+            "normal_human_false_positives": 0,
+            "records_affected": len(filename_hits),
+            "timing": "internal relay",
+            "decision": "reject: filename-bypass risk",
+        },
+        {
+            "rule": "Remove John Agent SaidIt permission",
+            "coverage": len(agent_cs),
+            "known_anomalies": len(codenames),
+            "normal_human_false_positives": 0,
+            "records_affected": len(john_posts),
+            "timing": "endpoint-specific",
+            "decision": "reject: endpoint-bypass risk",
+        },
+        {
+            "rule": "Alert on delete_file immediately after content_source post",
+            "coverage": cleanup_after_cs,
+            "known_anomalies": len(codenames),
+            "normal_human_false_positives": 0,
+            "records_affected": cleanup_after_cs,
+            "timing": "post-exposure",
+            "decision": "forensics only",
+        },
+    ]
 
     json.dump(out, open(OUT, "w"), indent=1, ensure_ascii=False)
     # also emit a JS global so pages work when opened directly as file:// (no server)

@@ -21,7 +21,7 @@
       <div class="card answer">
         <h2>Direct Answer</h2>
         <div class="a-body">A codename instruction file was relayed between Agents as <code>queue_subordinate_task(task=read_file)</code>. When the relay reached John Windward's Agent at the terminal step, John Agent executed <code>saidit_post_check</code>, <code>saidit_post(content_source)</code>, and two cleanup deletes.</div>
-        <div class="note" style="margin-top:12px"><b>Important correction:</b> SwiftWren reached John five times. The first four arrivals continued forwarding or looping; the fifth produced the target post. Arrival at John is necessary in the observed terminal chain, but not sufficient by itself.</div>
+        <div class="note" style="margin-top:12px"><b>Important correction:</b> SwiftWren reached John five times. The first four arrivals did not directly produce the public post in the immediate evidence window; the fifth produced the target post. Arrival at John is necessary in the observed terminal chain, but not sufficient by itself.</div>
       </div>
       <div class="card">
         <h3>Select Incident</h3>
@@ -47,15 +47,28 @@
         <div id="evidence" class="evidence-box"></div>
       </section>
 
+      <section class="panel" id="p-life">
+        <div class="head"><h2>B: File Lifecycle Timeline</h2><span class="sub">source read, payload, relay, post, and cleanup</span></div>
+        <p class="desc">This view links the macro chain to auditable event ids. Unknown source context is kept visible instead of being filled with unsupported content claims.</p>
+        <div class="svg-wrap"><svg id="lifecycle" width="100%" height="250"></svg></div>
+        <div id="johnoutcomes" style="margin-top:14px"></div>
+      </section>
+
       <section class="panel" id="p-walk">
-        <div class="head"><h2>B: Hop-Expanded Relay Path</h2><span class="sub">Agents on y-axis, hop order on x-axis</span></div>
+        <div class="head"><h2>C: Hop-Expanded Relay Path</h2><span class="sub">Agents on y-axis, hop order on x-axis</span></div>
         <p class="desc">Each point is a relay receiver. Repeated visits, self-loops, and arrivals at John remain readable because the path is unfolded over hop order.</p>
         <div class="legend" id="walk-legend"></div>
         <div class="svg-wrap"><svg id="walk" width="100%" height="540"></svg></div>
       </section>
 
+      <section class="panel" id="p-dept">
+        <div class="head"><h2>D: Department Propagation Matrix</h2><span class="sub">from-department to to-department relay counts</span></div>
+        <p class="desc">The matrix aggregates relay hops by organization unit. It shows whether the behavior stayed local or crossed system boundaries inside the company.</p>
+        <div class="svg-wrap"><svg id="deptmatrix" width="100%" height="420"></svg></div>
+      </section>
+
       <section class="panel" id="p-sys">
-        <div class="head"><h2>C: System Boundary Context</h2><span class="sub">source document to payload to relay to public post</span></div>
+        <div class="head"><h2>E: System Boundary Context</h2><span class="sub">source document to payload to relay to public post</span></div>
         <p class="desc">This flow separates internal operations from the external publishing boundary. The public boundary is where the harm becomes irreversible.</p>
         <div id="sysflow"></div>
       </section>
