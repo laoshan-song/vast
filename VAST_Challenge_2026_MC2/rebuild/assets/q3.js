@@ -9,6 +9,7 @@
   const guide = [
     ["Baseline comparison", "normal vs anomaly", "p-base"],
     ["Prior occurrences", "three incidents", "p-prior"],
+    ["Scale comparison", "dot plot metrics", "p-scale"],
     ["Single intervention", "SaidIt boundary", "p-fix"],
   ];
   document.getElementById("steps").innerHTML = guide.map(([t, dd, id], i) =>
@@ -147,6 +148,61 @@
   </table>
   <div class="note" style="margin-top:12px"><b>Shared mechanism:</b> <code>instruction relay -> John Agent -> content_source post -> cleanup</code>. Three successful occurrences with different origins are sufficient evidence that the behavior is repeatable.</div>`;
 
+  function drawScalePlot() {
+    const svg = document.getElementById("scaleplot");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Incident scale dot plots comparing hops, agents, departments, arrivals, duration, and cross-department hops.");
+    const W = Math.max(760, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 420, ml = 196, mr = 74, mt = 56, mb = 48;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const metrics = [
+      { key: "hop_count", label: "relay hops", fmt: (v) => v.toLocaleString(), get: (I) => I.hop_count },
+      { key: "distinct_agent_count", label: "distinct Agents", fmt: (v) => v.toLocaleString(), get: (I) => I.distinct_agent_count },
+      { key: "departments", label: "departments touched", fmt: (v) => v.toLocaleString(), get: (I) => I.departments_touched.length },
+      { key: "john_arrival_count", label: "John arrivals", fmt: (v) => v.toLocaleString(), get: (I) => I.john_arrival_count },
+      { key: "propagation_days", label: "propagation days", fmt: (v) => v.toFixed(2), get: (I) => daysBetween(I.first_hop_when, I.post.when) },
+      { key: "cross_dept_hops", label: "cross-dept hops", fmt: (v) => v.toLocaleString(), get: (I) => I.cross_dept_hops },
+    ];
+    const colors = { HiddenOrca: "var(--info)", MellowOtter: "var(--purple)", SwiftWren: "var(--anom)" };
+    add(svg, "text", { x: ml, y: 24, "font-size": 13, "font-weight": 800 }, "Incident scale comparison");
+    add(svg, "text", { x: ml, y: 43, "font-size": 11.5, fill: "#526174" },
+      "Separate axes avoid a misleading single normalized score; click dots for exact evidence.");
+    const rowH = (H - mt - mb) / metrics.length;
+    metrics.forEach((m, i) => {
+      const y = mt + i * rowH + rowH / 2;
+      const vals = CODES.map((c) => ({ c, v: m.get(inc[c]) }));
+      const max = Math.max(...vals.map((x) => x.v), 1);
+      const x = (v) => ml + (v / max) * (W - ml - mr);
+      add(svg, "line", { x1: ml, y1: y, x2: W - mr, y2: y, stroke: "#d8e1ec", "stroke-width": 1.5 });
+      [0, max].forEach((tick) => {
+        const xx = x(tick);
+        add(svg, "line", { x1: xx, y1: y - 6, x2: xx, y2: y + 6, stroke: "#bdc9d8" });
+        add(svg, "text", { x: xx, y: y + 22, "text-anchor": tick === 0 ? "start" : "end", "font-size": 10.4, fill: "#63748a" }, m.fmt(tick));
+      });
+      add(svg, "text", { x: ml - 14, y: y + 4, "text-anchor": "end", "font-size": 12,
+        "font-weight": 700, fill: "#526174" }, m.label);
+      vals.forEach(({ c, v }, j) => {
+        const xx = x(v);
+        const yy = y + (j - 1) * 9;
+        const dot = add(svg, "circle", { cx: xx, cy: yy, r: c === "SwiftWren" ? 6.5 : 5.2,
+          fill: colors[c], stroke: "#fff", "stroke-width": 1.8 });
+        makeInteractive(dot, `${c} ${m.label}: ${m.fmt(v)}`, () => showIncidentEvidence(c));
+        dot.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c}</div><div class="tt-r">${m.label}: ${m.fmt(v)}</div>`, e));
+        dot.addEventListener("mouseleave", hideTip);
+        if (v === max || c === "SwiftWren") {
+          add(svg, "text", { x: Math.min(xx + 9, W - mr + 4), y: yy + 4, "font-size": 10.5,
+            "font-weight": c === "SwiftWren" ? 800 : 600, fill: colors[c] }, `${c}: ${m.fmt(v)}`);
+        }
+      });
+    });
+    CODES.forEach((c, i) => {
+      const x = ml + i * 166;
+      add(svg, "circle", { cx: x, cy: H - 16, r: 5, fill: colors[c] });
+      add(svg, "text", { x: x + 10, y: H - 12, "font-size": 11.5, fill: "#526174" }, c);
+    });
+  }
+
   const rationaleByRule = {
     "Agent saidit_post with details.content_source": "all three anomalies cross this exact boundary; no normal human content posts are affected",
     "Block all queue_subordinate_task": "breaks normal automation and creates excessive operational cost",
@@ -280,5 +336,6 @@
     });
   }
 
+  drawScalePlot();
   drawDecision();
 })();

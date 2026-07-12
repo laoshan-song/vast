@@ -47,13 +47,25 @@
       </section>
 
       <section class="panel">
-        <div class="head"><h2>B: Evidence Boundary Matrix</h2><span class="sub">observed / inferred / unknown</span></div>
+        <div class="head"><h2>B: Provenance Confidence Matrix</h2><span class="sub">incident by evidence type</span></div>
+        <p class="desc">This matrix makes the certainty boundary visible. It shows which parts of each claim are directly logged, inferred, or unavailable from the data.</p>
+        <div class="svg-wrap"><svg id="confidence" width="100%" height="310"></svg></div>
+      </section>
+
+      <section class="panel">
+        <div class="head"><h2>C: Source-to-Post Evidence Timeline</h2><span class="sub">small multiples for the three posts</span></div>
+        <p class="desc">Each row shows the visible evidence chain for one post. The x-axis is stage order rather than duration, because the terminal post and cleanup events occur within seconds.</p>
+        <div class="svg-wrap"><svg id="sourcetimeline" width="100%" height="360"></svg></div>
+      </section>
+
+      <section class="panel">
+        <div class="head"><h2>D: Evidence Boundary Matrix</h2><span class="sub">observed / inferred / unknown</span></div>
         <p class="desc">This matrix prevents overclaiming. The answer distinguishes event facts from content interpretation and unknown file bodies.</p>
         <div id="boundary"></div>
       </section>
 
       <section class="panel">
-        <div class="head"><h2>C: Why the Posts Look Like Gibberish</h2><span class="sub">format mismatch, not proof of encryption</span></div>
+        <div class="head"><h2>E: Why the Posts Look Like Gibberish</h2><span class="sub">format mismatch, not proof of encryption</span></div>
         <div id="gibberish"></div>
       </section>
 

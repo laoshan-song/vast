@@ -1,7 +1,7 @@
 /* q2.js - provenance rows, evidence matrix, and interpretation boundaries */
 (async () => {
   const d = await MC2.load();
-  const { name, esc, evidenceBox } = MC2;
+  const { add, labelSvg, makeInteractive, showTip, hideTip, name, esc, evidenceBox } = MC2;
   const inc = d.incidents;
   const evidence = document.getElementById("evidence");
   const CODES = ["SwiftWren", "MellowOtter", "HiddenOrca"];
@@ -56,6 +56,14 @@
     document.querySelectorAll("#strength button").forEach((b) => b.classList.toggle("active", b.dataset.c === c));
   }
 
+  function statusColor(status) {
+    return status === "observed" ? "var(--ok)" : status === "inferred" ? "var(--warn)" : "var(--dim)";
+  }
+
+  function statusBadge(status) {
+    return status === "observed" ? "obs" : status === "inferred" ? "inf" : "unk";
+  }
+
   function cell(badgeClass, badgeText, title, sub, dashed = false) {
     return `<div class="fbox" style="${dashed ? "border-style:dashed;opacity:.76" : ""}">
       <div class="k"><span class="badge ${badgeClass}">${badgeText}</span></div>
@@ -87,6 +95,120 @@
       </div>
     </div>`;
   }).join("") + `<div class="note"><b>Reading rule:</b> SwiftWren and MellowOtter have visible source and payload events. HiddenOrca has the same terminal posting mechanism, but its source/package origin is outside the available time window.</div>`;
+
+  function confidenceCells(c) {
+    const I = inc[c];
+    const post = postEvent(I);
+    const deletes = (I.recipe || []).filter((x) => x.action === "delete_file");
+    return [
+      { key: "source", label: "source read", status: I.source_doc ? "observed" : "unknown", value: I.source_doc?.name || "outside visible window" },
+      { key: "payload", label: "payload create", status: I.create_file ? "observed" : "unknown", value: I.create_file ? `id ${I.create_file.id}` : "not visible" },
+      { key: "relay", label: "relay path", status: I.hop_count ? "observed" : "unknown", value: `${I.hop_count} hops` },
+      { key: "post", label: "public post", status: post ? "observed" : "unknown", value: post ? `id ${post.id}` : "not visible" },
+      { key: "theme", label: "probable theme", status: I.source_doc ? "inferred" : "unknown", value: META[c].theme },
+      { key: "body", label: "exact body", status: "unknown", value: "file body unavailable" },
+      { key: "cleanup", label: "cleanup", status: deletes.length ? "observed" : "unknown", value: `${deletes.length} delete events` },
+    ];
+  }
+
+  function drawConfidenceMatrix() {
+    const svg = document.getElementById("confidence");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Provenance confidence matrix showing observed, inferred, and unknown evidence.");
+    const W = Math.max(780, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 310, ml = 150, mt = 74, mr = 34, mb = 42;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const cols = confidenceCells("SwiftWren").map((x) => x.label);
+    const cw = (W - ml - mr) / cols.length;
+    const rh = 52;
+    add(svg, "text", { x: ml, y: 24, "font-size": 13, "font-weight": 800 }, "Evidence confidence by incident");
+    add(svg, "text", { x: ml, y: 43, "font-size": 11.5, fill: "#526174" },
+      "Click a cell to inspect the supporting event evidence; gray cells are deliberately not filled with speculation.");
+    cols.forEach((col, i) => {
+      const x = ml + i * cw + cw / 2;
+      add(svg, "text", { x, y: mt - 15, "text-anchor": "middle", "font-size": 10.6, fill: "#526174" }, col);
+    });
+    CODES.forEach((c, r) => {
+      const y = mt + r * rh;
+      add(svg, "text", { x: ml - 14, y: y + rh / 2 + 4, "text-anchor": "end", "font-size": 12.5,
+        "font-weight": 800, fill: c === "SwiftWren" ? "var(--anom)" : "#172033" }, c);
+      confidenceCells(c).forEach((cell, i) => {
+        const x = ml + i * cw;
+        const fill = cell.status === "observed" ? "rgba(32,134,90,.78)" : cell.status === "inferred" ? "rgba(166,106,0,.70)" : "rgba(122,135,151,.20)";
+        const rect = add(svg, "rect", { x: x + 5, y: y + 8, width: cw - 10, height: rh - 14, rx: 6,
+          fill, stroke: cell.status === "unknown" ? "#bdc9d8" : "transparent" });
+        makeInteractive(rect, `${c} ${cell.label}: ${cell.status}`, () => evidenceBox(evidence, `${c}: ${cell.label}`, [
+          ["status", cell.status],
+          ["value", cell.value],
+          ["meaning", META[c].claim],
+        ], { incident: c, cell }));
+        rect.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c}: ${cell.label}</div><div class="tt-r">${cell.status}</div><div class="tt-r">${esc(cell.value)}</div>`, e));
+        rect.addEventListener("mouseleave", hideTip);
+        add(svg, "text", { x: x + cw / 2, y: y + rh / 2 + 4, "text-anchor": "middle",
+          "font-size": 10.8, "font-weight": 800, fill: cell.status === "unknown" ? "#526174" : "#fff" },
+          cell.status === "observed" ? "OBS" : cell.status === "inferred" ? "INF" : "UNK");
+      });
+    });
+    [["observed", "var(--ok)"], ["inferred", "var(--warn)"], ["unknown", "var(--dim)"]].forEach(([lab, col], i) => {
+      const x = ml + i * 132;
+      add(svg, "rect", { x, y: H - 22, width: 12, height: 12, rx: 2, fill: col, opacity: lab === "unknown" ? .38 : .9 });
+      add(svg, "text", { x: x + 18, y: H - 12, "font-size": 11.5, fill: "#526174" }, lab);
+    });
+  }
+
+  function drawSourceTimeline() {
+    const svg = document.getElementById("sourcetimeline");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Small-multiple source-to-post evidence stage timelines for the three anomalous posts.");
+    const W = Math.max(780, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 360, ml = 152, mr = 42, mt = 54, rowH = 86;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    add(svg, "text", { x: ml, y: 22, "font-size": 13, "font-weight": 800 }, "Source-to-post timelines");
+    add(svg, "text", { x: ml, y: 41, "font-size": 11.5, fill: "#526174" },
+      "The horizontal axis is evidence stage order. Hover or click nodes for stage, timestamp, event id, and actor.");
+
+    CODES.forEach((c, ri) => {
+      const I = inc[c];
+      const events = (I.lifecycle || []).filter((e) => e.when);
+      const y = mt + ri * rowH + 36;
+      const x = (i) => ml + (events.length <= 1 ? 0 : (i / (events.length - 1)) * (W - ml - mr));
+      add(svg, "text", { x: ml - 18, y: y + 4, "text-anchor": "end", "font-size": 12.5,
+        "font-weight": 800, fill: c === "SwiftWren" ? "var(--anom)" : "#172033" }, c);
+      add(svg, "line", { x1: ml, y1: y, x2: W - mr, y2: y, stroke: "#d8e1ec", "stroke-width": 2 });
+      add(svg, "text", { x: ml, y: y + 28, "font-size": 10.5, fill: "#63748a", "font-family": "var(--mono)" }, events[0]?.when || "");
+      add(svg, "text", { x: W - mr, y: y + 28, "text-anchor": "end", "font-size": 10.5, fill: "#63748a", "font-family": "var(--mono)" }, events[events.length - 1]?.when || "");
+      events.forEach((ev, i) => {
+        const xx = x(i);
+        const col = ev.stage === "public_post" ? "var(--anom)" : ev.stage.startsWith("cleanup") ? "var(--info)" : statusColor(ev.status);
+        const node = add(svg, "circle", { cx: xx, cy: y, r: ev.stage === "public_post" ? 7.5 : 5.5,
+          fill: col, stroke: "#fff", "stroke-width": 2 });
+        makeInteractive(node, `${c} ${ev.label}`, () => evidenceBox(evidence, `${c}: ${ev.label}`, [
+          ["status", ev.status],
+          ["time UTC-7", ev.when],
+          ["event id", ev.event_id],
+          ["actor", name(ev.actor)],
+          ["target", ev.target],
+        ], ev));
+        node.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c}: ${ev.label}</div><div class="tt-r">${ev.when}</div><div class="tt-r">id ${ev.event_id}</div>`, e));
+        node.addEventListener("mouseleave", hideTip);
+      });
+      if (!I.source_doc) {
+        add(svg, "rect", { x: ml, y: y - 25, width: 72, height: 18, rx: 5, fill: "rgba(122,135,151,.16)", stroke: "#bdc9d8", "stroke-dasharray": "3 2" });
+        add(svg, "text", { x: ml + 36, y: y - 12, "text-anchor": "middle", "font-size": 10, fill: "#63748a" }, "source unknown");
+      }
+    });
+    [
+      ["observed internal evidence", "var(--ok)"],
+      ["public SaidIt post", "var(--anom)"],
+      ["cleanup delete", "var(--info)"],
+    ].forEach(([lab, col], i) => {
+      const x = ml + i * 180;
+      add(svg, "circle", { cx: x, cy: H - 18, r: 5, fill: col });
+      add(svg, "text", { x: x + 10, y: H - 14, "font-size": 11.5, fill: "#526174" }, lab);
+    });
+  }
 
   const boundaryRows = [
     ["read_file / create_file / saidit_post / delete_file event order", "obs", "", ""],
@@ -126,5 +248,7 @@
       </div>
     </div>`;
 
+  drawConfidenceMatrix();
+  drawSourceTimeline();
   renderEvidence("SwiftWren");
 })();
