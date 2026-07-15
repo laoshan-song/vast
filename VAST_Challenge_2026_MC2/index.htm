@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VAST Challenge 2026 MC2 Submission</title>
+  <style>
+    :root {
+      --bg: #f4f6fa;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #526174;
+      --border: #d8e1ec;
+      --ok: #13795b;
+      --warn: #a66a00;
+      --anom: #c43d4b;
+      --info: #256fb8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main { max-width: 1160px; margin: 0 auto; padding: 28px 22px 52px; }
+    header, section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+    h1, h2, h3 { margin: 0 0 10px; line-height: 1.2; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 20px; }
+    h3 { font-size: 15px; margin-top: 18px; }
+    p { margin: 8px 0 0; }
+    a { color: var(--info); font-weight: 650; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .92em; }
+    .muted { color: var(--muted); }
+    .todo {
+      border-left: 4px solid var(--warn);
+      background: #fffaf0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      background: #f8fafc;
+    }
+    .badge {
+      display: inline-block;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 2px 7px;
+      font-size: 12px;
+      font-weight: 750;
+      color: var(--muted);
+      margin-right: 6px;
+    }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .anom { color: var(--anom); }
+    figure {
+      margin: 14px 0 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    figure img { width: 100%; display: block; }
+    figcaption { padding: 10px 12px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+    .figure-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .figure-grid figure { margin: 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border-bottom: 1px solid var(--border); padding: 9px 8px; text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+    ul { margin: 8px 0 0; padding-left: 22px; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="muted">VAST Challenge 2026 / Mini-Challenge 2</p>
+    <h1>Agentic SaidIt Post Investigation</h1>
+    <p>This page is the self-contained submission entry point. It links to the interactive visual analytics system in <a href="rebuild/overview.html">rebuild/overview.html</a> and gives concise answers for Q1-Q3 with supporting figures.</p>
+  </header>
+
+  <section class="todo">
+    <h2>Required Fields To Complete Before Official Upload</h2>
+    <table>
+      <tr><th>Field</th><th>Current status</th></tr>
+      <tr><td>Team members, affiliations, emails, primary contact</td><td><b class="warn">TODO:</b> fill with your real team information.</td></tr>
+      <tr><td>Student team</td><td><b class="warn">TODO:</b> mark yes/no according to the official form.</td></tr>
+      <tr><td>Total hours</td><td><b class="warn">TODO:</b> enter the estimated total team hours.</td></tr>
+      <tr><td>Video link</td><td><b class="warn">TODO:</b> add the final video URL or bundled video filename.</td></tr>
+      <tr><td>Repository / live demo</td><td><a href="rebuild/overview.html">Local interactive demo</a>. Add final GitHub Pages URL after publishing.</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Tools Used</h2>
+    <ul>
+      <li>Python 3 for event extraction, aggregation, and derived MC2 visualization data.</li>
+      <li>HTML, CSS, and vanilla JavaScript with inline SVG for the interactive visual analytics system.</li>
+      <li>Playwright / Microsoft Edge for screenshot QA, interaction checks, and layout verification.</li>
+      <li>Git and GitHub Pages for version control and web publication.</li>
+      <li>OpenAI Codex / ChatGPT for coding assistance, review, and wording checks; analytical claims were constrained to the provided logs and derived data.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Q1. How was the anomalous SaidIt post made?</h2>
+    <p>The anomalous post was produced by an Agent-mediated file-posting workflow, not by John Windward manually typing a forum message. For the target SwiftWren incident, Emma Harbor's Agent read <code>meeting_notes.doc</code>, created <code>SwiftWren.txt</code>, and initiated the related <code>SwiftWren_further_instructions.md</code> task. The task propagated through <code>queue_subordinate_task(task=read_file)</code> across multiple Agents before the final relay reached John Windward's Agent.</p>
+    <p>The terminal sequence is directly observed: John Agent received the relay, executed <code>saidit_post_check</code>, posted to SaidIt with <code>content_source=SwiftWren.txt</code>, then deleted both the instruction file and the payload file. System context shows why this matters: ordinary SaidIt posts use human <code>content</code>, while only three posts use Agent <code>content_source</code>. SwiftWren is the largest observed chain among those incidents, with 186 relay hops, 18 Agents, 119 cross-department hops, and five arrivals at John before the final post.</p>
+    <p><a href="rebuild/q1.html">Open interactive Q1 view</a></p>
+    <div class="figure-grid">
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/06_overview_saidit_source_stacked.png" alt="SaidIt source-field composition">
+        <figcaption><b>Q1 Figure 1.</b> SaidIt baseline: ordinary posts use <code>content</code>; the anomalous branch uses <code>content_source</code>.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/09_q1_task_targeting_funnel.png" alt="Task-driven targeting funnel">
+        <figcaption><b>Q1 Figure 2.</b> The prompt clue narrows the search from all events to the John/SaidIt target event.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/10_q1_incident_metric_dotplot.png" alt="Incident metric dot plot">
+        <figcaption><b>Q1 Figure 3.</b> SwiftWren is the largest file-source incident by relay hops, Agents, departments, and John arrivals.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/18_q1_terminal_recipe_timeline.png" alt="Terminal recipe timeline">
+        <figcaption><b>Q1 Figure 4.</b> Terminal sequence: relay arrival, SaidIt check, file-source post, and cleanup deletes.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/15_q1_swiftwren_receiver_rank.png" alt="SwiftWren receiver rank">
+        <figcaption><b>Q1 Figure 5.</b> Important Agent endpoints in the SwiftWren relay, including repeated arrivals at John.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/17_q1_department_flow_heatmap.png" alt="SwiftWren department flow heatmap">
+        <figcaption><b>Q1 Figure 6.</b> Department-to-department relay counts contextualize the chain inside the broader system.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Q2. What do the posts mean, and what is the origin of their contents?</h2>
+    <p>The anomalous posts should be interpreted as file-source posting events rather than ordinary human-authored forum prose. The SaidIt baseline contains 105 ordinary human <code>content</code> posts and only three <code>content_source</code> posts; all three file-source posts are Agent posts by John Windward. This makes the most defensible interpretation mechanism-level: payload files were supplied to SaidIt as the post body, where ordinary forum text was expected.</p>
+    <p>The origin is visible for two payloads. SwiftWren links to Emma Harbor reading <code>meeting_notes.doc</code>, creating <code>SwiftWren.txt</code>, and the later John Agent post using <code>content_source=SwiftWren.txt</code>. MellowOtter links similarly to Noah Mariner reading <code>strategic_directions.doc</code>, creating <code>MellowOtter.txt</code>, and the John Agent post using that payload. HiddenOrca follows the same terminal posting pattern, but its upstream source document and payload creation record are not visible in the available logs.</p>
+    <p>Therefore the probable content themes are meeting notes for SwiftWren and strategic direction material for MellowOtter, while HiddenOrca's theme remains unknown. Exact body text, specific confidential sentences, encryption status, and human motive are not recoverable from the provided data.</p>
+    <p><a href="rebuild/q2.html">Open interactive Q2 view</a></p>
+    <div class="figure-grid">
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/19_q2_provenance_completeness_heatmap.png" alt="Provenance completeness heatmap">
+        <figcaption><b>Q2 Figure 1.</b> Completeness matrix separates observed source links from missing upstream evidence.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/24_q2_post_source_field_composition.png" alt="Post source field composition">
+        <figcaption><b>Q2 Figure 2.</b> SaidIt post fields show why the anomalous posts are file-source events, not normal forum text.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/21_q2_source_to_post_lag_bar.png" alt="Source to post lag">
+        <figcaption><b>Q2 Figure 3.</b> Source-to-post lag links upstream document activity to downstream public posts when evidence exists.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/22_q2_evidence_certainty_stacked.png" alt="Evidence certainty stacked bar">
+        <figcaption><b>Q2 Figure 4.</b> Evidence certainty counts prevent overclaiming exact text, motive, or missing source documents.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/26_q2_claim_boundary_matrix.png" alt="Claim boundary matrix">
+        <figcaption><b>Q2 Figure 5.</b> Claim boundary matrix marks which interpretations are observed, inferred, or unknown.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/27_q2_source_actor_department_bar.png" alt="Source actor department bar">
+        <figcaption><b>Q2 Figure 6.</b> Source actors and departments support the probable content themes for visible payload origins.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Q3. Could the behavior repeat, and where should one intervention be placed?</h2>
+    <p>The behavior has already repeated. HiddenOrca, MellowOtter, and SwiftWren all share the same terminal structure: an Agent relay reaches John Windward's Agent, John performs a SaidIt post check, a <code>saidit_post</code> uses <code>content_source</code>, and cleanup deletes follow. The paths differ in hop count, Agents, and departments, which indicates a structural workflow failure rather than a single accidental event.</p>
+    <p>The recommended single intervention is at the SaidIt boundary: block or require approval for Agent-initiated <code>saidit_post</code> events containing <code>details.content_source</code>. In the observed data this rule covers all three anomalous file-source posts and creates zero observed false positives among the 105 ordinary human <code>content</code> posts. It is also later than source-file access controls but earlier than public posting impact, making it a high-coverage, low-collateral boundary gate. A future variant that writes ordinary <code>content</code> directly would require additional behavior or content detection.</p>
+    <p><a href="rebuild/q3.html">Open interactive Q3 view</a></p>
+    <div class="figure-grid">
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/28_q3_recurrence_post_timeline.png" alt="Recurrence post timeline">
+        <figcaption><b>Q3 Figure 1.</b> Three file-source SaidIt posts show recurrence rather than a one-off failure.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/29_q3_incident_scale_dotplot.png" alt="Incident scale dot plot">
+        <figcaption><b>Q3 Figure 2.</b> Incident scale comparison shows SwiftWren as the broadest recurrence of the pattern.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/31_q3_intervention_scatter.png" alt="Intervention scatter">
+        <figcaption><b>Q3 Figure 3.</b> Candidate interventions are compared by false positives and affected records.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/33_q3_gate_confusion_matrix.png" alt="Gate confusion matrix">
+        <figcaption><b>Q3 Figure 4.</b> SaidIt content-source gate catches all observed anomalous posts with zero observed normal-post hits.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/34_q3_rule_tradeoff_matrix.png" alt="Rule tradeoff matrix">
+        <figcaption><b>Q3 Figure 5.</b> Tradeoff matrix explains why the boundary gate is the recommended single intervention.</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/36_q3_shared_agent_intersections.png" alt="Shared agent intersections">
+        <figcaption><b>Q3 Figure 6.</b> Shared-Agent intersections show repeated involvement patterns across incidents.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Interactive System</h2>
+    <div class="grid">
+      <div class="card"><span class="badge">Overview</span><a href="rebuild/overview.html">System baseline and anomaly signature</a></div>
+      <div class="card"><span class="badge">Q1</span><a href="rebuild/q1.html">Detailed chain and system flow</a></div>
+      <div class="card"><span class="badge">Q2</span><a href="rebuild/q2.html">Meaning, origin, and evidence boundaries</a></div>
+      <div class="card"><span class="badge">Q3</span><a href="rebuild/q3.html">Recurrence and one intervention</a></div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

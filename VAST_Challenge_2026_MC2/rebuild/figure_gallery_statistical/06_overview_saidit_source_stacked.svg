@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-label="SaidIt Source-Field Composition">
+  <rect width="1200" height="320" fill="#ffffff"/>
+  <text x="34" y="42" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#172033">SaidIt Source-Field Composition</text>
+  <text x="34" y="68" font-family="Arial, sans-serif" font-size="14" fill="#526174">Normal posts use content; anomalies use content_source.</text>
+  <text x="176" y="137.24" font-family="Arial, sans-serif" font-size="12" fill="#172033" text-anchor="end" fill="#526174" font-weight="700">SaidIt posts</text><rect x="190" y="115" width="894.4444444444445" height="32" fill="#20865a" /><text x="637.2222222222222" y="137.24" font-family="Arial, sans-serif" font-size="12" fill="#172033" text-anchor="middle" fill="#fff" font-weight="700">105</text><rect x="1084.4444444444443" y="115" width="25.555555555555554" height="32" fill="#c93b45" /><rect x="190" y="286" width="16" height="16" fill="#20865a" /><text x="212" y="299" font-family="Arial, sans-serif" font-size="12" fill="#172033" fill="#526174">content</text><rect x="340" y="286" width="16" height="16" fill="#c93b45" /><text x="362" y="299" font-family="Arial, sans-serif" font-size="12" fill="#172033" fill="#526174">content_source</text>
+</svg>

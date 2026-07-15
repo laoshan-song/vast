@@ -160,7 +160,11 @@
       daySeen.add(day);
       const xx = x(r.ts);
       add(svg, "line", { x1: xx, y1: mt, x2: xx, y2: H - mb + 5, stroke: "#d8e1ec", "stroke-width": .8 });
-      if (daySeen.size % 2 === 1) add(svg, "text", { x: xx + 3, y: H - 28, "font-size": 10.5, fill: "#63748a" }, day.slice(5));
+      if (daySeen.size % 4 === 1) {
+        const nearRight = xx > W - mr - 36;
+        add(svg, "text", { x: nearRight ? xx - 3 : xx + 3, y: H - 28,
+          "text-anchor": nearRight ? "end" : "start", "font-size": 10.5, fill: "#63748a" }, day.slice(5));
+      }
     });
 
     d.anomalous_posts.forEach((p) => {
@@ -485,7 +489,7 @@
     svg.innerHTML = "";
     labelSvg(svg, "Rule space of all SaidIt posts by actor type and source field, with check and cleanup rings.");
     const W = Math.max(820, Math.floor(svg.parentElement.clientWidth || 1160));
-    const H = 360, ml = 174, mr = 34, mt = 72, mb = 56;
+    const H = 380, ml = 174, mr = 34, mt = 94, mb = 56;
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     const cellW = (W - ml - mr) / 2;
     const cellH = (H - mt - mb) / 2;

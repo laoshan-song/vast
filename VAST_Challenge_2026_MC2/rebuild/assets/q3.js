@@ -7,16 +7,15 @@
   const CODES = ["HiddenOrca", "MellowOtter", "SwiftWren"];
 
   const guide = [
-    ["Baseline comparison", "normal vs anomaly", "p-base"],
-    ["Prior occurrences", "three incidents", "p-prior"],
+    ["Discovery path", "baseline to recurrence", "p-base"],
+    ["Prior occurrences", "terminal recipe", "p-prior"],
     ["Scale comparison", "dot plot metrics", "p-scale"],
-    ["Shared Agents", "UpSet intersections", "p-upset"],
-    ["Rule tradeoffs", "explore appendix", "p-parallel"],
+    ["Shared Agents", "supporting context", "p-upset"],
+    ["Rule tradeoffs", "data plus analyst cost", "p-parallel"],
     ["Single intervention", "SaidIt boundary", "p-fix"],
   ];
   function renderGuide() {
-    const visibleGuide = guide.filter(([, , id]) => state().mode === "explore" || id !== "p-parallel");
-    document.getElementById("steps").innerHTML = visibleGuide.map(([t, dd, id], i) =>
+    document.getElementById("steps").innerHTML = guide.map(([t, dd, id], i) =>
       `<button data-id="${id}"><span class="idx">${i + 1}</span><span><span class="t">${t}</span><span class="d">${dd}</span></span></button>`).join("");
     document.querySelectorAll("#steps button").forEach((b) => b.addEventListener("click", () => {
       document.querySelectorAll("#steps button").forEach((x) => x.classList.remove("active"));
@@ -31,7 +30,7 @@
     evidenceBox(evidence, "SaidIt boundary gate evidence", [
       ["rule", "actor is Agent AND saidit_post.details.content_source exists -> block or review"],
       ["known anomalies covered", "3 / 3"],
-      ["normal human posts affected", "0 / 105"],
+      ["observed normal human false positives", "0 / 105"],
       ["why this point", "irreversible external-publication boundary"],
       ["limitation", "does not catch a future variant that writes ordinary content directly"],
     ], { saidit_baseline: d.saidit_baseline, saidit_check: d.saidit_check });
@@ -70,20 +69,97 @@
   const b = d.saidit_baseline;
   const ck = d.saidit_check;
   const vir = d.virus;
+  function drawBaselineChart() {
+    const svg = document.getElementById("baselinechart");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Discovery funnel and denominator-safe baseline comparison for Q3 recurrence.");
+    const W = Math.max(780, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 520, ml = 252, mr = 136, mt = 220, rowH = 70;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("height", H);
+
+    const funnel = [
+      { label: "All SaidIt posts", value: b.total, sub: "observed posts", color: "var(--muted)" },
+      { label: "content_source posts", value: b.with_content_source, sub: "file-backed", color: "var(--anom)" },
+      { label: "John Agent endpoints", value: b.by_agent, sub: "same terminal poster", color: "var(--anom)" },
+      { label: "recurrence incidents", value: CODES.length, sub: "HiddenOrca, MellowOtter, SwiftWren", color: "var(--anom)" },
+    ];
+    const fw = (W - 76 - 76) / funnel.length;
+    add(svg, "text", { x: 76, y: 24, "font-size": 13.5, "font-weight": 800 }, "Discovery path from prompt to recurrence");
+    add(svg, "text", { x: 76, y: 44, "font-size": 11.8, fill: "#526174" },
+      "Start from the official SaidIt clue, scan post fields, isolate content_source posts, then test whether the terminal mechanism repeats.");
+    funnel.forEach((step, i) => {
+      const x = 76 + i * fw;
+      const y = 74;
+      const boxW = Math.min(188, fw - 26);
+      const rect = add(svg, "rect", { x, y, width: boxW, height: 96, rx: 8, fill: i === 0 ? "#f8fafc" : "#fff4f5",
+        stroke: i === 0 ? "#d8e1ec" : "rgba(201,59,69,.45)" });
+      makeInteractive(rect, step.label, () => evidenceBox(evidence, "Q3 discovery step", [
+        ["step", step.label],
+        ["count", step.value],
+        ["evidence", step.sub],
+      ], { saidit_baseline: b, incidents: CODES }));
+      add(svg, "text", { x: x + 12, y: y + 24, "font-size": 11.5, "font-weight": 800, fill: "#526174" }, `step ${i + 1}`);
+      add(svg, "text", { x: x + 12, y: y + 56, "font-size": 24, "font-weight": 900, fill: step.color,
+        "font-family": "var(--mono)" }, step.value.toLocaleString());
+      add(svg, "text", { x: x + 12, y: y + 76, "font-size": 12, "font-weight": 800, fill: "#172033" }, step.label);
+      add(svg, "text", { x: x + 12, y: y + 92, "font-size": 10.5, fill: "#63748a" }, step.sub);
+      if (i < funnel.length - 1) {
+        const ax = x + boxW + 7;
+        const ay = y + 48;
+        add(svg, "line", { x1: ax, y1: ay, x2: x + fw - 16, y2: ay, stroke: "#bdc9d8", "stroke-width": 1.8, "marker-end": "url(#arrow)" });
+      }
+    });
+
+    const rows = [
+      { label: "Actor type among SaidIt posts", denom: `${b.total} SaidIt posts`, normal: b.by_person, anomaly: b.by_agent, normalLabel: "person", anomalyLabel: "Agent" },
+      { label: "Post content field", denom: `${b.total} SaidIt posts`, normal: b.with_content_topic, anomaly: b.with_content_source, normalLabel: "ordinary content", anomalyLabel: "content_source file" },
+      { label: "Post-check outcome", denom: `${ck.total_checks} post_check events`, normal: ck.checks_not_posting, anomaly: ck.checks_leading_to_post, normalLabel: "no public post", anomalyLabel: "led to post" },
+    ];
+    const max = Math.max(...rows.flatMap((r) => [r.normal, r.anomaly]), 1);
+    const x = (v) => ml + (v / max) * (W - ml - mr);
+    add(svg, "text", { x: ml, y: 192, "font-size": 13.5, "font-weight": 800 }, "Denominator-safe baseline comparison");
+    add(svg, "text", { x: ml, y: 211, "font-size": 11.8, fill: "#526174" },
+      "Rows 1-2 use 108 SaidIt posts; row 3 uses 71 post_check events.");
+    rows.forEach((r, i) => {
+      const y = mt + i * rowH + 22;
+      add(svg, "text", { x: ml - 14, y: y + 13, "text-anchor": "end", "font-size": 12,
+        "font-weight": 800, fill: "#526174" }, r.label);
+      add(svg, "text", { x: ml - 14, y: y + 30, "text-anchor": "end", "font-size": 10.4,
+        fill: "#7a8797" }, r.denom);
+      add(svg, "line", { x1: ml, y1: y - 8, x2: W - mr, y2: y - 8, stroke: "#eef3f8" });
+      const bars = [
+        { v: r.normal, label: r.normalLabel, color: "var(--ok)", yy: y - 8 },
+        { v: r.anomaly, label: r.anomalyLabel, color: "var(--anom)", yy: y + 18 },
+      ];
+      bars.forEach((bar) => {
+        const rect = add(svg, "rect", { x: ml, y: bar.yy, width: Math.max(3, x(bar.v) - ml), height: 19, rx: 4, fill: bar.color, opacity: .86 });
+        rect.addEventListener("mousemove", (ev) => showTip(`<div class="tt-h">${r.label}</div><div class="tt-r">${bar.label}: ${bar.v.toLocaleString()}</div>`, ev));
+        rect.addEventListener("mouseleave", hideTip);
+        const longBar = bar.v / max > .44;
+        add(svg, "text", { x: longBar ? x(bar.v) - 8 : Math.min(x(bar.v) + 8, W - mr - 8), y: bar.yy + 14,
+          "text-anchor": longBar ? "end" : "start", "font-size": 10.8,
+          "font-weight": 800, fill: longBar ? "#fff" : bar.color }, `${bar.label}: ${bar.v.toLocaleString()}`);
+      });
+    });
+    add(svg, "text", { x: ml, y: H - 24, "font-size": 11.5, fill: "#526174" },
+      `${b.with_content_source}/${b.total} SaidIt posts use content_source; these are the three observed recurrence incidents.`);
+  }
   document.getElementById("baseline").innerHTML = `
     <div class="cards3">
       ${ratioCard("Who posted to SaidIt?", [
         { label: "person", value: b.by_person, color: "var(--ok)" },
         { label: "Agent", value: b.by_agent, color: "var(--anom)" },
-      ], `Only <b>${b.by_agent}</b> of ${b.total} SaidIt posts are Agent-initiated; all three are anomalous file-source posts.`)}
+      ], `Denominator: <b>${b.total}</b> SaidIt posts. Only <b>${b.by_agent}</b> are Agent-initiated, and all three are file-source anomalies.`)}
       ${ratioCard("What field supplied content?", [
         { label: "ordinary content", value: b.with_content_topic, color: "var(--ok)" },
         { label: "content_source file", value: b.with_content_source, color: "var(--anom)" },
-      ], `<b>${b.with_content_source}</b> posts use <code>content_source</code>, and they are exactly the three anomalies.`)}
+      ], `Denominator: <b>${b.total}</b> SaidIt posts. <b>${b.with_content_source}</b> posts use <code>content_source</code>, exactly the three observed anomalies.`)}
       ${ratioCard("What happened after post_check?", [
         { label: "no public post", value: ck.checks_not_posting, color: "var(--warn)" },
         { label: "led to post", value: ck.checks_leading_to_post, color: "var(--anom)" },
-      ], `Only <b>${ck.checks_leading_to_post}</b> of ${ck.total_checks} checks led to posting; all are John Agent terminal cases.`)}
+      ], `Denominator: <b>${ck.total_checks}</b> <code>saidit_post_check</code> events. Only <b>${ck.checks_leading_to_post}</b> led to posting, all John Agent terminal cases.`)}
     </div>
     <div class="note" style="margin-top:14px"><b>Noise control:</b> the dataset also contains ${vir.count.toLocaleString()} <code>virus:true</code> events, but they do not touch codename files or SaidIt (<code>${vir.touch_codename_files}/${vir.touch_saidit}</code>). They are background noise, not evidence for the file-source posting mechanism.</div>`;
 
@@ -137,6 +213,60 @@
 
   drawTimeline();
 
+  function drawTerminalRecipes() {
+    const svg = document.getElementById("terminalrecipes");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Small-multiple terminal recipes for the three recurring file-source SaidIt incidents.");
+    const W = Math.max(760, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 430, ml = 220, mr = 70, mt = 72, rowH = 104;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("height", H);
+    add(svg, "text", { x: ml, y: 24, "font-size": 13.5, "font-weight": 800 }, "Repeated terminal recipe evidence");
+    add(svg, "text", { x: ml, y: 44, "font-size": 11.8, fill: "#526174" },
+      "Each row uses the observed terminal event records. Same five-step recipe across incidents is the recurrence proof.");
+    const steps = [
+      { action: "queue_subordinate_task", label: "relay arrives", color: "var(--purple)" },
+      { action: "saidit_post_check", label: "post check", color: "var(--warn)" },
+      { action: "saidit_post", label: "content_source post", color: "var(--anom)" },
+      { action: "delete_file", label: "delete instruction", color: "#7a8797", nth: 0 },
+      { action: "delete_file", label: "delete payload", color: "#7a8797", nth: 1 },
+    ];
+    const x = (i) => ml + i * ((W - ml - mr) / (steps.length - 1));
+    CODES.forEach((code, row) => {
+      const I = inc[code];
+      const y = mt + row * rowH;
+      const recipe = I.recipe || [];
+      const deletes = recipe.filter((e) => e.action === "delete_file");
+      const stepEvents = steps.map((s) => {
+        if (s.action === "delete_file") return deletes[s.nth] || null;
+        return recipe.find((e) => e.action === s.action) || null;
+      });
+      add(svg, "text", { x: ml - 56, y: y + 6, "text-anchor": "end", "font-size": 12.5,
+        "font-weight": 900, fill: code === "SwiftWren" ? "var(--anom)" : code === "MellowOtter" ? "var(--purple)" : "var(--info)" }, code);
+      add(svg, "text", { x: ml - 56, y: y + 24, "text-anchor": "end", "font-size": 10.5,
+        fill: "#63748a" }, `${I.hop_count} hops / ${I.john_arrival_count} John arrival${I.john_arrival_count === 1 ? "" : "s"}`);
+      add(svg, "line", { x1: ml, y1: y, x2: W - mr, y2: y, stroke: "#d8e1ec", "stroke-width": 1.5 });
+      stepEvents.forEach((ev, i) => {
+        const xx = x(i);
+        if (i > 0) add(svg, "line", { x1: x(i - 1) + 11, y1: y, x2: xx - 11, y2: y, stroke: "#bdc9d8", "stroke-width": 1.4 });
+        const step = steps[i];
+        const fill = ev ? step.color : "#f4f6fa";
+        const circ = add(svg, "circle", { cx: xx, cy: y, r: 11, fill, stroke: ev ? "#fff" : "#bdc9d8", "stroke-width": 2 });
+        makeInteractive(circ, `${code}: ${step.label}`, () => showIncidentEvidence(code));
+        circ.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${code}: ${step.label}</div><div class="tt-r">${ev ? `id ${ev.id}, ${ev.when}` : "not observed"}</div>`, e));
+        circ.addEventListener("mouseleave", hideTip);
+        add(svg, "text", { x: xx, y: y + 34, "text-anchor": "middle", "font-size": 10.4,
+          "font-weight": 750, fill: "#526174" }, step.label);
+        add(svg, "text", { x: xx, y: y + 50, "text-anchor": "middle", "font-size": 9.8,
+          fill: "#7a8797", "font-family": "var(--mono)" }, ev ? `id ${ev.id}` : "missing");
+      });
+    });
+    add(svg, "text", { x: ml, y: H - 22, "font-size": 11.5, fill: "#526174" },
+      "Different upstream relay sizes, same terminal recipe: this is why Q3 treats the issue as repeatable system behavior.");
+  }
+  drawTerminalRecipes();
+
   const rows = [
     ["post time (UTC-7)", (c) => inc[c].post.when],
     ["content source", (c) => `${c}.txt`],
@@ -183,7 +313,7 @@
       const max = Math.max(...vals.map((x) => x.v), 1);
       const x = (v) => ml + (v / max) * (W - ml - mr);
       add(svg, "line", { x1: ml, y1: y, x2: W - mr, y2: y, stroke: "#d8e1ec", "stroke-width": 1.5 });
-      [0, max].forEach((tick) => {
+      [0].forEach((tick) => {
         const xx = x(tick);
         add(svg, "line", { x1: xx, y1: y - 6, x2: xx, y2: y + 6, stroke: "#bdc9d8" });
         add(svg, "text", { x: xx, y: y + 22, "text-anchor": tick === 0 ? "start" : "end", "font-size": 10.4, fill: "#63748a" }, m.fmt(tick));
@@ -199,7 +329,9 @@
         dot.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c}</div><div class="tt-r">${m.label}: ${m.fmt(v)}</div>`, e));
         dot.addEventListener("mouseleave", hideTip);
         if (v === max || c === "SwiftWren") {
-          add(svg, "text", { x: Math.min(xx + 9, W - mr + 4), y: yy + 4, "font-size": 10.5,
+          const nearRight = xx > W - mr - 96;
+          add(svg, "text", { x: nearRight ? xx - 10 : xx + 9, y: yy + 4,
+            "text-anchor": nearRight ? "end" : "start", "font-size": 10.5,
             "font-weight": c === "SwiftWren" ? 800 : 600, fill: colors[c] }, `${c}: ${m.fmt(v)}`);
         }
       });
@@ -271,7 +403,7 @@
   }
 
   const rationaleByRule = {
-    "Agent saidit_post with details.content_source": "all three anomalies cross this exact boundary; no normal human content posts are affected",
+    "Agent saidit_post with details.content_source": "all three anomalies cross this exact boundary; no observed normal human content posts are affected",
     "Block all queue_subordinate_task": "breaks normal automation and creates excessive operational cost",
     "Detect *_further_instructions.md relay filenames": "works on current filenames, but a small filename change bypasses it",
     "Remove John Agent SaidIt permission": "works for the observed endpoint but can be bypassed by routing to another posting-capable Agent",
@@ -293,6 +425,7 @@
     affected: r.records_affected,
     timing: r.timing,
     cost: costByRule[r.rule] || 3,
+    costNote: "analyst-assigned ordinal score, not directly logged",
     verdict: verdictOf(r.decision),
     rationale: rationaleByRule[r.rule] || r.decision,
     raw: r,
@@ -308,14 +441,14 @@
     </div>
     <div class="stats" style="margin-top:16px">
       <div class="stat anom"><div class="n">3/3</div><div class="l">known anomalies covered</div></div>
-      <div class="stat ok"><div class="n">0/105</div><div class="l">normal human-post false positives</div></div>
+      <div class="stat ok"><div class="n">0/105</div><div class="l">observed normal-post false positives</div></div>
       <div class="stat info"><div class="n">1</div><div class="l">single intervention point</div></div>
       <div class="stat warn"><div class="n">boundary</div><div class="l">closest point before public exposure</div></div>
     </div>`;
   showGateEvidence();
 
   document.getElementById("rulematrix").innerHTML = `<table class="grid evidence-matrix">
-    <tr><th>Single rule</th><th>Timing</th><th>Anomaly coverage</th><th>Non-anomaly blast radius</th><th>Records affected</th><th>Decision</th></tr>
+    <tr><th>Single rule</th><th>Timing</th><th>Anomaly coverage</th><th>Observed non-anomaly hits</th><th>Records affected</th><th>Decision</th></tr>
     ${candidates.map((c) => `<tr>
       <td style="${c.verdict === "recommended" ? "color:var(--ok);font-weight:800" : ""}">${c.name}</td>
       <td>${c.timing}</td>
@@ -328,7 +461,7 @@
   <div class="note" style="margin-top:12px"><b>Why the first rule wins:</b> it is pre-publication, covers all observed file-source anomalies, and affects only the three Agent content_source posts in the data. Broad relay blocking touches ${d.qst_overview.total.toLocaleString()} task records and is not proportionate.</div>`;
 
   document.getElementById("alts").innerHTML = `<table class="grid">
-    <tr><th>Candidate</th><th>Coverage</th><th>Blast radius / cost</th><th>Reason</th><th>Decision</th></tr>
+    <tr><th>Candidate</th><th>Coverage</th><th>Observed hits / analyst cost</th><th>Reason</th><th>Decision</th></tr>
     ${candidates.map((c) => `<tr>
       <td style="${c.verdict === "recommended" ? "color:var(--ok);font-weight:800" : ""}">${c.name}</td>
       <td>${c.coverage}/3</td>
@@ -344,12 +477,13 @@
     svg.innerHTML = "";
     labelSvg(svg, "Two by two confusion matrix for the recommended SaidIt content-source boundary gate.");
     const W = Math.max(720, Math.floor(svg.parentElement.clientWidth || 1160));
-    const H = 320, ml = 220, mt = 70, cw = Math.min(260, (W - ml - 80) / 2), rh = 82;
+    const H = 340, ml = 220, mt = 88, cw = Math.min(260, (W - ml - 80) / 2), rh = 82;
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("height", H);
     const cells = [
       { row: 0, col: 0, title: "blocked / reviewed", value: 3, label: "known anomalies", fill: "rgba(201,59,69,.82)", good: true },
       { row: 0, col: 1, title: "allowed", value: 0, label: "missed anomalies", fill: "rgba(122,135,151,.14)", good: true },
-      { row: 1, col: 0, title: "blocked / reviewed", value: 0, label: "normal human false positives", fill: "rgba(122,135,151,.14)", good: true },
+      { row: 1, col: 0, title: "blocked / reviewed", value: 0, label: "observed human false positives", fill: "rgba(122,135,151,.14)", good: true },
       { row: 1, col: 1, title: "allowed", value: 105, label: "normal human posts", fill: "rgba(32,134,90,.80)", good: true },
     ];
     add(svg, "text", { x: 34, y: 24, "font-size": 13, "font-weight": 800 }, "Recommended gate confusion matrix");
@@ -398,7 +532,7 @@
       { key: "coverage", label: "coverage", min: 0, max: 3, goodHigh: true, get: (c) => c.coverage, fmt: (v) => `${v}/3` },
       { key: "fp", label: "blast radius", min: 0, max: Math.max(...candidates.map((c) => c.fp), 1), goodHigh: false, get: (c) => c.fp, fmt: (v) => Math.round(v).toLocaleString() },
       { key: "affected", label: "records affected", min: 0, max: Math.max(...candidates.map((c) => c.affected), 1), goodHigh: false, get: (c) => c.affected, fmt: (v) => Math.round(v).toLocaleString() },
-      { key: "cost", label: "cost", min: 1, max: 5, goodHigh: false, get: (c) => c.cost, fmt: (v) => v.toFixed(0) },
+      { key: "cost", label: "analyst cost", min: 1, max: 5, goodHigh: false, get: (c) => c.cost, fmt: (v) => v.toFixed(0) },
       { key: "timing", label: "prevention timing", min: 0, max: 2, goodHigh: true, get: (c) => c.timing === "pre-publication" ? 2 : c.timing === "post-exposure" ? 0 : 1, fmt: (v) => v === 2 ? "pre" : v === 1 ? "during" : "post" },
     ];
     const x = (i) => ml + i * ((W - ml - mr) / (axes.length - 1));
@@ -409,7 +543,7 @@
     };
     add(svg, "text", { x: ml, y: 24, "font-size": 13, "font-weight": 800 }, "Intervention tradeoff parallel coordinates");
     add(svg, "text", { x: ml, y: 43, "font-size": 11.5, fill: "#526174" },
-      "Higher is better on every displayed axis after orientation: high coverage, low blast radius, low affected records, low cost, earlier timing.");
+      "Higher is better after orientation. Coverage, hits, records, and timing are derived counts; cost is analyst-scored 1-5.");
     axes.forEach((a, i) => {
       const xx = x(i);
       add(svg, "line", { x1: xx, y1: mt, x2: xx, y2: H - mb, stroke: "#bdc9d8" });
@@ -427,11 +561,11 @@
         ["coverage", `${c.coverage}/3`],
         ["blast radius", c.fp],
         ["records affected", c.affected],
-        ["cost", c.cost],
+        ["analyst cost", `${c.cost} (${c.costNote})`],
         ["timing", c.timing],
         ["decision", c.verdict],
       ], c));
-      line.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c.name}</div><div class="tt-r">${c.verdict}</div><div class="tt-r">coverage ${c.coverage}/3, cost ${c.cost}</div>`, e));
+      line.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c.name}</div><div class="tt-r">${c.verdict}</div><div class="tt-r">coverage ${c.coverage}/3, analyst cost ${c.cost}</div>`, e));
       line.addEventListener("mouseleave", hideTip);
       if (rec) {
         add(svg, "text", { x: pts[0][0] + 8, y: pts[0][1] - 8, "font-size": 11.5, "font-weight": 800, fill: "var(--ok)" }, "recommended");
@@ -447,7 +581,7 @@
   function drawDecision() {
     const svg = document.getElementById("decision");
     svg.innerHTML = "";
-    labelSvg(svg, "Coverage versus operational cost comparison for candidate interventions.");
+    labelSvg(svg, "Coverage versus analyst-scored operational cost for candidate interventions.");
     const W = Math.max(720, Math.floor(svg.parentElement.clientWidth || 1160));
     svg.setAttribute("viewBox", `0 0 ${W} 300`);
     const ml = 74, mr = 42, mt = 36, mb = 54;
@@ -465,15 +599,30 @@
       add(svg, "line", { x1: ml, y1: y(cov), x2: ml + plotW, y2: y(cov), stroke: "#eef3f8" });
       add(svg, "text", { x: ml - 12, y: y(cov) + 4, "text-anchor": "end", "font-size": 11, fill: "#63748a" }, `${cov}/3`);
     }
-    add(svg, "text", { x: ml + plotW / 2, y: 288, "text-anchor": "middle", "font-size": 12, fill: "#526174" }, "operational cost / blast radius");
+    add(svg, "text", { x: ml + plotW / 2, y: 288, "text-anchor": "middle", "font-size": 12, fill: "#526174" }, "analyst-scored operational cost");
       add(svg, "text", { x: 14, y: mt + plotH / 2, transform: `rotate(-90 14 ${mt + plotH / 2})`, "text-anchor": "middle", "font-size": 12, fill: "#526174" }, "known anomaly coverage");
       add(svg, "text", { x: ml + plotW, y: mt - 12, "text-anchor": "end", "font-size": 11, fill: "#63748a" },
-        "co-located candidates are slightly nudged for readability");
+        "labels use callouts for co-located candidates");
 
     const jitter = {
-      "Detect *_further_instructions.md relay filenames": -8,
-      "Alert on delete_file immediately after content_source post": 8,
+      "Detect *_further_instructions.md relay filenames": -18,
+      "Alert on delete_file immediately after content_source post": 18,
     };
+    const labelSpec = {
+      "SaidIt gate": { dx: 14, dy: -20, w: 84 },
+      "Filename rule": { dx: -104, dy: 38, w: 104 },
+      "Delete alert": { dx: 22, dy: 64, w: 94 },
+      "John-only": { dx: -42, dy: 38, w: 82 },
+      "Block tasks": { dx: -104, dy: 18, w: 94 },
+    };
+    function labelBox(text, px, py, spec, color, recommended) {
+      const lx = Math.max(ml + 4, Math.min(W - mr - spec.w, px + spec.dx));
+      const ly = Math.max(10, Math.min(300 - 38, py + spec.dy));
+      add(svg, "line", { x1: px, y1: py, x2: lx + spec.w / 2, y2: ly + 15, stroke: color, "stroke-width": 1.1, opacity: .45 });
+      add(svg, "rect", { x: lx, y: ly, width: spec.w, height: 24, rx: 6, fill: recommended ? "#eef9f4" : "#f8fafc", stroke: color, "stroke-width": recommended ? 1.6 : 1, opacity: .96 });
+      add(svg, "text", { x: lx + spec.w / 2, y: ly + 16, "text-anchor": "middle", "font-size": 10.8,
+        fill: recommended ? "var(--ok)" : "#526174", "font-weight": recommended ? 850 : 650 }, text);
+    }
     candidates.forEach((c) => {
       const recommended = c.verdict === "recommended";
       const px = x(c.cost) + (jitter[c.name] || 0);
@@ -484,11 +633,11 @@
       makeInteractive(r, `${c.name}: ${c.verdict}`, () => evidenceBox(evidence, `${c.name}`, [
         ["coverage", `${c.coverage}/3`],
         ["false positives", c.fp],
-        ["operational cost", c.cost],
+        ["analyst cost", `${c.cost} (${c.costNote})`],
         ["decision", c.verdict],
         ["reason", c.rationale],
       ], c));
-      r.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c.name}</div><div class="tt-r">coverage ${c.coverage}/3 / cost ${c.cost}</div><div class="tt-r">${c.verdict}</div>`, e));
+      r.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c.name}</div><div class="tt-r">coverage ${c.coverage}/3 / analyst cost ${c.cost}</div><div class="tt-r">${c.verdict}</div>`, e));
       r.addEventListener("mouseleave", hideTip);
       const short = {
         "Agent saidit_post with details.content_source": "SaidIt gate",
@@ -497,20 +646,14 @@
         "Remove John Agent SaidIt permission": "John-only",
         "Alert on delete_file immediately after content_source post": "Delete alert",
       }[c.name] || c.name;
-      const labelDy = {
-        "SaidIt gate": -12,
-        "Filename rule": 18,
-        "John-only": -12,
-        "Delete alert": 18,
-        "Block tasks": -12,
-      }[short] || 14;
-      add(svg, "text", { x: px + 12, y: py + labelDy, "font-size": 11.2,
-        fill: recommended ? "var(--ok)" : "#526174", "font-weight": recommended ? 800 : 500 }, short);
+      const spec = labelSpec[short] || { dx: 12, dy: 14, w: 90 };
+      labelBox(short, px, py, spec, recommended ? "var(--ok)" : c.verdict === "forensics only" ? "var(--warn)" : "#7a8797", recommended);
     });
   }
 
   drawScalePlot();
   drawUpSet();
+  drawBaselineChart();
   drawParallel();
   drawConfusion();
   drawDecision();
