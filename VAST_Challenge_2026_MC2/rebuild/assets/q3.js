@@ -343,6 +343,59 @@
     });
   }
 
+  function drawRecurrenceBars() {
+    const svg = document.getElementById("recurrencebars");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Numeric recurrence bar matrix comparing incident scale and propagation burden.");
+    const W = Math.max(760, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 480, ml = 190, mr = 72, mt = 76, rowH = 62;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("height", H);
+    add(svg, "text", { x: 34, y: 24, "font-size": 13.5, "font-weight": 900 }, "Recurrence scale as descriptive statistics");
+    add(svg, "text", { x: 34, y: 45, "font-size": 11.8, fill: "#526174" },
+      "Each row is one comparable metric. Length encodes value; labels keep exact numbers visible.");
+
+    const durationHours = (I) => Math.max(0, (toTs(I.post.when) - toTs(I.first_hop_when)) / 3600000);
+    const metrics = [
+      { label: "relay hops", get: (I) => I.hop_count, unit: "hops", color: "var(--info)" },
+      { label: "distinct Agents", get: (I) => I.distinct_agent_count, unit: "Agents", color: "var(--purple)" },
+      { label: "departments touched", get: (I) => I.departments_touched.length, unit: "depts", color: "var(--ok)" },
+      { label: "cross-dept hops", get: (I) => I.cross_dept_hops, unit: "hops", color: "var(--anom)" },
+      { label: "John arrivals", get: (I) => I.john_arrival_count, unit: "arrivals", color: "var(--warn)" },
+      { label: "propagation duration", get: (I) => durationHours(I), unit: "hours", color: "var(--cyan)", fmt: (v) => v >= 24 ? `${(v / 24).toFixed(1)}d` : `${v.toFixed(1)}h` },
+    ];
+    const plotW = W - ml - mr;
+    metrics.forEach((m, mi) => {
+      const y = mt + mi * rowH;
+      const vals = CODES.map((code) => ({ code, value: m.get(inc[code]) }));
+      const max = Math.max(...vals.map((v) => v.value), 1);
+      add(svg, "text", { x: ml - 16, y: y + 26, "text-anchor": "end",
+        "font-size": 12, "font-weight": 900, fill: "#526174" }, m.label);
+      add(svg, "line", { x1: ml, y1: y + 32, x2: W - mr, y2: y + 32, stroke: "#eef3f8" });
+      vals.forEach((v, i) => {
+        const laneY = y + i * 17;
+        const w = (v.value / max) * plotW;
+        const fill = v.code === "SwiftWren" ? "var(--anom)" : v.code === "MellowOtter" ? "var(--purple)" : "var(--info)";
+        const rect = add(svg, "rect", { x: ml, y: laneY, width: Math.max(3, w), height: 12, rx: 4,
+          fill, opacity: .78 });
+        makeInteractive(rect, `${v.code}: ${m.label}`, () => showIncidentEvidence(v.code));
+        rect.addEventListener("mousemove", (ev) => showTip(`<div class="tt-h">${v.code}: ${m.label}</div><div class="tt-r">${m.fmt ? m.fmt(v.value) : `${v.value.toLocaleString()} ${m.unit}`}</div>`, ev));
+        rect.addEventListener("mouseleave", hideTip);
+        add(svg, "text", { x: ml + Math.max(3, w) + 7, y: laneY + 10, "font-size": 10.4,
+          fill: "#526174", "font-family": "var(--mono)" }, m.fmt ? m.fmt(v.value) : v.value.toLocaleString());
+      });
+    });
+    CODES.forEach((code, i) => {
+      const x = ml + i * 160;
+      const fill = code === "SwiftWren" ? "var(--anom)" : code === "MellowOtter" ? "var(--purple)" : "var(--info)";
+      add(svg, "rect", { x, y: H - 28, width: 12, height: 12, rx: 2, fill });
+      add(svg, "text", { x: x + 18, y: H - 18, "font-size": 11.5, fill: "#526174" }, code);
+    });
+    add(svg, "text", { x: 34, y: H - 52, "font-size": 11.3, fill: "#526174" },
+      "Interpretation: the repeated mechanism is shared, but SwiftWren is much larger by hop count, cross-department movement, John arrivals, and duration.");
+  }
+
   function drawUpSet() {
     const svg = document.getElementById("upset");
     if (!svg) return;
@@ -651,6 +704,7 @@
     });
   }
 
+  drawRecurrenceBars();
   drawScalePlot();
   drawUpSet();
   drawBaselineChart();

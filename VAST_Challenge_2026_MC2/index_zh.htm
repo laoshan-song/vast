@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VAST Challenge 2026 MC2 中文阅读版</title>
+  <style>
+    :root {
+      --bg: #f4f6fa;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #526174;
+      --border: #d8e1ec;
+      --ok: #13795b;
+      --warn: #a66a00;
+      --anom: #c43d4b;
+      --info: #256fb8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.7 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    main { max-width: 1160px; margin: 0 auto; padding: 28px 22px 52px; }
+    header, section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+    h1, h2, h3 { margin: 0 0 10px; line-height: 1.25; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 20px; }
+    h3 { font-size: 15px; margin-top: 18px; }
+    p { margin: 8px 0 0; }
+    a { color: var(--info); font-weight: 650; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .92em; }
+    .muted { color: var(--muted); }
+    .todo { border-left: 4px solid var(--warn); background: #fffaf0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 12px; }
+    .card { border: 1px solid var(--border); border-radius: 8px; padding: 14px; background: #f8fafc; }
+    .badge {
+      display: inline-block;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 2px 7px;
+      font-size: 12px;
+      font-weight: 750;
+      color: var(--muted);
+      margin-right: 6px;
+    }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .anom { color: var(--anom); }
+    figure { margin: 14px 0 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; }
+    figure img { width: 100%; display: block; }
+    figcaption { padding: 10px 12px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+    .figure-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 12px; margin-top: 12px; }
+    .figure-grid figure { margin: 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border-bottom: 1px solid var(--border); padding: 9px 8px; text-align: left; vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+    ul { margin: 8px 0 0; padding-left: 22px; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="muted">VAST Challenge 2026 / Mini-Challenge 2 / 中文阅读版</p>
+    <h1>Agentic SaidIt 异常发帖调查</h1>
+    <p>本页是英文提交入口 <a href="index.htm">index.htm</a> 的中文阅读版，便于组内核对逻辑、准备展示和录制讲解。正式提交仍建议以英文页面和英文答题表为准。</p>
+    <p>交互式可视分析系统入口：<a href="rebuild/overview.html">rebuild/overview.html</a>。</p>
+  </header>
+
+  <section class="todo">
+    <h2>正式上传前仍需补齐的信息</h2>
+    <table>
+      <tr><th>字段</th><th>当前状态</th></tr>
+      <tr><td>团队成员、单位、邮箱、主要联系人</td><td><b class="warn">待补：</b>填写真实团队信息。</td></tr>
+      <tr><td>是否学生团队</td><td><b class="warn">待补：</b>按官方表格勾选。</td></tr>
+      <tr><td>总工时</td><td><b class="warn">待补：</b>估算全队总投入时间。</td></tr>
+      <tr><td>视频链接</td><td><b class="warn">待补：</b>加入最终视频 URL 或打包视频文件名。</td></tr>
+      <tr><td>仓库 / 在线演示</td><td><a href="rebuild/overview.html">本地交互演示</a>。发布后补 GitHub Pages 链接。</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>使用工具</h2>
+    <ul>
+      <li>Python 3：事件抽取、聚合和派生可视化数据生成。</li>
+      <li>HTML、CSS、原生 JavaScript 和 inline SVG：构建交互式可视分析系统。</li>
+      <li>Playwright / Microsoft Edge：截图质量检查、交互验证和布局验证。</li>
+      <li>Git 和 GitHub Pages：版本控制与网页发布。</li>
+      <li>OpenAI Codex / ChatGPT：辅助编码、审阅和文字校对；所有分析结论均约束在官方日志和派生数据证据内。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Q1. 异常 SaidIt 帖子是如何产生的？</h2>
+    <p>异常帖子不是 John Windward 手动输入论坛文本产生的，而是一个由 Agent 中介的文件发帖流程。以目标事件 SwiftWren 为例，Emma Harbor 的 Agent 先读取 <code>meeting_notes.doc</code>，创建 <code>SwiftWren.txt</code>，并触发相关的 <code>SwiftWren_further_instructions.md</code> 任务。该任务随后通过多次 <code>queue_subordinate_task(task=read_file)</code> 在多个 Agent 之间传播，最终到达 John Windward 的 Agent。</p>
+    <p>终端事件链在日志中可以直接观察到：John Agent 接收 relay 后执行 <code>saidit_post_check</code>，随后以 <code>content_source=SwiftWren.txt</code> 发帖到 SaidIt，并立即删除指令文件和 payload 文件。系统背景说明这一点很异常：普通 SaidIt 帖子使用人类 <code>content</code> 字段，而只有 3 条帖子使用 Agent 的 <code>content_source</code>。SwiftWren 是三起事件中规模最大的一起，包含 186 个 relay hops、18 个 Agent、119 次跨部门跳转，并在最终发帖前 5 次到达 John。</p>
+    <p><a href="rebuild/q1.html">打开 Q1 交互页面</a></p>
+    <div class="figure-grid">
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/06_overview_saidit_source_stacked.png" alt="SaidIt source-field composition">
+        <figcaption><b>Q1 图 1。</b>SaidIt 基线：普通帖子使用 <code>content</code>，异常分支使用 <code>content_source</code>。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/09_q1_task_targeting_funnel.png" alt="Task-driven targeting funnel">
+        <figcaption><b>Q1 图 2。</b>题目线索把搜索范围从全量事件缩小到 John/SaidIt 目标事件。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/10_q1_incident_metric_dotplot.png" alt="Incident metric dot plot">
+        <figcaption><b>Q1 图 3。</b>SwiftWren 在 hops、Agent、部门和 John arrivals 等指标上规模最大。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/18_q1_terminal_recipe_timeline.png" alt="Terminal recipe timeline">
+        <figcaption><b>Q1 图 4。</b>终端序列：relay 到达、SaidIt 检查、文件源发帖、清理删除。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/15_q1_swiftwren_receiver_rank.png" alt="SwiftWren receiver rank">
+        <figcaption><b>Q1 图 5。</b>SwiftWren relay 中的重要 Agent 终点，包括多次到达 John。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/17_q1_department_flow_heatmap.png" alt="SwiftWren department flow heatmap">
+        <figcaption><b>Q1 图 6。</b>部门间 relay 计数将目标链放入组织系统背景中解释。</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Q2. 这些帖子是什么意思，内容来源是什么？</h2>
+    <p>这些异常帖子应解释为文件源发帖事件，而不是普通人类撰写的论坛文本。SaidIt 基线中有 105 条普通人类 <code>content</code> 帖子，只有 3 条 <code>content_source</code> 帖子；这 3 条文件源帖子均由 John Windward 的 Agent 发布。因此，最稳妥的解释是机制层面的：payload 文件被作为 SaidIt 正文提交，而 SaidIt 原本预期的是普通论坛文本。</p>
+    <p>三起事件中，两起可以看到上游来源。SwiftWren 对应 Emma Harbor 读取 <code>meeting_notes.doc</code>、创建 <code>SwiftWren.txt</code>，后续 John Agent 以 <code>content_source=SwiftWren.txt</code> 发帖。MellowOtter 同理，对应 Noah Mariner 读取 <code>strategic_directions.doc</code>、创建 <code>MellowOtter.txt</code>，再由 John Agent 发布该 payload。HiddenOrca 的终端发帖机制相同，但在当前日志窗口中看不到上游 source document 和 payload create 记录。</p>
+    <p>因此，SwiftWren 的可能内容主题是会议记录，MellowOtter 的可能内容主题是战略方向材料；HiddenOrca 的主题未知。日志无法恢复 exact body text、具体机密句子、是否加密、以及人的动机。</p>
+    <p><a href="rebuild/q2.html">打开 Q2 交互页面</a></p>
+    <div class="figure-grid">
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/19_q2_provenance_completeness_heatmap.png" alt="Provenance completeness heatmap">
+        <figcaption><b>Q2 图 1。</b>完整性矩阵区分可观察来源链接和缺失的上游证据。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/24_q2_post_source_field_composition.png" alt="Post source field composition">
+        <figcaption><b>Q2 图 2。</b>SaidIt 字段分布说明异常帖子是文件源事件，不是普通论坛文本。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/21_q2_source_to_post_lag_bar.png" alt="Source to post lag">
+        <figcaption><b>Q2 图 3。</b>source-to-post 时间差将上游文档行为与下游公开发帖联系起来。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/22_q2_evidence_certainty_stacked.png" alt="Evidence certainty stacked bar">
+        <figcaption><b>Q2 图 4。</b>证据确定性计数避免过度声称 exact text、动机或缺失来源。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/26_q2_claim_boundary_matrix.png" alt="Claim boundary matrix">
+        <figcaption><b>Q2 图 5。</b>claim boundary matrix 标注哪些解释是 observed、inferred 或 unknown。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/27_q2_source_actor_department_bar.png" alt="Source actor department bar">
+        <figcaption><b>Q2 图 6。</b>来源人员与部门为可见 payload 的可能主题提供上下文支持。</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Q3. 该行为会不会重复，应该在哪里做一个干预？</h2>
+    <p>该行为已经重复出现。HiddenOrca、MellowOtter 和 SwiftWren 共享同一终端结构：Agent relay 到达 John Windward 的 Agent，John 执行 SaidIt post check，随后 <code>saidit_post</code> 使用 <code>content_source</code>，紧接着发生 cleanup deletes。三起事件在 hop count、Agent 数和部门范围上不同，说明问题不是单个文件名或单个人的偶发错误，而是结构性 workflow failure。</p>
+    <p>推荐的唯一干预点是 SaidIt 边界：阻止或要求审批所有 Agent 发起且包含 <code>details.content_source</code> 的 <code>saidit_post</code>。在已观测数据中，该规则覆盖 3/3 条异常文件源帖子，并且对 105 条普通人类 <code>content</code> 帖子的观测误伤为 0。它比源文件访问控制更靠近外部发布边界，又早于公开影响发生，因此是高覆盖、低连带影响的边界 gate。限制是：如果未来变体直接写普通 <code>content</code>，则还需要额外的行为检测或内容检测。</p>
+    <p><a href="rebuild/q3.html">打开 Q3 交互页面</a></p>
+    <div class="figure-grid">
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/28_q3_recurrence_post_timeline.png" alt="Recurrence post timeline">
+        <figcaption><b>Q3 图 1。</b>三条文件源 SaidIt 帖子说明这是重复机制，不是一次性故障。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/29_q3_incident_scale_dotplot.png" alt="Incident scale dot plot">
+        <figcaption><b>Q3 图 2。</b>事件规模对比显示 SwiftWren 是范围最大的复现。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/31_q3_intervention_scatter.png" alt="Intervention scatter">
+        <figcaption><b>Q3 图 3。</b>候选干预按 false positives 和 affected records 进行比较。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/33_q3_gate_confusion_matrix.png" alt="Gate confusion matrix">
+        <figcaption><b>Q3 图 4。</b>SaidIt content-source gate 捕获所有已观测异常帖子，且普通帖观测误伤为 0。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/34_q3_rule_tradeoff_matrix.png" alt="Rule tradeoff matrix">
+        <figcaption><b>Q3 图 5。</b>tradeoff matrix 解释为什么边界 gate 是推荐的唯一干预。</figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/36_q3_shared_agent_intersections.png" alt="Shared agent intersections">
+        <figcaption><b>Q3 图 6。</b>Shared-Agent intersections 展示三起事件中的重复参与模式。</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>交互式系统入口</h2>
+    <div class="grid">
+      <div class="card"><span class="badge">Overview</span><a href="rebuild/overview.html">系统基线与异常签名</a></div>
+      <div class="card"><span class="badge">Q1</span><a href="rebuild/q1.html">详细事件链与系统流</a></div>
+      <div class="card"><span class="badge">Q2</span><a href="rebuild/q2.html">含义、来源与证据边界</a></div>
+      <div class="card"><span class="badge">Q3</span><a href="rebuild/q3.html">历史复现与单一干预</a></div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

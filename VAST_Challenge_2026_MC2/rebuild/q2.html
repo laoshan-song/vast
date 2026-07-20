@@ -44,6 +44,13 @@
         <p class="desc">The anomalous posts should be interpreted as file-source posting events rather than ordinary human-authored forum prose. The SaidIt baseline contains 105 ordinary human <code>content</code> posts and only 3 <code>content_source</code> posts; all three file-source posts are Agent posts by John Windward. This makes the most defensible interpretation mechanism-level: payload files were supplied to SaidIt as the post body, where ordinary forum text was expected.</p>
         <p class="desc">The origin is visible for two of the three payloads. SwiftWren links to Emma Harbor reading <code>meeting_notes.doc</code>, creating <code>SwiftWren.txt</code>, and the later John Agent post using <code>content_source=SwiftWren.txt</code>. MellowOtter links similarly to Noah Mariner reading <code>strategic_directions.doc</code>, creating <code>MellowOtter.txt</code>, and the John Agent post using that payload. HiddenOrca follows the same terminal posting pattern, but its upstream source document and payload creation record are not visible in the available logs.</p>
         <p class="desc">Therefore the probable content themes are meeting notes for SwiftWren and strategic direction material for MellowOtter, while HiddenOrca's theme remains unknown. The exact body text, specific confidential sentences, encryption status, and human motive are not recoverable from the provided data.</p>
+        <div id="q2caseboard" class="case-board"></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>A0: Numeric Evidence Summary</h2><span class="sub">counts, payload size, and relay scale before interpretation</span></div>
+        <p class="desc">This descriptive-statistics panel turns Q2 evidence into numbers before any meaning claim is made. It shows how much of each provenance row is observed, inferred, or unknown, and compares payload size and relay scale.</p>
+        <div class="svg-wrap"><svg id="q2numeric" width="100%" height="470"></svg></div>
       </section>
 
       <section class="panel core">

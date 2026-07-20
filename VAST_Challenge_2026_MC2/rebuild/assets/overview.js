@@ -38,6 +38,102 @@
     </div>
   </div>`;
 
+  function drawLayerFusion() {
+    const svg = document.getElementById("layerfusion");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Data layer fusion pipeline from raw MC2 sources to derived evidence and official answer views.");
+    const W = Math.max(820, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 360, ml = 42, mr = 38, mt = 58;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("height", H);
+
+    add(svg, "text", { x: ml, y: 24, "font-size": 13.5, "font-weight": 900 }, "From raw records to auditable answer objects");
+    add(svg, "text", { x: ml, y: 44, "font-size": 11.8, fill: "#526174" },
+      "The dashboard fuses raw event logs and organization context into traceable evidence objects before final claims.");
+
+    const columns = [
+      {
+        title: "Raw provided data",
+        color: "var(--info)",
+        items: [
+          ["event log", `${d.total_events.toLocaleString()} records`],
+          ["org chart", "department context"],
+          ["SaidIt records", `${b.total} posts`],
+        ],
+      },
+      {
+        title: "Derived evidence",
+        color: "var(--purple)",
+        items: [
+          ["post baseline", `${b.with_content_source}/${b.total} content_source`],
+          ["terminal recipes", "check -> post -> cleanup"],
+          ["relay chains", "hop/time expanded"],
+        ],
+      },
+      {
+        title: "Evidence boundaries",
+        color: "var(--warn)",
+        items: [
+          ["observed", "event ids + fields"],
+          ["inferred", "probable themes"],
+          ["unknown", "missing file bodies"],
+        ],
+      },
+      {
+        title: "Answer views",
+        color: "var(--ok)",
+        items: [
+          ["Q1 mechanism", "exact chain + context"],
+          ["Q2 meaning", "provenance + uncertainty"],
+          ["Q3 recurrence", "one boundary gate"],
+        ],
+      },
+    ];
+
+    const colW = (W - ml - mr) / columns.length;
+    columns.forEach((col, i) => {
+      const x0 = ml + i * colW;
+      const cx = x0 + colW / 2;
+      add(svg, "rect", { x: x0 + 8, y: mt, width: colW - 16, height: 224, rx: 9,
+        fill: "#f8fafc", stroke: col.color, "stroke-width": 1.8 });
+      add(svg, "text", { x: cx, y: mt + 28, "text-anchor": "middle",
+        "font-size": 13, "font-weight": 900, fill: col.color }, col.title);
+      col.items.forEach(([k, v], j) => {
+        const y = mt + 58 + j * 48;
+        const item = add(svg, "rect", { x: x0 + 24, y, width: colW - 48, height: 34, rx: 7,
+          fill: "#fff", stroke: "#d8e1ec" });
+        bindTooltip(item, `${col.title}: ${k}`,
+          `<div class="tt-h">${k}</div><div class="tt-r">${v}</div><div class="tt-r">${col.title}</div>`);
+        add(svg, "text", { x: x0 + 36, y: y + 14, "font-size": 11.4,
+          "font-weight": 850, fill: "#172033" }, k);
+        add(svg, "text", { x: x0 + 36, y: y + 28, "font-size": 10.4,
+          fill: "#63748a", "font-family": "var(--mono)" }, v);
+      });
+      if (i < columns.length - 1) {
+        const ay = mt + 112;
+        add(svg, "line", { x1: x0 + colW - 6, y1: ay, x2: x0 + colW + 6, y2: ay,
+          stroke: "#bdc9d8", "stroke-width": 2 });
+        add(svg, "path", { d: `M${x0 + colW + 1},${ay - 5} L${x0 + colW + 10},${ay} L${x0 + colW + 1},${ay + 5}`,
+          fill: "none", stroke: "#bdc9d8", "stroke-width": 2 });
+      }
+    });
+
+    [
+      ["No hairball", "paths are unfolded by time/hop", "var(--ok)"],
+      ["No invented text", "payload bodies unavailable", "var(--warn)"],
+      ["No hidden denominator", `${b.total} SaidIt posts / ${ck.total_checks} checks`, "var(--ok)"],
+    ].forEach(([k, v, color], i) => {
+      const x0 = ml + i * ((W - ml - mr) / 3);
+      add(svg, "rect", { x: x0, y: H - 52, width: (W - ml - mr) / 3 - 18, height: 34, rx: 7,
+        fill: "#fff", stroke: "#d8e1ec" });
+      add(svg, "text", { x: x0 + 12, y: H - 35, "font-size": 11.2,
+        "font-weight": 900, fill: color }, k);
+      add(svg, "text", { x: x0 + 12, y: H - 20, "font-size": 10.3,
+        fill: "#526174" }, v);
+    });
+  }
+
   function drawEventBars() {
     const svg = document.getElementById("typebars");
     svg.innerHTML = "";
@@ -555,6 +651,7 @@
     </div>`;
 
   drawEventBars();
+  drawLayerFusion();
   drawTimeDensity();
   drawProcessComparison();
   drawCalendarHeatmap();

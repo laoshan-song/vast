@@ -93,6 +93,121 @@
     };
   }
 
+  function renderCaseBoard() {
+    const node = document.getElementById("q2caseboard");
+    if (!node) return;
+    node.innerHTML = CODES.map((code) => {
+      const I = inc[code];
+      const src = I.source_doc;
+      const cf = I.create_file;
+      const post = postEvent(I);
+      const observed = [
+        post ? `post id ${post.id}: content_source=${code}.txt` : "public post not visible",
+        cf ? `create_file id ${cf.id}` : "payload creation not visible",
+        src ? `read_file id ${src.id}: ${src.name}` : "source read not visible",
+      ];
+      const limitation = src
+        ? "Exact payload text is unavailable; theme is inferred from source filename and handler."
+        : "Upstream source and payload creation are outside the visible evidence window.";
+      const status = src ? "observed + inferred" : "partial + unknown";
+      return `<div class="case-tile" data-c="${esc(code)}">
+        <div class="case-head">
+          <span class="case-code">${esc(code)}</span>
+          <span class="badge ${src ? "inf" : "unk"}">${esc(status)}</span>
+        </div>
+        <div class="case-claim">${esc(META[code].theme)}</div>
+        <div class="case-sub"><b>Evidence:</b> ${observed.map(esc).join(" / ")}</div>
+        <div class="case-sub"><b>Limit:</b> ${esc(limitation)}</div>
+      </div>`;
+    }).join("");
+    node.querySelectorAll(".case-tile").forEach((tile) => {
+      tile.addEventListener("click", () => setState({ incident: tile.dataset.c }));
+    });
+  }
+
+  function drawNumericEvidenceSummary() {
+    const svg = document.getElementById("q2numeric");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Q2 numeric evidence summary with certainty counts, payload size, and relay scale.");
+    const W = Math.max(780, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 470, ml = 150, mr = 48, mt = 76;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("height", H);
+    add(svg, "text", { x: 34, y: 24, "font-size": 13.5, "font-weight": 900 }, "Descriptive statistics before meaning claims");
+    add(svg, "text", { x: 34, y: 45, "font-size": 11.8, fill: "#526174" },
+      "Counts use visible evidence cells; size/hop bars use logged payload and relay metrics. Unknown remains numeric, not hidden.");
+
+    const certRows = CODES.map((code) => {
+      const cells = confidenceCells(code);
+      return {
+        code,
+        observed: cells.filter((x) => x.status === "observed").length,
+        inferred: cells.filter((x) => x.status === "inferred").length,
+        unknown: cells.filter((x) => x.status === "unknown").length,
+        size: inc[code].create_file?.size_hint || 0,
+        hops: inc[code].hop_count,
+        john: inc[code].john_arrival_count,
+      };
+    });
+    const colors = { observed: "var(--ok)", inferred: "var(--warn)", unknown: "#9aa7b7" };
+    const barW = Math.min(420, W * .42);
+    const rowH = 62;
+    add(svg, "text", { x: ml, y: mt - 22, "font-size": 12.5, "font-weight": 900 }, "Evidence-cell certainty counts");
+    ["observed", "inferred", "unknown"].forEach((k, i) => {
+      const x = ml + i * 112;
+      add(svg, "rect", { x, y: mt - 8, width: 10, height: 10, rx: 2, fill: colors[k] });
+      add(svg, "text", { x: x + 16, y: mt + 1, "font-size": 10.8, fill: "#526174" }, k);
+    });
+    certRows.forEach((r, i) => {
+      const y = mt + 34 + i * rowH;
+      add(svg, "text", { x: ml - 18, y: y + 18, "text-anchor": "end", "font-size": 12.5,
+        "font-weight": 900, fill: codeColor(r.code) }, r.code);
+      let acc = 0;
+      ["observed", "inferred", "unknown"].forEach((k) => {
+        const v = r[k];
+        const w = (v / 7) * barW;
+        const rect = add(svg, "rect", { x: ml + acc, y, width: Math.max(3, w), height: 26, rx: 5,
+          fill: colors[k], opacity: k === "unknown" ? .62 : .86 });
+        rect.addEventListener("mousemove", (ev) => showTip(`<div class="tt-h">${r.code}: ${k}</div><div class="tt-r">${v} of 7 evidence fields</div>`, ev));
+        rect.addEventListener("mouseleave", hideTip);
+        if (w > 32) add(svg, "text", { x: ml + acc + w / 2, y: y + 18, "text-anchor": "middle",
+          "font-size": 10.6, "font-weight": 900, fill: "#fff", "font-family": "var(--mono)" }, v);
+        acc += w;
+      });
+      add(svg, "text", { x: ml + barW + 12, y: y + 18, "font-size": 11.2, fill: "#526174" },
+        `${r.observed} obs / ${r.inferred} inf / ${r.unknown} unk`);
+    });
+
+    const x2 = ml + barW + 178;
+    const chartW = W - x2 - mr;
+    const metrics = [
+      { key: "size", label: "payload bytes", color: "var(--purple)", max: Math.max(...certRows.map((r) => r.size), 1), fmt: (v) => v ? v.toLocaleString() : "unknown" },
+      { key: "hops", label: "relay hops", color: "var(--info)", max: Math.max(...certRows.map((r) => r.hops), 1), fmt: (v) => v.toLocaleString() },
+      { key: "john", label: "John arrivals", color: "var(--anom)", max: Math.max(...certRows.map((r) => r.john), 1), fmt: (v) => v.toLocaleString() },
+    ];
+    add(svg, "text", { x: x2, y: mt - 22, "font-size": 12.5, "font-weight": 900 }, "Numeric scale checks");
+    metrics.forEach((m, mi) => {
+      const y0 = mt + 20 + mi * 112;
+      add(svg, "text", { x: x2, y: y0 - 14, "font-size": 11.8, "font-weight": 900, fill: m.color }, m.label);
+      certRows.forEach((r, i) => {
+        const y = y0 + i * 25;
+        const v = r[m.key];
+        const w = v ? (v / m.max) * chartW : 2;
+        add(svg, "text", { x: x2 - 8, y: y + 11, "text-anchor": "end", "font-size": 10.5,
+          fill: codeColor(r.code), "font-weight": 800 }, r.code.replace("Wren", "").replace("Otter", "").replace("Orca", ""));
+        const rect = add(svg, "rect", { x: x2, y, width: Math.max(2, w), height: 15, rx: 4,
+          fill: v ? m.color : "#e6edf5", opacity: v ? .82 : .9, stroke: v ? "none" : "#bdc9d8", "stroke-dasharray": v ? "none" : "3 2" });
+        rect.addEventListener("mousemove", (ev) => showTip(`<div class="tt-h">${r.code}: ${m.label}</div><div class="tt-r">${m.fmt(v)}</div>`, ev));
+        rect.addEventListener("mouseleave", hideTip);
+        add(svg, "text", { x: x2 + Math.max(2, w) + 7, y: y + 11, "font-size": 10.5,
+          fill: "#526174", "font-family": "var(--mono)" }, m.fmt(v));
+      });
+    });
+    add(svg, "text", { x: 34, y: H - 16, "font-size": 11.5, fill: "#526174" },
+      "Reading: Q2 has enough observed evidence to identify two sources, but one incident still has numeric unknowns; the chart prevents overclaiming.");
+  }
+
   function drawSourceFieldScan() {
     const svg = document.getElementById("sourcefieldscan");
     if (!svg) return;
@@ -926,6 +1041,8 @@
     </div>`;
 
   drawSourceFieldScan();
+  renderCaseBoard();
+  drawNumericEvidenceSummary();
   drawPayloadBacktrace();
   drawLocalWindows();
   drawProvenanceGraph();

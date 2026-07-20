@@ -14,6 +14,7 @@
     <h1>How a file-backed Agent workflow escaped to SaidIt</h1>
     <p class="lead">This overview establishes normal behavior before isolating the target anomaly: John Windward's Agent posted a file-backed message to SaidIt on <b>May 17, 2046 04:21 UTC-7</b>. The page uses counts, ratios, and linked evidence from <code>MC2 data.json</code> and <code>org_chart.json</code>.</p>
     <p class="lead" style="margin-top:8px"><b>Conclusion:</b> an internal document was packaged as a codename text file, relayed as an Agent <code>read_file</code> task, posted through <code>saidit_post(content_source)</code>, then cleaned up. The same mechanism appears three times.</p>
+    <p class="lead" style="margin-top:8px"><a href="../index_zh.htm">中文阅读版</a> mirrors the final answers for local discussion; the English pages remain the official-facing version.</p>
   </header>
 
   <div class="layout">
@@ -51,6 +52,12 @@
       <section class="panel core">
         <div class="head"><h2>Answer Map</h2><span class="sub">official questions mapped to evidence views</span></div>
         <div id="qmap"></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>Data Layer Fusion</h2><span class="sub">raw data sources -> derived evidence objects -> official answers</span></div>
+        <p class="desc">This view makes the analysis pipeline auditable. It separates original logs, file operations, Agent relays, organization context, public SaidIt records, and uncertainty labels before any final claim is made.</p>
+        <div class="svg-wrap"><svg id="layerfusion" width="1180" height="360"></svg></div>
       </section>
 
       <section class="panel explore-only">
