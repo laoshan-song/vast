@@ -131,7 +131,7 @@
     svg.innerHTML = "";
     labelSvg(svg, "Q2 numeric evidence summary with certainty counts, payload size, and relay scale.");
     const W = Math.max(780, Math.floor(svg.parentElement.clientWidth || 1160));
-    const H = 470, ml = 150, mr = 48, mt = 76;
+    const H = 500, ml = 150, mr = 48, mt = 96;
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     svg.setAttribute("height", H);
     add(svg, "text", { x: 34, y: 24, "font-size": 13.5, "font-weight": 900 }, "Descriptive statistics before meaning claims");

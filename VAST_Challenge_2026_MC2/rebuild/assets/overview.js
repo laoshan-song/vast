@@ -1,7 +1,7 @@
 /* overview.js - system baseline, signature small multiples, method pipeline */
 (async () => {
   const d = await MC2.load();
-  const { add, labelSvg, bindTooltip, showTip, hideTip, toTs, pageHref } = MC2;
+  const { add, labelSvg, bindTooltip, makeInteractive, showTip, hideTip, toTs, pageHref, setState } = MC2;
 
   const b = d.saidit_baseline;
   const ck = d.saidit_check;
@@ -138,7 +138,10 @@
     const svg = document.getElementById("typebars");
     svg.innerHTML = "";
     labelSvg(svg, "Sorted event type distribution. SaidIt actions are highlighted.");
-    const W = 1180, H = 470, ml = 198, mr = 96, mt = 12, mb = 24;
+    const W = Math.max(820, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 470, ml = 198, mr = 230, mt = 12, mb = 24;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("height", H);
     const entries = Object.entries(d.event_type_counts).sort((a, b) => b[1] - a[1]);
     const max = Math.max(...entries.map((x) => x[1]));
     const bh = (H - mt - mb) / entries.length;
@@ -153,15 +156,15 @@
         fill: isSaidIt ? "#172033" : "#526174", "font-weight": isSaidIt ? 700 : 400 }, k);
       const bar = add(svg, "rect", { x: ml, y: y + 2, width: Math.max(1, x(v) - ml), height: bh - 5,
         rx: 3, fill: col, opacity: isSaidIt ? 0.96 : 0.55 });
-      add(svg, "text", { x: x(v) + 8, y: y + bh / 2 + 4, "font-size": 11.5, fill: "#526174",
+      add(svg, "text", { x: Math.min(x(v) + 8, W - mr + 74), y: y + bh / 2 + 4, "font-size": 11.5, fill: "#526174",
         "font-family": "var(--mono)" }, v.toLocaleString());
       bindTooltip(bar, `${k}: ${v.toLocaleString()} events`, `<div class="tt-h">${k}</div><div class="tt-r">${v.toLocaleString()} events</div>`);
     });
 
     [["anomalous post action", "var(--anom)"], ["SaidIt check/post actions", "var(--warn)"], ["other event types", "var(--info)"]]
       .forEach(([t, c], i) => {
-        add(svg, "rect", { x: W - mr - 190, y: mt + 8 + i * 21, width: 12, height: 12, rx: 2, fill: c, opacity: .85 });
-        add(svg, "text", { x: W - mr - 172, y: mt + 18 + i * 21, "font-size": 11.5, fill: "#526174" }, t);
+        add(svg, "rect", { x: W - 214, y: mt + 8 + i * 21, width: 12, height: 12, rx: 2, fill: c, opacity: .85 });
+        add(svg, "text", { x: W - 196, y: mt + 18 + i * 21, "font-size": 11.5, fill: "#526174" }, t);
       });
   }
 
@@ -260,7 +263,7 @@
       add(svg, "rect", { x: ml, y: y + 9, width: W - ml - mr, height: bh - 18, rx: 4, fill: "#eef3f8", stroke: "#d8e1ec" });
       const barW = Math.max(pct > 0 ? 2 : 0, pct * (W - ml - mr));
       const bar = add(svg, "rect", { x: ml, y: y + 9, width: barW, height: bh - 18, rx: 4, fill: i >= 2 ? "var(--anom)" : "var(--warn)", opacity: .86 });
-      add(svg, "text", { x: W - mr + 6, y: y + bh / 2 + 4, "font-size": 10.5, fill: "#526174", "font-family": "var(--mono)" },
+      add(svg, "text", { x: W - mr - 2, y: y + bh / 2 + 4, "text-anchor": "end", "font-size": 10.5, fill: "#526174", "font-family": "var(--mono)" },
         `${num}/${den}`);
       bindTooltip(bar, `${label}: ${num}/${den}`,
         `<div class="tt-h">${label}</div><div class="tt-r">${num.toLocaleString()} / ${den.toLocaleString()}</div><div class="tt-r">${(pct * 100).toFixed(4)}%</div>`);
@@ -356,7 +359,7 @@
       });
     });
     add(svg, "text", { x: ml, y: H - 12, "font-size": 11.5, fill: "#526174" },
-      "The pivot field is content_source because it explains the post body source; actor, post_check, cleanup, and file-name fields corroborate the same pattern.");
+      "Reading: content_source explains body origin; actor, post_check, cleanup, and file name corroborate the pattern.");
   }
 
   function drawFileBars(svgId, title, entries, opts = {}) {
@@ -379,7 +382,7 @@
         const ow = (opts.overlay[k] / max) * (W - ml - mr);
         add(svg, "rect", { x: ml, y: y + 5, width: Math.max(1, ow), height: bh - 10, rx: 4, fill: "var(--anom)", opacity: .92 });
       }
-      add(svg, "text", { x: ml + w + 8, y: y + bh / 2 + 4, "font-size": 10.8, fill: "#526174", "font-family": "var(--mono)" }, v.toLocaleString());
+      add(svg, "text", { x: W - mr - 2, y: y + bh / 2 + 4, "text-anchor": "end", "font-size": 10.8, fill: "#526174", "font-family": "var(--mono)" }, v.toLocaleString());
       bindTooltip(bar, `${k}: ${v}`, `<div class="tt-h">${k}</div><div class="tt-r">${v.toLocaleString()} events</div>${opts.overlay && opts.overlay[k] ? `<div class="tt-r">${opts.overlay[k].toLocaleString()} codename-related</div>` : ""}`);
     });
   }
@@ -435,9 +438,15 @@
         const bar = add(svg, "rect", { x: x0, y: y + rowH / 2 - 10, width: bw, height: 20, rx: 4, fill: col, opacity: .82 });
         add(svg, "text", { x: x0 + bw + 6, y: y + rowH / 2 + 4, "font-size": 10.6, fill: "#526174", "font-family": "var(--mono)" }, Number.isInteger(v) ? v.toLocaleString() : v.toFixed(1));
         if (i === 0) add(svg, "text", { x: x0, y: mt - 16, "font-size": 11.6, "font-weight": 850, fill: col }, codes[j]);
+        makeInteractive(bar, `Open Q1 chain for ${codes[j]}`, () => {
+          setState({ incident: codes[j] }, { replaceUrl: false });
+          location.href = pageHref("q1.html");
+        });
         bindTooltip(bar, `${codes[j]} ${label}`, `<div class="tt-h">${codes[j]}</div><div class="tt-r">${label}: ${Number.isInteger(v) ? v.toLocaleString() : v.toFixed(2)}</div>`);
       });
     });
+    add(svg, "text", { x: ml, y: H - 12, "font-size": 11.4, fill: "#526174" },
+      "Interaction: click any incident bar to open the corresponding Q1 chain view.");
   }
 
   function drawTimeDensity() {
@@ -445,7 +454,10 @@
     if (!svg || !d.time_density) return;
     svg.innerHTML = "";
     labelSvg(svg, "Hourly global event density with virus window and file-source SaidIt anomaly posts.");
-    const W = 1180, H = 330, ml = 58, mr = 36, mt = 36, mb = 58;
+    const W = Math.max(820, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 330, ml = 58, mr = 36, mt = 36, mb = 58;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("height", H);
     const rows = d.time_density.map((r) => ({ ...r, ts: toTs(r.hour) }));
     const min = rows[0].ts, max = rows[rows.length - 1].ts;
     const x = (t) => ml + ((t - min) / (max - min)) * (W - ml - mr);
@@ -484,7 +496,7 @@
       daySeen.add(day);
       const xx = x(r.ts);
       add(svg, "line", { x1: xx, y1: mt, x2: xx, y2: H - mb + 5, stroke: "#d8e1ec", "stroke-width": .8 });
-      if (daySeen.size % 4 === 1) {
+      if (daySeen.size % 6 === 1) {
         const nearRight = xx > W - mr - 36;
         add(svg, "text", { x: nearRight ? xx - 3 : xx + 3, y: H - 28,
           "text-anchor": nearRight ? "end" : "start", "font-size": 10.5, fill: "#63748a" }, day.slice(5));
@@ -854,6 +866,13 @@
         const mark = add(svg, "circle", { cx: x, cy: y, r: anomaly ? 6 : 4.2,
           fill: anomaly ? "var(--anom)" : "var(--ok)", opacity: anomaly ? 1 : .62,
           stroke: post.post_check && post.cleanup ? "#172033" : "#fff", "stroke-width": post.post_check && post.cleanup ? 2.4 : 1 });
+        if (anomaly && post.file) {
+          const code = post.file.replace(".txt", "");
+          makeInteractive(mark, `Open Q1 chain for ${code}`, () => {
+            setState({ incident: code }, { replaceUrl: false });
+            location.href = pageHref("q1.html");
+          });
+        }
         bindTooltip(mark, `SaidIt post ${post.id}: ${actorType}, ${sourceField}`,
           `<div class="tt-h">post id ${post.id}</div><div class="tt-r">${post.when_local}</div><div class="tt-r">${actorType} / ${sourceField}</div><div class="tt-r">post_check ${post.post_check} / cleanup ${post.cleanup}</div>${post.file ? `<div class="tt-r">${post.file}</div>` : ""}`);
       });
@@ -865,6 +884,7 @@
     add(svg, "text", { x: ml + 12, y: H - 16, "font-size": 12, fill: "#46576b" }, "ordinary post");
     add(svg, "circle", { cx: ml + 150, cy: H - 20, r: 6, fill: "var(--anom)", stroke: "#172033", "stroke-width": 2 });
     add(svg, "text", { x: ml + 164, y: H - 16, "font-size": 12, fill: "#46576b" }, "Agent file-source + check + cleanup");
+    add(svg, "text", { x: ml + 390, y: H - 16, "font-size": 12, fill: "#46576b" }, "click red marks to open Q1 chain");
   }
 
   document.getElementById("pipeline").innerHTML = `

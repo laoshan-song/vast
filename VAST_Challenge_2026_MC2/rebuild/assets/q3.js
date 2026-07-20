@@ -349,7 +349,7 @@
     svg.innerHTML = "";
     labelSvg(svg, "Numeric recurrence bar matrix comparing incident scale and propagation burden.");
     const W = Math.max(760, Math.floor(svg.parentElement.clientWidth || 1160));
-    const H = 480, ml = 190, mr = 72, mt = 76, rowH = 62;
+    const H = 540, ml = 190, mr = 72, mt = 76, rowH = 62;
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     svg.setAttribute("height", H);
     add(svg, "text", { x: 34, y: 24, "font-size": 13.5, "font-weight": 900 }, "Recurrence scale as descriptive statistics");
@@ -392,7 +392,7 @@
       add(svg, "rect", { x, y: H - 28, width: 12, height: 12, rx: 2, fill });
       add(svg, "text", { x: x + 18, y: H - 18, "font-size": 11.5, fill: "#526174" }, code);
     });
-    add(svg, "text", { x: 34, y: H - 52, "font-size": 11.3, fill: "#526174" },
+    add(svg, "text", { x: 34, y: H - 82, "font-size": 11.3, fill: "#526174" },
       "Interpretation: the repeated mechanism is shared, but SwiftWren is much larger by hop count, cross-department movement, John arrivals, and duration.");
   }
 

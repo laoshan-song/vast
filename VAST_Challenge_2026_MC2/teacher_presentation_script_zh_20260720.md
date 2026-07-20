@@ -1,6 +1,6 @@
 # VAST Challenge 2026 MC2 课程汇报展示稿
 
-建议时长：6 分钟左右  
+建议时长：7 分钟左右  
 展示方式：优先打开 GitHub Pages 或本地网页，按 Overview -> Q1 -> Q2 -> Q3 的顺序展示  
 中文阅读版入口：`index_zh.htm`  
 英文正式入口：`index.htm`  
@@ -28,32 +28,37 @@
 
 ---
 
-## 0:40-1:35 Overview：先做 EDA 系统基线，再定位异常签名
+## 0:40-2:10 Overview：先做 EDA 系统基线，再定位异常签名
 
 展示页面：`rebuild/overview.html`
 
 我们首先没有直接画最终事件链，而是先建立系统基线。因为 VAST Challenge 更强调可视分析过程，而不是只给出结论。这里采用的是探索式数据分析思路：先看全局分布，再看分组差异，最后再筛出异常签名。
 
-从 Overview 可以看到，原始日志共有 185,147 条事件，其中 SaidIt 发帖共有 108 条。正常模式非常清楚：105 条是人类用户使用普通 `content` 字段发帖。异常模式只有 3 条：发帖者是 Agent，并且发帖内容不是普通文本，而是来自 `details.content_source` 文件。
+第一步先看 System Event Mix。这个条形图回答的是：我们面对的系统到底有多大、SaidIt 发帖在其中占多大比例。原始日志共有 185,147 条事件，SaidIt 发帖只有 108 条，所以异常发帖不能脱离全局系统去孤立判断。
 
-这里我们使用了多组描述性统计视图：
+第二步看 Actors and Rarity。左边先看不同主体类型的出现规模，右边把同一个异常数量放到不同分母下比较。这样做是为了避免只说 3 条异常帖，而不说明它在全系统、Agent 行为和 SaidIt 发帖中的稀有程度。这里可以看到，异常不是凭感觉判断出来的，而是在多个统计口径下都非常少见。
 
-- System Event Mix 用条形图展示所有事件类型的规模，说明 SaidIt 发帖只是大系统中的很小一部分；
-- Actors and Rarity 用主体类型组成和不同分母下的异常比例，说明异常不是凭感觉判断，而是在多个统计口径下都很稀有；
-- 全局时间密度图，用来把异常发帖放到完整日志时间窗口里；
-- Department Activity Matrix 用部门 × 事件类型矩阵展示普通活动、文件操作、relay 和 codename 信号主要集中在哪里；
-- SaidIt Field Audit 比较正常人类帖子和 Agent 文件源帖子的字段差异，解释为什么 `content_source` 是合理的追踪入口；
-- SaidIt rule space，用 actor type 和 source field 把 108 条帖子分到不同格子中；
-- File Operations 展示 read、create、delete 等文件操作和文件扩展名分布，说明文件源证据在全局文件活动中的位置；
-- Incident Scale Comparison 对比 HiddenOrca、MellowOtter 和 SwiftWren 的 relay hops、Agent 数、跨部门跳转和 John 到达次数；
-- Process Comparison，对比正常人类发帖流程和 Agent 文件源发帖流程；
-- Data Layer Fusion，展示我们如何从原始日志、文件操作、Agent relay、组织结构和 SaidIt 记录，构造后续 Q1-Q3 的证据对象。
+第三步看 Global Time Density。它把三条文件源异常帖放回完整时间轴中，同时标出病毒诱饵事件的高峰。这个图的作用是区分背景噪声和目标异常：系统里确实有大量事件波动，但目标异常并不是简单等同于最大事件高峰。
 
-这一页想说明的是：异常不是主观判断出来的，而是通过全局 EDA、字段审计和流程对比逐步分离出来的一个干净签名，即 `Agent + saidit_post + content_source`。它既是统计上的少数模式，也是流程上的异常模式。
+第四步看 Department Activity Matrix。因为后面 Q1 会讨论跨部门 Agent relay，所以 Overview 需要先说明各部门的普通活动基线。这个矩阵展示每个部门的总事件、文件操作、relay 发送和接收、codename 信号、SaidIt 发帖数量。它说明 SwiftWren 后面的跨部门传播不是凭空出现，而是发生在一个本来就有大量部门交互和文件操作的系统中。
+
+第五步进入 SaidIt Field Audit。这里开始从全局缩小到发帖字段本身。我们比较正常人类帖子和 Agent 文件源帖子的字段差异：正常帖子主要是 Human actor 加普通 `content` 字段，而异常帖子是 Agent actor 加 `content_source` 字段，并且伴随 post_check、cleanup 和文件名。也就是说，`content_source` 不是随便挑出来的字段，而是能解释帖子内容来源的关键差异。
+
+第六步看 SaidIt Rule Space。这个图把 108 条 SaidIt 帖子放到 actor type 和 source field 的二维空间里。结果很清楚：105 条正常人类帖子集中在 Human + content 位置，3 条异常帖子集中在 Agent + content_source 位置。因此，异常签名可以概括为 `Agent + saidit_post + content_source`。
+
+第七步看 File Operations。既然异常签名指向文件源，下一步就要看文件操作基线。这个图展示 read、create、delete 等文件操作，以及不同文件扩展名的分布。它说明文件活动本身在系统中很常见，但 codename payload 和 `.md` 指令文件相关操作是更小、更需要追踪的子集。
+
+第八步看 Incident Scale Comparison。这个图把 HiddenOrca、MellowOtter 和 SwiftWren 三起文件源事件放在一起比较 relay hops、Agent 数、部门数、跨部门跳转和 John 到达次数。它说明 5 月 17 日的 SwiftWren 不是全新机制，而是同类机制中规模最大的一次。
+
+第九步看 Process Comparison。到这里，我们已经知道异常少见、字段不同、涉及文件和历史复现。Process Comparison 再把正常人类发帖流程和 Agent 文件源发帖流程放在一起对比，说明两者不是同一种流程的轻微差异，而是两条不同的过程路径。
+
+最后看 Data Layer Fusion。这个图不是证据本身，而是说明我们如何把原始日志、文件操作、Agent relay、组织结构和 SaidIt 记录融合成后面 Q1、Q2、Q3 的证据对象。它的作用是保证后面的结论可追溯，而不是只给出最终故事。
+
+所以，Overview 的逻辑是逐步收缩的：先证明系统规模和正常基线，再定位 SaidIt 异常字段，再连接文件操作和历史复现，最后形成后续追踪的入口。核心结论是：异常不是主观判断出来的，而是通过全局 EDA、字段审计和流程对比逐步分离出来的一个干净签名，即 `Agent + saidit_post + content_source`。它既是统计上的少数模式，也是流程上的异常模式。
 
 ---
 
-## 1:35-2:45 Q1：异常帖子是如何产生的
+## 2:10-3:20 Q1：异常帖子是如何产生的
 
 展示页面：`rebuild/q1.html`
 
@@ -81,7 +86,7 @@ John Agent 执行 `saidit_post_check`；
 
 ---
 
-## 2:45-3:55 Q2：帖子是什么意思，内容从哪里来
+## 3:20-4:30 Q2：帖子是什么意思，内容从哪里来
 
 展示页面：`rebuild/q2.html`
 
@@ -101,7 +106,7 @@ HiddenOrca 的终端机制是可见的，也就是同样发生了 Agent 文件�
 
 ---
 
-## 3:55-5:20 Q3：是否会复发，以及选择一个干预点
+## 4:30-5:55 Q3：是否会复发，以及选择一个干预点
 
 展示页面：`rebuild/q3.html`
 
@@ -133,7 +138,7 @@ Q3 的问题是：这种行为是否会重复，以及应该选择最多一个�
 
 ---
 
-## 5:20-6:00 可视化设计说明：为什么这样设计
+## 5:55-6:35 可视化设计说明：为什么这样设计
 
 这里补充说明我们的可视化设计思路。
 
@@ -147,7 +152,7 @@ Q3 的问题是：这种行为是否会重复，以及应该选择最多一个�
 
 ---
 
-## 6:00-6:20 结尾总结
+## 6:35-6:55 结尾总结
 
 总结一下，我们的分析回答了三个核心问题。
 
