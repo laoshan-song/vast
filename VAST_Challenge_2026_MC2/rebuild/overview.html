@@ -60,16 +60,31 @@
         <div class="svg-wrap"><svg id="layerfusion" width="1180" height="360"></svg></div>
       </section>
 
-      <section class="panel explore-only">
+      <section class="panel core">
         <div class="head"><h2>Baseline A: System Event Mix</h2><span class="sub">bar chart sorted by event count</span></div>
         <p class="desc">This view shows scale. SaidIt posting is a small part of the full system, so the anomaly must be judged against the normal operational background.</p>
         <div class="svg-wrap"><svg id="typebars" width="1180" height="470"></svg></div>
       </section>
 
       <section class="panel core">
+        <div class="head"><h2>EDA Baseline: Actors and Rarity</h2><span class="sub">party composition + anomaly denominators</span></div>
+        <p class="desc">This pair follows the exploratory-data-analysis habit of checking who appears in the data and how rare the target pattern is under different denominators.</p>
+        <div class="viz-two">
+          <div class="svg-wrap"><svg id="partybaseline" width="560" height="320"></svg></div>
+          <div class="svg-wrap"><svg id="raritybars" width="560" height="320"></svg></div>
+        </div>
+      </section>
+
+      <section class="panel core">
         <div class="head"><h2>Baseline B: Global Time Density</h2><span class="sub">hourly activity, decoy window, and anomaly posts</span></div>
         <p class="desc">This compressed temporal overview places the three file-source posts inside the full log window. Total activity is log-scaled so the virus burst is visible without flattening quieter periods.</p>
         <div class="svg-wrap"><svg id="timeheat" width="1180" height="330"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>EDA Baseline: Department Activity Matrix</h2><span class="sub">department rows by event, relay, file, and codename signals</span></div>
+        <p class="desc">The target chain crosses departments, so the overview first establishes where ordinary activity, file operations, and relays concentrate across the organization.</p>
+        <div class="svg-wrap"><svg id="deptmatrix" width="1180" height="420"></svg></div>
       </section>
 
       <section class="panel core">
@@ -103,9 +118,30 @@
       </section>
 
       <section class="panel core">
+        <div class="head"><h2>EDA Baseline: SaidIt Field Audit</h2><span class="sub">field presence matrix for normal vs anomalous posts</span></div>
+        <p class="desc">This matrix answers why <code>content_source</code> is a valid starting point: it is not selected in isolation, but after comparing the observed fields and adjacent behavior of all 108 SaidIt posts.</p>
+        <div class="svg-wrap"><svg id="fieldaudit" width="1180" height="360"></svg></div>
+      </section>
+
+      <section class="panel core">
         <div class="head"><h2>SaidIt Rule Space</h2><span class="sub">all 108 posts separated by actor, source field, check, and cleanup</span></div>
         <p class="desc">Each mark is a SaidIt post. The three Agent file-source posts form a distinct rule signature rather than a subjective anomaly cluster.</p>
         <div class="svg-wrap"><svg id="rulespace" width="1180" height="360"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>EDA Baseline: File Operations</h2><span class="sub">action and extension distributions for file evidence</span></div>
+        <p class="desc">Because the anomalous posts are file-backed, this baseline shows how common file reads, creates, deletes, and file extensions are before focusing on codename payloads.</p>
+        <div class="viz-two">
+          <div class="svg-wrap"><svg id="fileops" width="560" height="330"></svg></div>
+          <div class="svg-wrap"><svg id="fileexts" width="560" height="330"></svg></div>
+        </div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>EDA Baseline: Incident Scale Comparison</h2><span class="sub">small-multiple bars for the three file-source incidents</span></div>
+        <p class="desc">This overview-level comparison links Q1 and Q3: the target SwiftWren event is the same mechanism as prior incidents, but much larger in relay scale and cross-department spread.</p>
+        <div class="svg-wrap"><svg id="incidentscaleoverview" width="1180" height="430"></svg></div>
       </section>
 
       <section class="panel explore-only">

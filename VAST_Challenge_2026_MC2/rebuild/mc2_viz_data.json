@@ -19359,6 +19359,332 @@
   },
   "node_count": 75
  },
+ "department_activity": [
+  {
+   "total_first_party_events": 21565,
+   "relay_sent": 146,
+   "relay_received": 190,
+   "file_ops": 2332,
+   "saidit_posts": 83,
+   "codename_related": 13,
+   "distinct_people": 11,
+   "department": "customer_support"
+  },
+  {
+   "total_first_party_events": 6223,
+   "relay_sent": 117,
+   "relay_received": 74,
+   "file_ops": 680,
+   "saidit_posts": 0,
+   "codename_related": 19,
+   "distinct_people": 3,
+   "department": "executive_suite"
+  },
+  {
+   "total_first_party_events": 13163,
+   "relay_sent": 175,
+   "relay_received": 197,
+   "file_ops": 1420,
+   "saidit_posts": 0,
+   "codename_related": 20,
+   "distinct_people": 6,
+   "department": "human_resources"
+  },
+  {
+   "total_first_party_events": 81165,
+   "relay_sent": 616,
+   "relay_received": 600,
+   "file_ops": 41050,
+   "saidit_posts": 0,
+   "codename_related": 121,
+   "distinct_people": 7,
+   "department": "information_technologies"
+  },
+  {
+   "total_first_party_events": 17708,
+   "relay_sent": 132,
+   "relay_received": 157,
+   "file_ops": 1978,
+   "saidit_posts": 0,
+   "codename_related": 4,
+   "distinct_people": 9,
+   "department": "legal"
+  },
+  {
+   "total_first_party_events": 36642,
+   "relay_sent": 503,
+   "relay_received": 471,
+   "file_ops": 8646,
+   "saidit_posts": 25,
+   "codename_related": 71,
+   "distinct_people": 13,
+   "department": "products"
+  }
+ ],
+ "actor_activity_baseline": [
+  {
+   "actor": "zoey_drydock",
+   "total_first_party_events": 31861,
+   "relay_sent": 42,
+   "relay_received": 134,
+   "file_ops": 18004,
+   "saidit_posts": 0,
+   "codename_related": 19,
+   "dept": "information_technologies"
+  },
+  {
+   "actor": "gabriel_sonar",
+   "total_first_party_events": 22958,
+   "relay_sent": 92,
+   "relay_received": 76,
+   "file_ops": 12803,
+   "saidit_posts": 0,
+   "codename_related": 21,
+   "dept": "information_technologies"
+  },
+  {
+   "actor": "owen_hatch",
+   "total_first_party_events": 17358,
+   "relay_sent": 107,
+   "relay_received": 55,
+   "file_ops": 9283,
+   "saidit_posts": 0,
+   "codename_related": 17,
+   "dept": "information_technologies"
+  },
+  {
+   "actor": "evelyn_dock",
+   "total_first_party_events": 11909,
+   "relay_sent": 82,
+   "relay_received": 91,
+   "file_ops": 5975,
+   "saidit_posts": 0,
+   "codename_related": 21,
+   "dept": "products"
+  },
+  {
+   "actor": "olivia_keel",
+   "total_first_party_events": 2517,
+   "relay_sent": 63,
+   "relay_received": 100,
+   "file_ops": 260,
+   "saidit_posts": 0,
+   "codename_related": 14,
+   "dept": "products"
+  },
+  {
+   "actor": "matthew_tide",
+   "total_first_party_events": 2404,
+   "relay_sent": 20,
+   "relay_received": 14,
+   "file_ops": 290,
+   "saidit_posts": 0,
+   "codename_related": 0,
+   "dept": "human_resources"
+  },
+  {
+   "actor": "levi_signal",
+   "total_first_party_events": 2398,
+   "relay_sent": 58,
+   "relay_received": 124,
+   "file_ops": 260,
+   "saidit_posts": 0,
+   "codename_related": 18,
+   "dept": "information_technologies"
+  },
+  {
+   "actor": "victoria_rigging",
+   "total_first_party_events": 2340,
+   "relay_sent": 176,
+   "relay_received": 18,
+   "file_ops": 228,
+   "saidit_posts": 0,
+   "codename_related": 18,
+   "dept": "information_technologies"
+  },
+  {
+   "actor": "daniel_gangway",
+   "total_first_party_events": 2301,
+   "relay_sent": 34,
+   "relay_received": 111,
+   "file_ops": 239,
+   "saidit_posts": 0,
+   "codename_related": 12,
+   "dept": "human_resources"
+  },
+  {
+   "actor": "ella_pilot",
+   "total_first_party_events": 2237,
+   "relay_sent": 18,
+   "relay_received": 32,
+   "file_ops": 254,
+   "saidit_posts": 0,
+   "codename_related": 0,
+   "dept": "human_resources"
+  },
+  {
+   "actor": "julian_seaway",
+   "total_first_party_events": 2190,
+   "relay_sent": 17,
+   "relay_received": 15,
+   "file_ops": 248,
+   "saidit_posts": 0,
+   "codename_related": 0,
+   "dept": "customer_support"
+  },
+  {
+   "actor": "liam_anchor",
+   "total_first_party_events": 2179,
+   "relay_sent": 87,
+   "relay_received": 47,
+   "file_ops": 235,
+   "saidit_posts": 0,
+   "codename_related": 13,
+   "dept": "executive_suite"
+  },
+  {
+   "actor": "sebastian_cutter",
+   "total_first_party_events": 2167,
+   "relay_sent": 1,
+   "relay_received": 24,
+   "file_ops": 260,
+   "saidit_posts": 0,
+   "codename_related": 0,
+   "dept": "legal"
+  },
+  {
+   "actor": "chloe_ballast",
+   "total_first_party_events": 2153,
+   "relay_sent": 16,
+   "relay_received": 156,
+   "file_ops": 244,
+   "saidit_posts": 0,
+   "codename_related": 16,
+   "dept": "information_technologies"
+  },
+  {
+   "actor": "henry_sail",
+   "total_first_party_events": 2127,
+   "relay_sent": 115,
+   "relay_received": 11,
+   "file_ops": 217,
+   "saidit_posts": 0,
+   "codename_related": 11,
+   "dept": "products"
+  },
+  {
+   "actor": "audrey_portside",
+   "total_first_party_events": 2118,
+   "relay_sent": 1,
+   "relay_received": 37,
+   "file_ops": 289,
+   "saidit_posts": 0,
+   "codename_related": 0,
+   "dept": "customer_support"
+  },
+  {
+   "actor": "michael_capstan",
+   "total_first_party_events": 2106,
+   "relay_sent": 60,
+   "relay_received": 21,
+   "file_ops": 221,
+   "saidit_posts": 0,
+   "codename_related": 8,
+   "dept": "human_resources"
+  },
+  {
+   "actor": "james_stern",
+   "total_first_party_events": 2102,
+   "relay_sent": 31,
+   "relay_received": 105,
+   "file_ops": 235,
+   "saidit_posts": 0,
+   "codename_related": 10,
+   "dept": "products"
+  },
+  {
+   "actor": "lily_anchorline",
+   "total_first_party_events": 2097,
+   "relay_sent": 125,
+   "relay_received": 37,
+   "file_ops": 228,
+   "saidit_posts": 0,
+   "codename_related": 12,
+   "dept": "information_technologies"
+  },
+  {
+   "actor": "harper_oar",
+   "total_first_party_events": 2094,
+   "relay_sent": 26,
+   "relay_received": 8,
+   "file_ops": 225,
+   "saidit_posts": 0,
+   "codename_related": 0,
+   "dept": "human_resources"
+  },
+  {
+   "actor": "david_breakwater",
+   "total_first_party_events": 2069,
+   "relay_sent": 48,
+   "relay_received": 15,
+   "file_ops": 212,
+   "saidit_posts": 0,
+   "codename_related": 4,
+   "dept": "legal"
+  },
+  {
+   "actor": "john_windward",
+   "total_first_party_events": 2062,
+   "relay_sent": 44,
+   "relay_received": 19,
+   "file_ops": 208,
+   "saidit_posts": 22,
+   "codename_related": 13,
+   "dept": "customer_support"
+  },
+  {
+   "actor": "jack_helm",
+   "total_first_party_events": 2056,
+   "relay_sent": 32,
+   "relay_received": 2,
+   "file_ops": 252,
+   "saidit_posts": 0,
+   "codename_related": 0,
+   "dept": "legal"
+  },
+  {
+   "actor": "abigail_spinnaker",
+   "total_first_party_events": 2053,
+   "relay_sent": 11,
+   "relay_received": 10,
+   "file_ops": 213,
+   "saidit_posts": 0,
+   "codename_related": 0,
+   "dept": "legal"
+  }
+ ],
+ "file_operation_baseline": {
+  "by_action": {
+   "read_file": 18838,
+   "create_file": 16000,
+   "delete_file": 15057,
+   "access_files": 3571,
+   "list_files": 2640
+  },
+  "by_extension": {
+   ".txt": 46105,
+   "unknown": 6211,
+   ".prompt": 2573,
+   ".json": 1210,
+   ".md": 5,
+   ".doc": 2
+  },
+  "codename_related_by_action": {
+   "delete_file": 6,
+   "create_file": 2,
+   "read_file": 2
+  }
+ },
  "virus": {
   "count": 75254,
   "window_local": [

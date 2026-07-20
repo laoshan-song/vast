@@ -345,6 +345,88 @@ def main():
     out["org"] = {"person_dept": person_dept, "person_team": person_team,
                   "person_lead": person_lead, "node_count": len(org["nodes"])}
 
+    # ---- EDA overview baselines: department, file operations, and actor context ----
+    dept_stats = defaultdict(lambda: {
+        "total_first_party_events": 0,
+        "relay_sent": 0,
+        "relay_received": 0,
+        "file_ops": 0,
+        "saidit_posts": 0,
+        "codename_related": 0,
+        "distinct_people": set(),
+    })
+    actor_stats = defaultdict(lambda: {
+        "total_first_party_events": 0,
+        "relay_sent": 0,
+        "relay_received": 0,
+        "file_ops": 0,
+        "saidit_posts": 0,
+        "codename_related": 0,
+        "dept": None,
+    })
+    file_ops = Counter()
+    file_ext = Counter()
+    file_codename_ops = Counter()
+
+    def detail_blob(e):
+        return json.dumps(det(e), ensure_ascii=False)
+
+    def fileish_target(e):
+        de = det(e)
+        return de.get("target") or de.get("content_source") or de.get("path") or de.get("filename")
+
+    for e in ev:
+        blob = detail_blob(e)
+        action = e["short_name"]
+        first_actor = short(e["parties"][0]) if e.get("parties") else None
+        first_dept = person_dept.get(first_actor)
+        if first_dept:
+            dept_stats[first_dept]["total_first_party_events"] += 1
+            dept_stats[first_dept]["distinct_people"].add(first_actor)
+            actor_stats[first_actor]["total_first_party_events"] += 1
+            actor_stats[first_actor]["dept"] = first_dept
+            if action in ("read_file", "create_file", "delete_file", "access_files", "list_files"):
+                dept_stats[first_dept]["file_ops"] += 1
+                actor_stats[first_actor]["file_ops"] += 1
+            if action == "saidit_post":
+                dept_stats[first_dept]["saidit_posts"] += 1
+                actor_stats[first_actor]["saidit_posts"] += 1
+            if any(c in blob for c in codenames):
+                dept_stats[first_dept]["codename_related"] += 1
+                actor_stats[first_actor]["codename_related"] += 1
+        if action == "queue_subordinate_task" and len(e.get("parties", [])) > 1:
+            sender, receiver = short(e["parties"][0]), short(e["parties"][1])
+            sd, rd = person_dept.get(sender), person_dept.get(receiver)
+            if sd:
+                dept_stats[sd]["relay_sent"] += 1
+                actor_stats[sender]["relay_sent"] += 1
+                actor_stats[sender]["dept"] = sd
+            if rd:
+                dept_stats[rd]["relay_received"] += 1
+                actor_stats[receiver]["relay_received"] += 1
+                actor_stats[receiver]["dept"] = rd
+        if action in ("read_file", "create_file", "delete_file", "access_files", "list_files"):
+            target = str(fileish_target(e) or "unknown")
+            ext = os.path.splitext(target)[1].lower() or "unknown"
+            file_ops[action] += 1
+            file_ext[ext] += 1
+            if any(c in blob for c in codenames):
+                file_codename_ops[action] += 1
+
+    out["department_activity"] = [
+        {k: (len(v) if k == "distinct_people" else v) for k, v in stats.items()} | {"department": dept}
+        for dept, stats in sorted(dept_stats.items())
+    ]
+    out["actor_activity_baseline"] = [
+        {"actor": actor, **stats}
+        for actor, stats in sorted(actor_stats.items(), key=lambda kv: -kv[1]["total_first_party_events"])[:24]
+    ]
+    out["file_operation_baseline"] = {
+        "by_action": dict(file_ops.most_common()),
+        "by_extension": dict(file_ext.most_common()),
+        "codename_related_by_action": dict(file_codename_ops.most_common()),
+    }
+
     # cross-department hops per incident
     for code, inc in incidents.items():
         cross = 0

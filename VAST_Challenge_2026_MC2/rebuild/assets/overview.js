@@ -212,6 +212,234 @@
       "The anomaly is defined by the intersection of Agent actor and content_source file, not by post count alone.");
   }
 
+  function drawPartyBaseline() {
+    const svg = document.getElementById("partybaseline");
+    if (!svg || !d.party_type_counts) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Party type composition bar chart.");
+    const W = 560, H = 320, ml = 132, mr = 34, mt = 42, mb = 28;
+    const entries = Object.entries(d.party_type_counts).slice(0, 8);
+    const total = Object.values(d.party_type_counts).reduce((a, v) => a + v, 0);
+    const max = Math.max(...entries.map(([, v]) => v));
+    const x = (v) => ml + (v / max) * (W - ml - mr);
+    const bh = (H - mt - mb) / entries.length;
+    add(svg, "text", { x: 18, y: 20, "font-size": 13, "font-weight": 850 }, "Party type composition");
+    add(svg, "text", { x: 18, y: 38, "font-size": 11.5, fill: "#526174" },
+      `${total.toLocaleString()} party appearances across ${d.total_events.toLocaleString()} events`);
+    entries.forEach(([k, v], i) => {
+      const y = mt + i * bh;
+      const col = k.toLowerCase().includes("agent") ? "var(--warn)" : k === "person" ? "var(--ok)" : "var(--info)";
+      add(svg, "text", { x: ml - 10, y: y + bh / 2 + 4, "text-anchor": "end", "font-size": 11.5, fill: "#526174" }, k);
+      const bar = add(svg, "rect", { x: ml, y: y + 5, width: Math.max(1, x(v) - ml), height: bh - 10, rx: 4, fill: col, opacity: .78 });
+      add(svg, "text", { x: x(v) + 7, y: y + bh / 2 + 4, "font-size": 10.8, fill: "#526174", "font-family": "var(--mono)" }, v.toLocaleString());
+      bindTooltip(bar, `${k}: ${v}`, `<div class="tt-h">${k}</div><div class="tt-r">${v.toLocaleString()} appearances</div><div class="tt-r">${(v / total * 100).toFixed(2)}% of party appearances</div>`);
+    });
+  }
+
+  function drawRarityBars() {
+    const svg = document.getElementById("raritybars");
+    if (!svg) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Anomaly rarity under several denominators.");
+    const W = 560, H = 320, ml = 190, mr = 52, mt = 42, mb = 28;
+    const rows = [
+      ["all logged events", b.with_content_source, d.total_events],
+      ["Agent/person appearances", b.with_content_source, d.party_type_counts["Agent/person"] || 1],
+      ["all SaidIt posts", b.with_content_source, b.total],
+      ["Agent SaidIt posts", b.with_content_source, b.by_agent],
+      ["content_source posts", b.with_content_source, b.with_content_source],
+    ];
+    const bh = (H - mt - mb) / rows.length;
+    add(svg, "text", { x: 18, y: 20, "font-size": 13, "font-weight": 850 }, "Rarity denominators");
+    add(svg, "text", { x: 18, y: 38, "font-size": 11.5, fill: "#526174" },
+      "Same numerator, different baselines; this prevents ratio cherry-picking.");
+    rows.forEach(([label, num, den], i) => {
+      const y = mt + i * bh;
+      const pct = den ? num / den : 0;
+      add(svg, "text", { x: ml - 10, y: y + bh / 2 + 4, "text-anchor": "end", "font-size": 11.2, fill: "#526174" }, label);
+      add(svg, "rect", { x: ml, y: y + 9, width: W - ml - mr, height: bh - 18, rx: 4, fill: "#eef3f8", stroke: "#d8e1ec" });
+      const barW = Math.max(pct > 0 ? 2 : 0, pct * (W - ml - mr));
+      const bar = add(svg, "rect", { x: ml, y: y + 9, width: barW, height: bh - 18, rx: 4, fill: i >= 2 ? "var(--anom)" : "var(--warn)", opacity: .86 });
+      add(svg, "text", { x: W - mr + 6, y: y + bh / 2 + 4, "font-size": 10.5, fill: "#526174", "font-family": "var(--mono)" },
+        `${num}/${den}`);
+      bindTooltip(bar, `${label}: ${num}/${den}`,
+        `<div class="tt-h">${label}</div><div class="tt-r">${num.toLocaleString()} / ${den.toLocaleString()}</div><div class="tt-r">${(pct * 100).toFixed(4)}%</div>`);
+    });
+  }
+
+  function drawDepartmentMatrix() {
+    const svg = document.getElementById("deptmatrix");
+    if (!svg || !d.department_activity) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Department activity heatmap matrix.");
+    const rows = [...d.department_activity].sort((a, b) => b.total_first_party_events - a.total_first_party_events);
+    const cols = [
+      ["total_first_party_events", "all events"],
+      ["file_ops", "file ops"],
+      ["relay_sent", "relay sent"],
+      ["relay_received", "relay received"],
+      ["codename_related", "codename"],
+      ["saidit_posts", "SaidIt"],
+      ["distinct_people", "people"],
+    ];
+    const W = Math.max(820, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 420, ml = 190, mr = 44, mt = 76, mb = 38;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("height", H);
+    const cellW = (W - ml - mr) / cols.length;
+    const cellH = (H - mt - mb) / rows.length;
+    const maxByCol = Object.fromEntries(cols.map(([k]) => [k, Math.max(...rows.map((r) => r[k] || 0), 1)]));
+    add(svg, "text", { x: ml, y: 24, "font-size": 13.5, "font-weight": 850 }, "Department baseline matrix");
+    add(svg, "text", { x: ml, y: 44, "font-size": 11.8, fill: "#526174" },
+      "Rows are departments. Color is column-normalized log intensity; numbers remain raw counts.");
+    cols.forEach(([, label], j) => {
+      add(svg, "text", { x: ml + j * cellW + cellW / 2, y: mt - 14, "text-anchor": "middle", "font-size": 11.2, "font-weight": 800, fill: "#46576b" }, label);
+    });
+    rows.forEach((r, i) => {
+      const y = mt + i * cellH;
+      add(svg, "text", { x: ml - 12, y: y + cellH / 2 + 4, "text-anchor": "end", "font-size": 11.4, "font-weight": 800, fill: MC2.deptColor(r.department) }, MC2.name(r.department));
+      cols.forEach(([k, label], j) => {
+        const v = r[k] || 0;
+        const intensity = Math.log1p(v) / Math.log1p(maxByCol[k]);
+        const fill = `rgba(37,111,184,${0.08 + intensity * 0.72})`;
+        const rect = add(svg, "rect", { x: ml + j * cellW + 3, y: y + 3, width: cellW - 6, height: cellH - 6, rx: 4, fill, stroke: "#d8e1ec" });
+        add(svg, "text", { x: ml + j * cellW + cellW / 2, y: y + cellH / 2 + 4, "text-anchor": "middle", "font-size": 10.5, "font-family": "var(--mono)", fill: intensity > .62 ? "#fff" : "#172033", "font-weight": 750 }, v.toLocaleString());
+        bindTooltip(rect, `${r.department} ${label}`,
+          `<div class="tt-h">${MC2.name(r.department)} / ${label}</div><div class="tt-r">${v.toLocaleString()}</div>`);
+      });
+    });
+  }
+
+  function drawFieldAudit() {
+    const svg = document.getElementById("fieldaudit");
+    if (!svg || !d.saidit_posts_compact) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "SaidIt post field presence matrix.");
+    const W = Math.max(820, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 360, ml = 248, mr = 48, mt = 74, mb = 44;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("height", H);
+    const normal = d.saidit_posts_compact.filter((p) => p.actor_type === "Human" && p.source_field === "content");
+    const anomaly = d.saidit_posts_compact.filter((p) => p.actor_type === "Agent" && p.source_field === "content_source");
+    const groups = [
+      ["normal human content posts", normal],
+      ["Agent file-source posts", anomaly],
+    ];
+    const checks = [
+      ["Human actor", (p) => p.actor_type === "Human"],
+      ["Agent actor", (p) => p.actor_type === "Agent"],
+      ["ordinary content field", (p) => p.source_field === "content"],
+      ["content_source field", (p) => p.source_field === "content_source"],
+      ["post_check before post", (p) => p.post_check],
+      ["cleanup after post", (p) => p.cleanup],
+      ["file name observed", (p) => Boolean(p.file)],
+    ];
+    const cellW = (W - ml - mr) / groups.length;
+    const cellH = (H - mt - mb) / checks.length;
+    add(svg, "text", { x: ml, y: 24, "font-size": 13.5, "font-weight": 850 }, "SaidIt field and adjacent-behavior audit");
+    add(svg, "text", { x: ml, y: 44, "font-size": 11.8, fill: "#526174" },
+      "Percentages are within each group; counts are shown as present / denominator.");
+    groups.forEach(([label, arr], j) => {
+      add(svg, "text", { x: ml + j * cellW + cellW / 2, y: mt - 14, "text-anchor": "middle", "font-size": 12, "font-weight": 850, fill: j ? "var(--anom)" : "var(--ok)" }, `${label} (${arr.length})`);
+    });
+    checks.forEach(([label, fn], i) => {
+      const y = mt + i * cellH;
+      add(svg, "text", { x: ml - 12, y: y + cellH / 2 + 4, "text-anchor": "end", "font-size": 11.5, fill: "#526174" }, label);
+      groups.forEach(([, arr], j) => {
+        const present = arr.filter(fn).length;
+        const pct = arr.length ? present / arr.length : 0;
+        const col = j ? `rgba(201,59,69,${0.10 + pct * .75})` : `rgba(19,121,91,${0.10 + pct * .65})`;
+        const rect = add(svg, "rect", { x: ml + j * cellW + 8, y: y + 4, width: cellW - 16, height: cellH - 8, rx: 5, fill: col, stroke: "#d8e1ec" });
+        add(svg, "text", { x: ml + j * cellW + cellW / 2, y: y + cellH / 2 + 4, "text-anchor": "middle", "font-size": 11.2, "font-family": "var(--mono)", "font-weight": 800, fill: pct > .65 ? "#fff" : "#172033" }, `${present}/${arr.length}`);
+        bindTooltip(rect, `${label}`,
+          `<div class="tt-h">${label}</div><div class="tt-r">${present}/${arr.length} = ${(pct * 100).toFixed(1)}%</div>`);
+      });
+    });
+    add(svg, "text", { x: ml, y: H - 12, "font-size": 11.5, fill: "#526174" },
+      "The pivot field is content_source because it explains the post body source; actor, post_check, cleanup, and file-name fields corroborate the same pattern.");
+  }
+
+  function drawFileBars(svgId, title, entries, opts = {}) {
+    const svg = document.getElementById(svgId);
+    if (!svg || !entries) return;
+    svg.innerHTML = "";
+    labelSvg(svg, title);
+    const W = 560, H = 330, ml = 132, mr = 46, mt = 48, mb = 32;
+    const rows = Object.entries(entries).slice(0, 8);
+    const max = Math.max(...rows.map(([, v]) => v), 1);
+    const bh = (H - mt - mb) / rows.length;
+    add(svg, "text", { x: 18, y: 22, "font-size": 13, "font-weight": 850 }, title);
+    add(svg, "text", { x: 18, y: 40, "font-size": 11.5, fill: "#526174" }, opts.subtitle || "Counts from raw file-related events.");
+    rows.forEach(([k, v], i) => {
+      const y = mt + i * bh;
+      const w = (v / max) * (W - ml - mr);
+      add(svg, "text", { x: ml - 10, y: y + bh / 2 + 4, "text-anchor": "end", "font-size": 11.4, fill: "#526174" }, k);
+      const bar = add(svg, "rect", { x: ml, y: y + 5, width: Math.max(1, w), height: bh - 10, rx: 4, fill: opts.color || "var(--info)", opacity: .74 });
+      if (opts.overlay && opts.overlay[k]) {
+        const ow = (opts.overlay[k] / max) * (W - ml - mr);
+        add(svg, "rect", { x: ml, y: y + 5, width: Math.max(1, ow), height: bh - 10, rx: 4, fill: "var(--anom)", opacity: .92 });
+      }
+      add(svg, "text", { x: ml + w + 8, y: y + bh / 2 + 4, "font-size": 10.8, fill: "#526174", "font-family": "var(--mono)" }, v.toLocaleString());
+      bindTooltip(bar, `${k}: ${v}`, `<div class="tt-h">${k}</div><div class="tt-r">${v.toLocaleString()} events</div>${opts.overlay && opts.overlay[k] ? `<div class="tt-r">${opts.overlay[k].toLocaleString()} codename-related</div>` : ""}`);
+    });
+  }
+
+  function drawFileOperationBaselines() {
+    const f = d.file_operation_baseline || {};
+    drawFileBars("fileops", "File action distribution", f.by_action, {
+      subtitle: "Red overlay marks codename-related file operations.",
+      overlay: f.codename_related_by_action || {},
+      color: "var(--info)",
+    });
+    drawFileBars("fileexts", "File extension distribution", f.by_extension, {
+      subtitle: "Payloads and working files are mostly .txt; source docs are rare.",
+      color: "var(--ok)",
+    });
+  }
+
+  function drawIncidentScaleOverview() {
+    const svg = document.getElementById("incidentscaleoverview");
+    if (!svg || !d.incidents) return;
+    svg.innerHTML = "";
+    labelSvg(svg, "Incident scale comparison matrix.");
+    const W = Math.max(820, Math.floor(svg.parentElement.clientWidth || 1160));
+    const H = 430, ml = 188, mr = 42, mt = 76, mb = 40;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("height", H);
+    const codes = ["HiddenOrca", "MellowOtter", "SwiftWren"];
+    const incs = codes.map((code) => d.incidents[code]);
+    const metrics = [
+      ["hop_count", "relay hops", (x) => x.hop_count],
+      ["distinct_agent_count", "distinct Agents", (x) => x.distinct_agent_count],
+      ["departments", "departments", (x) => (x.departments_touched || []).length],
+      ["cross_dept_hops", "cross-dept hops", (x) => x.cross_dept_hops || 0],
+      ["john_arrival_count", "John arrivals", (x) => x.john_arrival_count],
+      ["duration", "relay duration days", (x) => x.first_hop_when && x.last_hop_when ? MC2.daysBetween(x.first_hop_when, x.last_hop_when) : 0],
+    ];
+    const rowH = (H - mt - mb) / metrics.length;
+    const plotW = W - ml - mr;
+    add(svg, "text", { x: ml, y: 24, "font-size": 13.5, "font-weight": 850 }, "File-source incident scale comparison");
+    add(svg, "text", { x: ml, y: 44, "font-size": 11.8, fill: "#526174" },
+      "Each row is normalized to its own maximum so scale differences remain readable.");
+    metrics.forEach(([, label, fn], i) => {
+      const y = mt + i * rowH;
+      const vals = incs.map(fn);
+      const max = Math.max(...vals, 1);
+      add(svg, "text", { x: ml - 14, y: y + rowH / 2 + 4, "text-anchor": "end", "font-size": 11.5, fill: "#526174" }, label);
+      add(svg, "line", { x1: ml, y1: y + rowH / 2, x2: W - mr, y2: y + rowH / 2, stroke: "#eef3f8" });
+      vals.forEach((v, j) => {
+        const slot = plotW / codes.length;
+        const x0 = ml + j * slot + 14;
+        const bw = Math.max(2, (v / max) * (slot - 58));
+        const col = codes[j] === "SwiftWren" ? "var(--anom)" : codes[j] === "MellowOtter" ? "var(--warn)" : "var(--info)";
+        const bar = add(svg, "rect", { x: x0, y: y + rowH / 2 - 10, width: bw, height: 20, rx: 4, fill: col, opacity: .82 });
+        add(svg, "text", { x: x0 + bw + 6, y: y + rowH / 2 + 4, "font-size": 10.6, fill: "#526174", "font-family": "var(--mono)" }, Number.isInteger(v) ? v.toLocaleString() : v.toFixed(1));
+        if (i === 0) add(svg, "text", { x: x0, y: mt - 16, "font-size": 11.6, "font-weight": 850, fill: col }, codes[j]);
+        bindTooltip(bar, `${codes[j]} ${label}`, `<div class="tt-h">${codes[j]}</div><div class="tt-r">${label}: ${Number.isInteger(v) ? v.toLocaleString() : v.toFixed(2)}</div>`);
+      });
+    });
+  }
+
   function drawTimeDensity() {
     const svg = document.getElementById("timeheat");
     if (!svg || !d.time_density) return;
@@ -652,13 +880,19 @@
 
   drawEventBars();
   drawLayerFusion();
+  drawPartyBaseline();
+  drawRarityBars();
   drawTimeDensity();
+  drawDepartmentMatrix();
   drawProcessComparison();
   drawCalendarHeatmap();
   drawEventStream();
   drawSignalSmallMultiples();
   drawSignatureBars();
+  drawFieldAudit();
   drawRuleSpace();
+  drawFileOperationBaselines();
+  drawIncidentScaleOverview();
   drawQstBars();
   drawActorBars();
 })();
