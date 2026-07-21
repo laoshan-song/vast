@@ -1,0 +1,101 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Q3 - Recurrence and Intervention - MC2</title>
+<link rel="stylesheet" href="./assets/app.css">
+</head>
+<body>
+<div id="nav" data-active="q3.html"></div>
+<div class="wrap">
+  <header class="hero">
+    <div class="tag">Question 3 / Could it repeat? Investigate history and pick one intervention</div>
+    <h1>Q3: Recurrence pattern and one defensible intervention</h1>
+    <p class="lead">The behavior can repeat because the same terminal mechanism appears in three incidents with different origins and scales. The intervention should target the shared external-publication boundary, not a single person or filename.</p>
+    <p class="lead" style="margin-top:8px"><b>Interaction:</b> click timeline markers and intervention candidates to inspect evidence, coverage, false positives, and limitations.</p>
+  </header>
+
+  <div class="layout">
+    <aside class="side">
+      <div class="card answer">
+        <h2>Direct Answer</h2>
+        <div class="a-body">Choose one intervention: at the SaidIt boundary, block or require approval for any Agent-initiated <code>saidit_post</code> that contains <code>details.content_source</code>.</div>
+        <div class="note" style="margin-top:12px">This gate covers <b>3/3</b> observed anomalies and creates <b>0/105</b> observed false positives among normal human SaidIt posts. Limitation: a future variant that writes ordinary <code>content</code> directly would need additional behavior or content detection.</div>
+      </div>
+      <div class="card">
+        <h3>Argument Structure</h3>
+        <div class="steps" id="steps"></div>
+      </div>
+    </aside>
+
+    <main>
+      <section class="panel answer" id="p-answer">
+        <div class="head"><h2>Official Answer Draft</h2><span class="sub">concise Q3 response supported by Figures A-F</span></div>
+        <p class="desc">This behavior has already repeated. Before the May 17 SwiftWren target event, two prior file-source SaidIt incidents appear in the logs: HiddenOrca on May 10 at 05:45:42 and MellowOtter on May 10 at 17:56:04. All three incidents share the same terminal mechanism: a relay reaches John Windward's Agent, the Agent performs <code>saidit_post_check</code>, posts to SaidIt with <code>details.content_source</code>, and immediately deletes the instruction and payload files. Their upstream paths differ in scale and visibility, so the issue is not a single filename or a single source document.</p>
+        <p class="desc">The strongest single intervention is a SaidIt boundary gate: block or require approval for Agent-initiated <code>saidit_post</code> events that include <code>details.content_source</code>. In the observed data this covers all three file-source anomalies and creates zero observed false positives among the 105 normal human <code>content</code> posts. Broader relay blocking affects many normal automation records, filename rules are easy to bypass, John-only permission removal is endpoint-specific, and delete-file alerts arrive after public exposure.</p>
+      </section>
+
+      <section class="panel core" id="p-base">
+        <div class="head"><h2>A: Discovery From SaidIt Baseline</h2><span class="sub">all posts -> file-source posts -> John Agent terminal pattern</span></div>
+        <p class="desc">This figure shows how the recurrence was discovered from the data. The denominator is explicit: SaidIt post counts use 108 posts, while post-check outcome uses 71 <code>saidit_post_check</code> events.</p>
+        <div class="svg-wrap"><svg id="baselinechart" width="100%" height="520"></svg></div>
+        <div id="baseline"></div>
+      </section>
+
+      <section class="panel core" id="p-prior">
+        <div class="head"><h2>B: Prior Occurrences and Repeated Terminal Recipe</h2><span class="sub">three incidents, same endpoint sequence</span></div>
+        <p class="desc">The prior issues are not inferred from similarity alone. Each row below shows the observed terminal recipe: relay arrival, SaidIt check, file-source post, and two cleanup deletes.</p>
+        <div class="svg-wrap"><svg id="timeline" width="100%" height="240"></svg></div>
+        <div class="svg-wrap" style="margin-top:16px"><svg id="terminalrecipes" width="100%" height="430"></svg></div>
+        <div id="priortable" style="margin-top:16px"></div>
+      </section>
+
+      <section class="panel core" id="p-scale">
+        <div class="head"><h2>C: Incident Scale Comparison</h2><span class="sub">dot plots for comparable incident metrics</span></div>
+        <p class="desc">This view turns the recurrence table into scan-friendly comparisons. Each metric has its own axis, so the chart compares rank and magnitude without mixing incompatible units.</p>
+        <div class="svg-wrap"><svg id="recurrencebars" width="100%" height="480"></svg></div>
+        <div class="svg-wrap"><svg id="scaleplot" width="100%" height="420"></svg></div>
+      </section>
+
+      <section class="panel core" id="p-upset">
+        <div class="head"><h2>D: Shared-Agent UpSet</h2><span class="sub">exact membership intersections across the three incidents</span></div>
+        <p class="desc">This is supporting context, not the main recurrence proof. The recurrence proof is the repeated terminal recipe; the UpSet chart shows how much participant overlap exists across otherwise different relay paths.</p>
+        <div class="svg-wrap"><svg id="upset" width="100%" height="390"></svg></div>
+      </section>
+
+      <section class="panel core" id="p-parallel">
+        <div class="head"><h2>E: Intervention Parallel Coordinates</h2><span class="sub">multi-criteria comparison of candidate rules</span></div>
+        <p class="desc">Each line is one possible single intervention. Coverage, blast radius, affected records, and timing come from the derived event counts; cost is an analyst-assigned ordinal score and is labeled as such.</p>
+        <div class="svg-wrap"><svg id="parallel" width="100%" height="400"></svg></div>
+      </section>
+
+      <section class="panel core" id="p-fix">
+        <div class="head"><h2>F: One Intervention</h2><span class="sub">decision matrix and coverage-vs-cost view</span></div>
+        <div id="gate"></div>
+        <div id="evidence" class="evidence-box"></div>
+        <h3 style="margin-top:20px">Recommended Gate Confusion Matrix</h3>
+        <p class="desc">This 2x2 matrix shows what the selected rule would block or allow in the observed SaidIt posts. It separates detected anomalies from normal human posts instead of relying on prose.</p>
+        <div class="svg-wrap"><svg id="confusion" width="100%" height="320"></svg></div>
+        <h3 style="margin-top:20px">Rule Coverage Matrix</h3>
+        <p class="desc">Rows are possible single intervention rules. Columns separate anomaly coverage, non-anomaly blast radius, affected records, and timing. This keeps the recommendation auditable.</p>
+        <div id="rulematrix"></div>
+        <div>
+          <h3 style="margin-top:20px">Candidate Intervention Assessment</h3>
+          <div id="alts"></div>
+          <div class="svg-wrap" style="margin-top:16px"><svg id="decision" width="100%" height="300"></svg></div>
+        </div>
+      </section>
+
+      <div class="footer">Intervention evaluation uses full-count evidence: <code>content_source</code> covers 3/3 observed anomalies and creates 0/105 observed false positives among normal human content posts. The rule only claims coverage for the observed file-source anomaly pattern.</div>
+    </main>
+  </div>
+</div>
+<script src="./mc2_viz_data.js"></script>
+<script src="./assets/app.js"></script>
+<script src="./assets/q3.js"></script>
+<script src="./assets/i18n_zh.js"></script>
+</body>
+</html>
+
+
