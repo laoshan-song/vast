@@ -5,6 +5,7 @@
     "verify:accessibility": "node VAST_Challenge_2026_MC2/accessibility_verify.js",
     "verify:responsive": "node VAST_Challenge_2026_MC2/responsive_verify.js",
     "verify:rebuild": "node VAST_Challenge_2026_MC2/rebuild/verify.js",
+    "verify:submission": "node VAST_Challenge_2026_MC2/pre_submission_validator.js",
     "verify": "npm run verify:accessibility && npm run verify:responsive && npm run verify:rebuild"
   },
   "devDependencies": {

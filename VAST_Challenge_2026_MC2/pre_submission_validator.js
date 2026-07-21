@@ -6,9 +6,12 @@ const repoRoot = path.resolve(root, "..");
 const indexPath = path.join(root, "final_report_0709.html");
 
 const requiredFiles = [
+  "index.htm",
+  "index_zh.htm",
   "final_report_0709.html",
   "final_report_0709.pdf",
   "apply_team_metadata.js",
+  "team_metadata.example.json",
   "github_release_finalization_guide_zh.md",
   "README_FINAL.md",
   "pre_submission_validator.js",
@@ -99,6 +102,94 @@ function isExternal(value) {
   return /^(https?:|mailto:|tel:|#)/i.test(value);
 }
 
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function inspectHashTarget(target, hash, htmlFile, refValue, errors) {
+  if (!hash || !/\.(html?|xhtml)$/i.test(target)) return;
+  let id;
+  try {
+    id = decodeURIComponent(hash.split("?")[0]);
+  } catch (_) {
+    id = hash.split("?")[0];
+  }
+  if (!id) return;
+  const targetHtml = fs.readFileSync(target, "utf8");
+  const idRe = new RegExp(`\\bid\\s*=\\s*["']${escapeRegex(id)}["']`, "i");
+  if (!idRe.test(targetHtml)) {
+    errors.push(`Broken hash target in ${htmlFile}: ${refValue} does not find id="${id}".`);
+  }
+}
+
+function inspectLocalRefs(html, htmlFile, baseDir, errors) {
+  const refs = [
+    ...extractAttrs(html, "href"),
+    ...extractAttrs(html, "src"),
+  ].filter((v) => !isExternal(v));
+
+  for (const refValue of refs) {
+    const [beforeHash, afterHash = ""] = refValue.split("#");
+    const clean = beforeHash.split("?")[0];
+    if (!clean) continue;
+    const target = path.resolve(baseDir, clean);
+    if (!target.startsWith(root)) {
+      errors.push(`Relative link escapes repo root in ${htmlFile}: ${refValue}`);
+    } else if (!fs.existsSync(target)) {
+      errors.push(`Broken relative link in ${htmlFile}: ${refValue}`);
+    } else {
+      inspectHashTarget(target, afterHash, htmlFile, refValue, errors);
+    }
+  }
+}
+
+function inspectAnswerIndex(file, label, errors) {
+  const htmlPath = path.join(root, file);
+  if (!fs.existsSync(htmlPath)) {
+    errors.push(`Missing ${label}: ${file}`);
+    return;
+  }
+  const html = fs.readFileSync(htmlPath, "utf8");
+  inspectLocalRefs(html, file, path.dirname(htmlPath), errors);
+
+  const toolsNeedles = {
+    "custom SVG": ["custom SVG", "自定义 SVG"],
+    "PNG statistical": ["PNG statistical", "PNG 统计"],
+    "Playwright": ["Playwright"],
+    "GitHub Pages": ["GitHub Pages"],
+    "Tableau": ["Tableau"],
+    "Vega-Lite": ["Vega-Lite"],
+    "D3 runtime": ["D3 runtime", "D3 运行时"],
+  };
+  for (const [needle, variants] of Object.entries(toolsNeedles)) {
+    if (!variants.some((variant) => html.includes(variant))) {
+      errors.push(`${label} is missing current Tools Used wording: ${needle}`);
+    }
+  }
+
+  const sections = html.match(/<section\b[\s\S]*?<\/section>/gi) || [];
+  for (const q of ["Q1", "Q2", "Q3"]) {
+    const section = sections.find((candidate) => new RegExp(`<h2>${q}[\\s\\S]*?<\\/h2>`, "i").test(candidate));
+    if (!section) {
+      errors.push(`${label} is missing ${q} answer section.`);
+      continue;
+    }
+    const figureCount = (section.match(/<figure\b/gi) || []).length;
+    const statisticalCount = (section.match(/figure_gallery_statistical\//gi) || []).length;
+    const evidenceLinkCount = (section.match(/class=["']evidence-link["']/gi) || []).length;
+    const evidenceHashCount = (section.match(/href=["']rebuild\/q[123](?:_zh)?\.html\?mode=review#p-/gi) || []).length;
+    if (figureCount !== 6) {
+      errors.push(`${label} ${q} must include exactly 6 official figures; found ${figureCount}.`);
+    }
+    if (statisticalCount !== 6) {
+      errors.push(`${label} ${q} must reference exactly 6 statistical gallery figures; found ${statisticalCount}.`);
+    }
+    if (evidenceLinkCount !== 6 || evidenceHashCount !== 6) {
+      errors.push(`${label} ${q} must include 6 figure-to-evidence links; found ${evidenceLinkCount} links and ${evidenceHashCount} review hash targets.`);
+    }
+  }
+}
+
 const errors = [];
 const warnings = [];
 
@@ -144,21 +235,7 @@ if (!fs.existsSync(indexPath)) {
     if (!html.includes(token)) errors.push(`Required answer text not found in final_report_0709.html: ${token}`);
   }
 
-  const refs = [
-    ...extractAttrs(html, "href"),
-    ...extractAttrs(html, "src"),
-  ].filter((v) => !isExternal(v));
-
-  for (const refValue of refs) {
-    const clean = refValue.split("#")[0].split("?")[0];
-    if (!clean) continue;
-    const target = path.resolve(root, clean);
-    if (!target.startsWith(root)) {
-      errors.push(`Relative link escapes repo root: ${refValue}`);
-    } else if (!fs.existsSync(target)) {
-      errors.push(`Broken relative link in final_report_0709.html: ${refValue}`);
-    }
-  }
+  inspectLocalRefs(html, "final_report_0709.html", root, errors);
 
   const videoRow = html.match(/<tr><td>Video link<\/td><td>(.*?)<\/td><\/tr>/i);
   const hasBundledVideo = allFiles.some((f) => /\.(mp4|wmv)$/i.test(f));
@@ -167,6 +244,9 @@ if (!fs.existsSync(indexPath)) {
     errors.push("Missing final video artifact: add a stable video URL in final_report_0709.html or include an MP4/WMV file in the final package.");
   }
 }
+
+inspectAnswerIndex("index.htm", "English answer entry", errors);
+inspectAnswerIndex("index_zh.htm", "Chinese answer entry", errors);
 
 console.log("MC2 source-repo pre-submission validator");
 console.log(`Repo artifact root: ${root}`);

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -39,7 +39,7 @@
     </aside>
 
     <main>
-      <section class="panel answer">
+      <section class="panel answer" id="p-answer">
         <div class="head"><h2>Official Answer Draft</h2><span class="sub">use with Figures A-F</span></div>
         <p class="desc">The anomalous posts should be interpreted as file-source posting events rather than ordinary human-authored forum prose. The SaidIt baseline contains 105 ordinary human <code>content</code> posts and only 3 <code>content_source</code> posts; all three file-source posts are Agent posts by John Windward. This makes the most defensible interpretation mechanism-level: payload files were supplied to SaidIt as the post body, where ordinary forum text was expected.</p>
         <p class="desc">The origin is visible for two of the three payloads. SwiftWren links to Emma Harbor reading <code>meeting_notes.doc</code>, creating <code>SwiftWren.txt</code>, and the later John Agent post using <code>content_source=SwiftWren.txt</code>. MellowOtter links similarly to Noah Mariner reading <code>strategic_directions.doc</code>, creating <code>MellowOtter.txt</code>, and the John Agent post using that payload. HiddenOrca follows the same terminal posting pattern, but its upstream source document and payload creation record are not visible in the available logs.</p>
@@ -47,13 +47,44 @@
         <div id="q2caseboard" class="case-board"></div>
       </section>
 
-      <section class="panel core">
+      <section class="panel core" id="p-numeric">
         <div class="head"><h2>A0: Numeric Evidence Summary</h2><span class="sub">counts, payload size, and relay scale before interpretation</span></div>
         <p class="desc">This descriptive-statistics panel turns Q2 evidence into numbers before any meaning claim is made. It shows how much of each provenance row is observed, inferred, or unknown, and compares payload size and relay scale.</p>
         <div class="svg-wrap"><svg id="q2numeric" width="100%" height="470"></svg></div>
       </section>
 
-      <section class="panel core">
+      <section class="panel core" id="p-eda">
+        <div class="head"><h2>A1: Descriptive Provenance Statistics</h2><span class="sub">six EDA figures before source interpretation</span></div>
+        <p class="desc">These figures make the Q2 reasoning quantitative. They compare evidence completeness, file size, source-to-post lag, source visibility, cleanup behavior, and claim boundaries before assigning probable meaning.</p>
+        <div class="figure-grid figure-stack">
+          <figure class="eda-figure" data-target-panel="p-confidence">
+            <img src="./figure_gallery_statistical/19_q2_provenance_completeness_heatmap.png" alt="Provenance completeness heatmap">
+            <figcaption><span class="figure-kicker">Figure 1 / Completeness</span><span class="figure-takeaway">SwiftWren and MellowOtter have visible source-to-payload chains; HiddenOrca is weaker because the upstream source is unavailable.</span><span class="figure-evidence">Data basis: observed source read, payload create, relay, SaidIt post, and cleanup events for each incident.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-reasoning">
+            <img src="./figure_gallery_statistical/24_q2_post_source_field_composition.png" alt="Post source field composition">
+            <figcaption><span class="figure-kicker">Figure 2 / Source Field</span><span class="figure-takeaway">SaidIt post fields show why the anomalous posts are file-source events, not normal forum text.</span><span class="figure-evidence">Data basis: all SaidIt posts grouped by ordinary <code>content</code> versus <code>content_source</code>.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-provenance">
+            <img src="./figure_gallery_statistical/21_q2_source_to_post_lag_bar.png" alt="Source-to-post lag bar">
+            <figcaption><span class="figure-kicker">Figure 3 / Temporal Provenance</span><span class="figure-takeaway">Source-to-post lag links upstream document activity to downstream public posts when evidence exists.</span><span class="figure-evidence">Data basis: source read or payload creation time compared with the final SaidIt post time.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-confidence">
+            <img src="./figure_gallery_statistical/22_q2_evidence_certainty_stacked.png" alt="Evidence certainty stacked bar">
+            <figcaption><span class="figure-kicker">Figure 4 / Evidence Boundary</span><span class="figure-takeaway">Evidence certainty counts prevent overclaiming exact text, motive, or missing source documents.</span><span class="figure-evidence">Data basis: per-incident evidence labels used in the Q2 provenance board.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-boundary">
+            <img src="./figure_gallery_statistical/26_q2_claim_boundary_matrix.png" alt="Claim boundary matrix">
+            <figcaption><span class="figure-kicker">Figure 5 / Claim Boundary</span><span class="figure-takeaway">Claim boundary matrix marks which interpretations are observed, inferred, or unknown.</span><span class="figure-evidence">Data basis: supported, inferred, and unsupported Q2 conclusion classes.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-provenance">
+            <img src="./figure_gallery_statistical/27_q2_source_actor_department_bar.png" alt="Source actor department bar">
+            <figcaption><span class="figure-kicker">Figure 6 / Source Context</span><span class="figure-takeaway">Source actors and departments support the probable content themes for visible payload origins.</span><span class="figure-evidence">Data basis: source actors, organizational roles, source documents, and visible payload creation records.</span></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="panel core" id="p-reasoning">
         <div class="head"><h2>A: EDA Reasoning Path</h2><span class="sub">from prompt clue to payload backtrace</span></div>
         <p class="desc">These charts show the investigation path: locate the prompted John/SaidIt target event, compare its post-body field against the SaidIt baseline, reverse-search the payload filenames, then inspect local event windows that support or limit the source claim.</p>
         <div class="viz-two">
@@ -63,7 +94,7 @@
         <div class="svg-wrap" style="margin-top:16px"><svg id="localwindows" width="100%" height="500"></svg></div>
       </section>
 
-      <section class="panel core">
+      <section class="panel core" id="p-provenance">
         <div class="head"><h2>B: Content Provenance Graph</h2><span class="sub">source document to payload file to SaidIt post</span></div>
         <p class="desc">This node-link provenance graph keeps file entities, logged events, and inferred themes separate. Missing source context is shown as unknown rather than filled with speculation.</p>
         <div class="svg-wrap"><svg id="provenancegraph" width="100%" height="520"></svg></div>
@@ -72,26 +103,26 @@
         <div id="evidence" class="evidence-box explore-only"></div>
       </section>
 
-      <section class="panel core">
+      <section class="panel core" id="p-claim">
         <div class="head"><h2>C: Claim Support DAG</h2><span class="sub">which evidence supports which Q2 claims</span></div>
         <p class="desc">This graph connects observed log facts to the final interpretive claims. It is intentionally not a social-network graph: the point is claim support, not connectivity decoration.</p>
         <div class="svg-wrap"><svg id="provflow" width="100%" height="390"></svg></div>
       </section>
 
-      <section class="panel core">
+      <section class="panel core" id="p-confidence">
         <div class="head"><h2>D: Provenance Confidence Matrix</h2><span class="sub">incident by evidence type</span></div>
         <p class="desc">This matrix makes the certainty boundary visible. It shows which parts of each claim are directly logged, inferred, or unavailable from the data.</p>
         <div class="svg-wrap"><svg id="confidence" width="100%" height="310"></svg></div>
       </section>
 
-      <section class="panel core">
+      <section class="panel core" id="p-meaning">
         <div class="head"><h2>E: Meaning Model</h2><span class="sub">normal text post versus file-backed post</span></div>
         <p class="desc">The logs support a mechanism-level interpretation: file content was supplied to SaidIt where ordinary forum text was expected. They do not support exact plaintext reconstruction.</p>
         <div class="svg-wrap"><svg id="meaningmodel" width="100%" height="470"></svg></div>
         <div id="gibberish" class="explore-only"></div>
       </section>
 
-      <section class="panel core">
+      <section class="panel core" id="p-boundary">
         <div class="head"><h2>F: Claim Guardrails</h2><span class="sub">what the answer may and may not claim</span></div>
         <p class="desc">This guardrail chart prevents overclaiming. It separates supported conclusions from claims that the available logs cannot justify.</p>
         <div class="svg-wrap"><svg id="boundaryviz" width="100%" height="430"></svg></div>
@@ -115,3 +146,6 @@
 <script src="./assets/q2.js"></script>
 </body>
 </html>
+
+
+

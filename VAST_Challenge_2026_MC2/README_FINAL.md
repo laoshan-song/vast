@@ -35,6 +35,7 @@ This directory contains multiple development artifacts. For grading or final rev
 - Add a stable narrated video link or bundled video file.
 - Record from `video_script_4min_zh.md`; it is aligned to the current drill-down interactions and the <=4 minute video requirement.
 - Put the final answer page at the root of the official zip as `index.htm`.
+- Keep exactly six official supporting figures for Q1, Q2, and Q3 in `index.htm`; `pre_submission_validator.js` now checks the counts, linked image files, and figure-to-evidence links.
 - Create a Git tag or GitHub Release for the submitted version if using GitHub Pages as a demo link.
 - Build a clean zip with only final files and relative links.
 - Run `node pre_submission_validator.js`, `node accessibility_verify.js`, and `node responsive_verify.js` after real team metadata and video information are filled.
@@ -57,7 +58,18 @@ This directory contains multiple development artifacts. For grading or final rev
 - Q3 adds a shared-Agent UpSet view for exact incident membership intersections.
 - Clickable and keyboard-focusable marks expose evidence details; supported overview marks can pin tooltips until `Esc` is pressed.
 
+## Tools Used
+
+- HTML/CSS/vanilla JavaScript and custom SVG for the final browser-based visual analytics interface.
+- Python `rebuild/extract_data.py` for reproducible extraction from the official event log and organization chart.
+- PNG statistical figure generation for descriptive EDA evidence galleries embedded in Overview and Q1-Q3.
+- Playwright / `playwright-core` with Microsoft Edge for screenshots, interaction tests, responsive checks, and figure lightbox verification.
+- Git and GitHub Pages for version control, archival tags, and static deployment.
+
+The final `rebuild/` pages are self-contained and do not depend on Tableau, Vega-Lite, or a D3 runtime. D3 appears only in older prototype artifacts under development folders.
+
 ## Local Verification Setup
 
 - Run `npm install` once from the repository root. The only browser dependency is `playwright-core`; validators reuse the installed Microsoft Edge browser.
-- Run `npm run verify` from the repository root for accessibility, responsive-layout, and rebuild screenshot checks.
+- Run `npm run verify` from the repository root for accessibility, responsive-layout, and rebuild screenshot checks across both English and Chinese entry/rebuild pages.
+- Run `npm run verify:submission` after real team metadata and video information are filled; it checks required metadata, local links, current Tools Used wording, exactly six official figures for Q1-Q3, and the figure-to-evidence links in `index.htm` and `index_zh.htm`.

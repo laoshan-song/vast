@@ -1,78 +1,89 @@
-# MC2 四分钟视频录制脚本
+# MC2 四分钟视频录制脚本（20260721 增强版）
 
-用途：正式录制 VAST Challenge 2026 MC2 / 课程期末展示视频。目标时长控制在 3:40-3:55，最多不超过 4:00。
+用途：正式录制 VAST Challenge 2026 MC2 / 课程期末展示视频。  
+目标时长：3:40-3:55，最多不超过 4:00。  
+展示页面：优先录英文正式页；若课堂说明需要，可切到中文镜像页辅助讲解。
 
-录制原则：
+## 录制原则
 
-- 展示实际网页 `rebuild/index.html` 或线上 GitHub Pages，不要只放幻灯片。
-- 全程口径保持证据边界：可观测的是日志中的事件、文件名、动作和时间；不可观测的是文件正文、动机和幕后触发者身份。
-- 至少演示一次 Q1/Q2/Q3 的证据 drill-down 点击。
-- 使用 UTC-7 题目本地时间描述目标事件：2046-05-17 04:21。
+- 展示实际网页，不只展示幻灯片。
+- 至少演示一次交互 drill-down：点击图中节点或事件，显示 event id、时间、actor、target 和 raw JSON。
+- 至少演示一次 EDA 图的证据联动：在正式入口或 Q1-Q3 页面点击 `Open evidence view` / `查看对应证据视图`，说明统计图如何跳到对应交互证据面板。
+- 全程保持证据边界：能确定的是日志中的事件、文件名、动作和时间；不能确定的是完整文件正文、个人动机和幕后触发者身份。
+- 使用题目本地时间 UTC-7 描述目标事件：2046-05-17 04:21。
 
-## 0:00-0:20 开场与问题定位
+## 0:00-0:25 开场与问题定位
 
-屏幕操作：打开 `rebuild/index.html`，进入 Overview。
-
-旁白：
-
-这份作品分析 VAST Challenge 2026 Mini-Challenge 2。目标事件是 2046 年 5 月 17 日 04:21，John Windward 名下在 SaidIt 出现一条乱码帖子。我们的目标不是猜测动机，而是用日志证据还原：帖子怎样产生、内容可能来自哪里、这种行为是否已经重复，以及应该在哪一个系统边界做干预。
-
-## 0:20-0:55 系统概览与异常签名
-
-屏幕操作：停留 Overview，指向 baseline 与 anomaly signature 区域。
+屏幕操作：打开 `rebuild/index.html` 或 GitHub Pages 首页，进入 Overview。
 
 旁白：
 
-我们先建立系统基线。原始数据包含 185,147 条事件，其中 SaidIt 发帖共有 108 条。正常模式是人类用户使用普通 `content` 字段发帖，共 105 条。异常模式只有 3 条：发帖者是 Agent，而且 `saidit_post` 使用 `content_source` 文件作为正文来源。这个签名非常干净，所以后续分析围绕 `Agent + content_source` 展开。
+本作品分析 VAST Challenge 2026 Mini-Challenge 2。题目给出的目标事件是：2046 年 5 月 17 日 04:21，John Windward 名下在 SaidIt 上出现一条乱码帖子。我们的目标不是猜测个人动机，而是用日志证据回答三个问题：帖子如何产生，内容可能来自哪里，这种行为是否已经重复发生，以及如果只能选择一个干预点，应该拦在哪里。
 
-设计上，我们没有用大而杂的网络图作为主视图，而是把问题拆成三层：Q1 还原事件链，Q2 追踪内容来源，Q3 比较历史重复并选择单点干预。
+## 0:25-1:05 Overview：先建立基线，再发现异常签名
 
-## 0:55-1:55 Q1：目标帖子如何产生
-
-屏幕操作：进入 Q1。先展示五步 terminal recipe，再点击一个 recipe 方块或 relay 点，打开 evidence panel。
+屏幕操作：停留在 Overview，展示 Statistical EDA Atlas 和 SaidIt 字段审计；可用统计图上方的搜索框或“上一张/下一张”逐图聚焦。
 
 旁白：
 
-Q1 聚焦 5 月 17 日的 SwiftWren 目标链。可观测链条是：Emma Harbor 的 Agent 读取 `meeting_notes.doc`，创建 `SwiftWren.txt` payload；随后 `SwiftWren_further_instructions.md` 通过 `queue_subordinate_task(task=read_file)` 在 Agent 间传播。整条 relay 最终到达 John Windward Agent。
+我们先做全局 EDA。原始日志共有 185,147 条事件，其中 SaidIt posts 只有 108 条。事件类型条形图、主体组成图、时间热力图和部门矩阵先建立系统基线，说明异常发生在一个复杂的 Agent 自动化环境中。
 
-终端序列有五步，分别是 relay 到达 John、`saidit_post_check`、`saidit_post(content_source=SwiftWren.txt)`，然后删除 instruction 文件和 payload 文件。这里我点击其中一步，可以看到原始 evidence panel：包括 event id、时间、动作、actor、target 和 raw JSON。这个 drill-down 的作用是让图上的每个关键结论都能回到日志记录，而不是只讲故事。
+然后看 SaidIt 字段审计。正常模式是人类使用普通 `content` 字段发帖，共 105 条；异常模式只有 3 条，都是 Agent 使用 `content_source` 文件作为帖子正文来源。因此后续分析围绕这个罕见签名展开：`Agent + saidit_post + content_source`。
 
-## 1:55-2:35 Q2：帖子“是什么意思”以及内容来源
+录制提示：如果统计图在视频中显得太小，可以点击图表进入放大视图，再继续讲图题、核心结论和数据依据。若从正式入口页录制，可点击每张图下方的 `Open evidence view`，直接跳到对应的交互证据面板。
 
-屏幕操作：进入 Q2。依次点击或切换 SwiftWren、MellowOtter、HiddenOrca 的 evidence selector。
+工具说明可在 Overview 末尾展示：最终系统使用 HTML、CSS、原生 JavaScript、自定义 SVG、Python 数据提取、PNG 统计图生成和 Playwright/Edge 验证；正式 rebuild 页面不依赖 Tableau、Vega-Lite 或 D3 运行时。
 
-旁白：
+## 1:05-2:00 Q1：目标帖子如何产生
 
-Q2 回答帖子内容的含义和来源。我们的结论是：这些帖子语义上是“文件被外部公开发布”，而不是普通人工输入的 SaidIt 文本。原因是三条异常帖都通过 `content_source` 引用了本地 payload 文件。
-
-对 SwiftWren，日志可见 `meeting_notes.doc` 被读取、`SwiftWren.txt` 被创建、随后由 John Agent 作为 `content_source` 发布。对 MellowOtter，也能看到源文档到 payload 再到公开帖的 provenance。对 HiddenOrca，源文档在可见窗口外，所以我们只确认它复用了同样的 file-source 发帖机制，不能声称知道它的原始文档。这里的 observed、inferred、unknown 三类标签，是为了防止把推断写成事实。
-
-## 2:35-3:35 Q3：是否会复发，以及单点干预
-
-屏幕操作：进入 Q3。展示 timeline 和 comparison table，点击一个历史事件 marker 或默认 gate evidence panel。
+屏幕操作：进入 Q1，展示六张 EDA 图；点击“Open linked evidence view / 查看对应证据视图”跳到 terminal recipe 或 relay swimlane，再点击其中一个事件。
 
 旁白：
 
-Q3 的结论是：这种行为已经重复发生。历史上有 HiddenOrca、MellowOtter，加上最新的 SwiftWren，三次都共享同一个终端机制：Agent relay 到 John Agent，然后 `saidit_post(content_source)`，最后清理文件。
+Q1 追踪目标 SwiftWren 事件。目标 SaidIt 记录显示，John Windward 的 Agent 在 04:21:15 发帖，details 中不是普通 `content`，而是 `content_source=SwiftWren.txt`。这说明帖子正文来自文件。
 
-这说明问题不是某一条孤立帖子，而是系统边界缺少检查。我们只选择一个干预点：SaidIt 发布边界。当发帖者是 Agent，并且 `saidit_post.details.content_source` 存在时，阻断或转人工审批。这个规则覆盖 3/3 已知异常，并且对 105 条正常人工 SaidIt 帖没有误报，因为正常帖使用的是普通 `content` 字段。
+终端五步序列显示最后几秒的机制：任务 relay 到达 John Agent，随后执行 `saidit_post_check`，再执行 `saidit_post(content_source=SwiftWren.txt)`，最后删除指令文件和 payload 文件。这里点击一个事件，可以看到对应的 event id、时间、actor、target 和 raw JSON。
 
-它的限制也要说明：如果未来异常改用直接 `content` 文本，这个规则不能单独覆盖。但在当前数据中，它是最小、最靠近外部发布边界、同时业务扰动最低的干预。
+再往前追踪 `SwiftWren_further_instructions.md`，可以看到它经过 186 次 relay hops、18 个 Agent 和 119 次跨部门跳转后到达 John。文件生命周期图进一步显示，Emma Harbor 的 Agent 先读取 `meeting_notes.doc`，随后创建 `SwiftWren.txt`。因此，目标帖不是 John 手动输入，而是文件通过 Agent 任务链传播后被发布到 SaidIt。
 
-## 3:35-3:55 收束
+## 2:00-2:45 Q2：帖子内容意味着什么，来自哪里
 
-屏幕操作：回到 Overview 或 Q3 gate，停在最终结论处。
+屏幕操作：进入 Q2，先用六张 EDA 图说明证据完整性、字段差异和结论边界；再点击图上的证据视图按钮，展示 provenance graph、evidence certainty 和 claim guardrails。
 
 旁白：
 
-总结一下：目标乱码帖由 Agent 任务链触发，最后通过 John Windward Agent 的 file-source SaidIt 发帖产生。帖子内容的准确正文不可见，但可证明它来自本地 payload 文件，并且至少两条有可见源文档 provenance。历史数据显示同一机制已经出现三次。最有效的单点防护是在 SaidIt 边界审查 Agent 发起的 `content_source` 发帖。
+Q2 是溯源问题，不是动机判断问题。日志没有保存完整 payload 正文，所以我们不恢复逐字内容，而是判断内容来源和证据强度。
+
+SwiftWren 的来源链最清楚：`meeting_notes.doc -> SwiftWren.txt -> SaidIt content_source post`，所以可能主题是会议记录。MellowOtter 类似地连接到 `strategic_directions.doc`，所以可能主题是战略方向材料。HiddenOrca 共享相同的终端文件源发帖机制，但上游源文档不可见，因此保持 unknown。
+
+页面用 observed、inferred、unknown 三类标记区分证据边界，避免把合理推断写成确定事实。
+
+## 2:45-3:35 Q3：复发证据与单点干预
+
+屏幕操作：进入 Q3，先用六张 EDA 图说明复发、稀有性、误伤和规则权衡；再点击证据视图按钮展示 recurrence timeline、incident scale dot plot、confusion matrix 和 rule tradeoff matrix。
+
+旁白：
+
+Q3 的结论是这种行为已经重复发生。HiddenOrca、MellowOtter 和 SwiftWren 时间不同、规模不同，但共享同一终端模式：relay 到 John Agent，执行 `saidit_post_check`，使用 `content_source` 发帖，并清理文件。
+
+如果只能选一个干预点，我们推荐 SaidIt boundary gate：当发帖主体是 Agent，且 `saidit_post.details.content_source` 存在时，阻断或转人工审批。混淆矩阵显示，这条规则覆盖当前 3/3 个观测异常，同时对 105 条正常人类 SaidIt 帖的观测误伤为 0。它也发生在公开发布之前，比事后 delete-file 报警更有效。
+
+局限也需要说明：如果未来 Agent 直接生成普通 `content` 文本，这条规则需要与行为检测或内容检测配合。但在本题数据和单点干预限制下，它是证据最充分、业务扰动最低的方案。
+
+## 3:35-3:55 收尾
+
+屏幕操作：停在 Q3 推荐规则或 Overview 结论区域。
+
+旁白：
+
+总结来说，目标乱码帖不是 John 手动写出，而是内部文件经过 Agent 任务链传播后，被 John Windward 的 Agent 作为 `content_source` 发布到 SaidIt。我们的可视分析系统完成了三项任务：还原 SwiftWren 精确事件链，说明帖子来源和证据边界，证明同类机制已复发，并给出 SaidIt 发布边界这一单点干预方案。
 
 ## 录制后自检
 
-- 最终视频时长不超过 4:00。
-- 有清楚人声旁白。
-- 画面展示的是实际网页，不是纯幻灯片。
-- Q1 展示了五步 terminal sequence。
-- Q1/Q2/Q3 至少各有一次 evidence drill-down 或 incident selection。
-- 没有说“确定攻击者是谁”“确切泄露正文是什么”“HiddenOrca 源文档已知”。
-- 结尾明确回答了机制、内容来源、历史重复和一个干预点。
+- 视频时长不超过 4 分钟。
+- 展示的是实际网页。
+- Overview/Q1/Q2/Q3 都出现。
+- 至少演示一次 evidence drill-down。
+- 至少演示一次 EDA 图搜索、放大或图到证据视图跳转。
+- 没有声称知道完整正文、个人动机或 HiddenOrca 的源文档。
+- 明确给出 3/108、105/108、3/3、0/105 等关键数字。

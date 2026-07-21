@@ -3,41 +3,41 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Q1 - Mechanism - MC2</title>
+<title>Q1 - 产生机制 - MC2</title>
 <link rel="stylesheet" href="./assets/app.css">
 </head>
 <body>
 <div id="nav" data-active="q1.html"></div>
 <div class="wrap">
   <header class="hero">
-    <div class="tag">Question 1 / How was the anomalous SaidIt post made?</div>
-    <h1>Q1: EDA path to the file-source SaidIt post</h1>
-    <p class="lead">The analysis starts with normal SaidIt behavior, isolates the rare Agent <code>content_source</code> pattern, then traces the SwiftWren relay chain to John Windward's Agent.</p>
-    <p class="lead" style="margin-top:8px"><b>Interaction:</b> use the EDA figures as the answer path; then click recipe boxes, route points, or stage filters to inspect exact event evidence.</p>
+    <div class="tag">问题 1 / 异常 SaidIt 帖子是如何产生的？</div>
+    <h1>Q1：从 EDA 追踪到文件源 SaidIt 异常帖</h1>
+    <p class="lead">分析先建立正常 SaidIt 行为基线，再隔离罕见的 Agent <code>content_source</code> 模式，最后追踪 SwiftWren 任务链如何到达 John Windward 的 Agent。</p>
+    <p class="lead" style="margin-top:8px"><b>交互方式：</b>先按 EDA 图理解答题路径，再点击终端序列、relay 点或阶段过滤器，查看对应的精确事件证据。</p>
   </header>
 
   <div class="layout">
     <aside class="side">
       <div class="card">
-        <h3>Select Incident</h3>
+        <h3>选择事件</h3>
         <div class="btnrow" id="incsel"></div>
         <div class="stats" id="incstats" style="margin-top:6px"></div>
       </div>
       <div class="card">
-        <h3>Focus Stage</h3>
+        <h3>聚焦阶段</h3>
         <div class="btnrow" id="stagefilter"></div>
-        <div class="note">Filtering is a focus+context aid: non-matching steps remain visible but faded.</div>
+        <div class="note">筛选用于聚焦与保留上下文：不匹配的步骤仍然可见，但会被淡化。</div>
       </div>
       <div class="card">
-        <h3>Page Guide</h3>
+        <h3>页面导航</h3>
         <div class="steps" id="steps"></div>
       </div>
     </aside>
 
     <main>
       <section class="panel core" id="p-investigation">
-        <div class="head"><h2>Interactive EDA Investigation</h2><span class="sub">clue -> scan fields -> isolate signature -> trace files -> prove chain</span></div>
-        <p class="desc">This workbench shows the actual reasoning path. Each step states why the next filter or field is examined, so the conclusion is derived rather than asserted.</p>
+        <div class="head"><h2>交互式 EDA 调查</h2><span class="sub">题目线索 -> 字段扫描 -> 异常签名 -> 文件追踪 -> 链条证明</span></div>
+        <p class="desc">这个工作台展示实际推理路径。每一步都先说明为什么要检查下一个筛选条件或字段，使结论是从证据推出的，而不是直接宣布的。</p>
         <div class="investigation-layout">
           <div class="investigation-steps" id="investigationSteps"></div>
           <div class="investigation-main">
@@ -49,86 +49,86 @@
       </section>
 
       <section class="panel core" id="p-eda">
-        <div class="head"><h2>EDA Answer Path: six figures for Q1</h2><span class="sub">baseline -> anomaly signature -> exact chain -> system context</span></div>
-        <p class="desc">These figures answer the two required Q1 views separately: the first two contextualize the message chain in the overall system, and the last four focus on the target SwiftWren chain.</p>
-        <div class="figure-grid">
-          <figure class="eda-figure">
-            <img src="./figure_gallery_statistical/06_overview_saidit_source_stacked.png" alt="SaidIt source-field composition">
-            <figcaption><b>1. SaidIt baseline.</b> Normal posts overwhelmingly use ordinary <code>content</code>; the rare <code>content_source</code> branch defines the mechanism to inspect.</figcaption>
+        <div class="head"><h2>Q1 的 EDA 答题路径：六张图</h2><span class="sub">基线 -> 异常签名 -> 精确链条 -> 系统背景</span></div>
+        <p class="desc">这六张图分别对应 Q1 的两个要求：前两张把目标消息链放回整体系统中解释，后四张聚焦 SwiftWren 目标链条本身。</p>
+        <div class="figure-grid figure-stack">
+          <figure class="eda-figure" data-target-panel="p-investigation">
+            <img src="./figure_gallery_statistical/06_overview_saidit_source_stacked.png" alt="SaidIt 来源字段组成图">
+            <figcaption><span class="figure-kicker">图 1 / 基线</span><span class="figure-takeaway">目标帖异常，是因为 SaidIt 通常接收普通 <code>content</code>，而不是文件来源的 <code>content_source</code>。</span><span class="figure-evidence">数据依据：全部 108 条 SaidIt 发帖；105 条人类普通内容帖，对比 3 条 Agent 文件源帖。</span></figcaption>
           </figure>
-          <figure class="eda-figure">
-            <img src="./figure_gallery_statistical/09_q1_task_targeting_funnel.png" alt="Task-driven targeting funnel">
-            <figcaption><b>2. Task-driven targeting.</b> We start from SaidIt because the official clue names SaidIt, John Windward, and the May 17 04:21 target time.</figcaption>
+          <figure class="eda-figure" data-target-panel="p-investigation">
+            <img src="./figure_gallery_statistical/09_q1_task_targeting_funnel.png" alt="任务线索定位漏斗图">
+            <figcaption><span class="figure-kicker">图 2 / 筛选路径</span><span class="figure-takeaway">从 SaidIt 开始不是主观选择，而是题目已给出平台、人物和时间；漏斗图展示如何逐步锁定目标子集。</span><span class="figure-evidence">数据依据：event type、actor type、timestamp 和 <code>details.content_source</code> 字段。</span></figcaption>
           </figure>
-          <figure class="eda-figure">
-            <img src="./figure_gallery_statistical/10_q1_incident_metric_dotplot.png" alt="Incident metric dot plot">
-            <figcaption><b>3. System context.</b> SwiftWren is largest across relay hops, cross-department hops, and John arrivals.</figcaption>
+          <figure class="eda-figure" data-target-panel="p-walk">
+            <img src="./figure_gallery_statistical/10_q1_incident_metric_dotplot.png" alt="事件指标点图">
+            <figcaption><span class="figure-kicker">图 3 / 系统背景</span><span class="figure-takeaway">SwiftWren 不只是题目指定的目标事件，它也是观测到的最大规模文件源传播链。</span><span class="figure-evidence">数据依据：每个事件的转发跳数、不同 Agent 数、涉及部门、跨部门跳数和到达 John 次数。</span></figcaption>
           </figure>
-          <figure class="eda-figure">
-            <img src="./figure_gallery_statistical/18_q1_terminal_recipe_timeline.png" alt="Terminal recipe timeline">
-            <figcaption><b>4. Exact terminal chain.</b> John Agent receives the relay, checks SaidIt, posts the file source, and deletes both files.</figcaption>
+          <figure class="eda-figure" data-target-panel="p-recipe">
+            <img src="./figure_gallery_statistical/18_q1_terminal_recipe_timeline.png" alt="终端操作序列时间线">
+            <figcaption><span class="figure-kicker">图 4 / 精确链条</span><span class="figure-takeaway">发帖前后最后几秒形成五步终端序列：任务到达、发帖检查、文件源发帖、删除指令文件、删除 payload 文件。</span><span class="figure-evidence">数据依据：2046 年 5 月 17 日 04:21 目标帖附近的事件 id。</span></figcaption>
           </figure>
-          <figure class="eda-figure">
-            <img src="./figure_gallery_statistical/15_q1_swiftwren_receiver_rank.png" alt="SwiftWren receiver rank bar chart">
-            <figcaption><b>5. Important people/Agents.</b> Receiver counts highlight repeated relay endpoints and John as the terminal posting endpoint.</figcaption>
+          <figure class="eda-figure" data-target-panel="p-walk">
+            <img src="./figure_gallery_statistical/15_q1_swiftwren_receiver_rank.png" alt="SwiftWren 接收者排序条形图">
+            <figcaption><span class="figure-kicker">图 5 / 关键 Agent</span><span class="figure-takeaway">接收次数排序把 186 跳泳道图压缩成可比较统计图，帮助识别反复接收任务的关键节点。</span><span class="figure-evidence">数据依据：携带 <code>SwiftWren_further_instructions.md</code> 的 <code>queue_subordinate_task</code> 发送方/接收方记录。</span></figcaption>
           </figure>
-          <figure class="eda-figure">
-            <img src="./figure_gallery_statistical/17_q1_department_flow_heatmap.png" alt="SwiftWren department flow heatmap">
-            <figcaption><b>6. Important system interactions.</b> Department-to-department flow shows the relay crossing organizational boundaries before SaidIt publication.</figcaption>
+          <figure class="eda-figure" data-target-panel="p-dept">
+            <img src="./figure_gallery_statistical/17_q1_department_flow_heatmap.png" alt="SwiftWren 部门流向热力图">
+            <figcaption><span class="figure-kicker">图 6 / 系统交互</span><span class="figure-takeaway">链条跨越多个组织边界，因此更准确的解释是系统级任务转发失控，而不是某一个人的单独发帖行为。</span><span class="figure-evidence">数据依据：将 <code>org_chart.json</code> 部门映射与 relay sender/receiver Agent 连接后的统计。</span></figcaption>
           </figure>
         </div>
       </section>
 
       <section class="panel core answer" id="p-answer">
-        <div class="head"><h2>Conclusion After EDA</h2><span class="sub">answer supported by the figures above</span></div>
-        <div class="a-body"><b>Main finding.</b> The anomalous post was produced by an Agent-mediated file-posting workflow, not by John manually typing a SaidIt message. The target post used <code>content_source=SwiftWren.txt</code>.</div>
-        <div class="a-body" style="margin-top:10px"><b>Detailed view.</b> Emma Harbor's Agent read <code>meeting_notes.doc</code>, created <code>SwiftWren.txt</code>, and the related <code>SwiftWren_further_instructions.md</code> task propagated through <code>queue_subordinate_task(task=read_file)</code>. The final relay reached John Windward's Agent, which executed <code>saidit_post_check</code>, <code>saidit_post(content_source)</code>, and two cleanup deletes.</div>
-        <div class="a-body" style="margin-top:10px"><b>System overview.</b> Normal SaidIt posts use human-written <code>content</code>. Only 3 of 108 SaidIt posts use Agent <code>content_source</code>, and SwiftWren is the largest observed relay chain among those incidents.</div>
-        <div class="note" style="margin-top:12px"><b>Important correction:</b> SwiftWren reached John five times. The first four arrivals did not directly produce the public post in the immediate evidence window; the fifth produced the target post. Arrival at John is necessary in the observed terminal chain, but not sufficient by itself.</div>
+        <div class="head"><h2>EDA 后的结论</h2><span class="sub">由上方图表支撑的答案</span></div>
+        <div class="a-body"><b>核心发现。</b>异常帖来自 Agent 介导的文件源发帖流程，而不是 John 手动输入 SaidIt 文本。目标帖使用的是 <code>content_source=SwiftWren.txt</code>。</div>
+        <div class="a-body" style="margin-top:10px"><b>详细视图。</b>Emma Harbor 的 Agent 读取 <code>meeting_notes.doc</code>，创建 <code>SwiftWren.txt</code>，随后相关的 <code>SwiftWren_further_instructions.md</code> 任务通过 <code>queue_subordinate_task(task=read_file)</code> 传播。最后一跳到达 John Windward 的 Agent 后，它执行 <code>saidit_post_check</code>、<code>saidit_post(content_source)</code>，并删除两个相关文件。</div>
+        <div class="a-body" style="margin-top:10px"><b>系统概览。</b>正常 SaidIt 帖通常使用人类写入的 <code>content</code>。108 条 SaidIt posts 中只有 3 条使用 Agent <code>content_source</code>，而 SwiftWren 是这三起事件中观测到的最大 relay chain。</div>
+        <div class="note" style="margin-top:12px"><b>重要边界：</b>SwiftWren 任务五次到达 John。前四次到达没有在紧邻证据窗口内直接产生公开发帖，第五次到达才导致目标帖。到达 John 是终端链条中的必要环节，但不是充分条件。</div>
       </section>
 
       <section class="panel core" id="p-recipe">
-        <div class="head"><h2>Detailed View A: Terminal Five-Step Recipe</h2><span class="sub" id="recipe-sub"></span></div>
-        <p class="desc">This sequence is the exact terminal chain after John Agent receives the final relay task. It is shown as a timeline rather than a network hairball.</p>
+        <div class="head"><h2>详细视图 A：终端五步序列</h2><span class="sub" id="recipe-sub"></span></div>
+        <p class="desc">这个序列展示 John Agent 接收最后一次 relay 任务后的精确终端链条。这里使用时间线，而不是难以阅读的毛线球网络图。</p>
         <div class="svg-wrap"><svg id="recipe" width="100%" height="270"></svg></div>
         <div id="evidence" class="evidence-box"></div>
       </section>
 
       <section class="panel core" id="p-life">
-        <div class="head"><h2>Detailed View B: File Lifecycle Timeline</h2><span class="sub">source read, payload, relay, post, and cleanup</span></div>
-        <p class="desc">This view links the macro chain to auditable event ids. Unknown source context is kept visible instead of being filled with unsupported content claims.</p>
+        <div class="head"><h2>详细视图 B：文件生命周期时间线</h2><span class="sub">来源读取、payload、转发、发帖与清理</span></div>
+        <p class="desc">这个视图把宏观链条连接到可审计的 event id。未知来源不会被强行补成没有证据的内容结论。</p>
         <div class="svg-wrap"><svg id="lifecycle" width="100%" height="250"></svg></div>
         <div id="johnoutcomes" style="margin-top:14px"></div>
       </section>
 
       <section class="panel core" id="p-walk">
-        <div class="head"><h2>Detailed View C: Agent Relay Swimlane</h2><span class="sub" id="walk-sub">switch between hop order and elapsed time</span></div>
-        <p class="desc">Each point is a relay receiver. Select an Agent to coordinate highlighting across the lane and evidence record.</p>
-        <div class="btnrow"><button class="btn" id="walk-hop" type="button">Hop order</button><button class="btn" id="walk-time" type="button">Elapsed time</button><button class="btn" id="clear-agent" type="button">Clear Agent</button></div>
+        <div class="head"><h2>详细视图 C：Agent 转发泳道图</h2><span class="sub" id="walk-sub">在跳数顺序与经过时间之间切换</span></div>
+        <p class="desc">每个点代表一个 relay 接收者。选择某个 Agent 后，泳道图和证据记录会联动高亮。</p>
+        <div class="btnrow"><button class="btn" id="walk-hop" type="button">跳数顺序</button><button class="btn" id="walk-time" type="button">经过时间</button><button class="btn" id="clear-agent" type="button">清除 Agent</button></div>
         <div class="legend" id="walk-legend"></div>
         <div class="svg-wrap"><svg id="walk" width="100%" height="540"></svg></div>
       </section>
 
       <section class="panel core" id="p-dept">
-        <div class="head"><h2>System Overview A: Department Propagation Matrix</h2><span class="sub">from-department to to-department relay counts</span></div>
-        <p class="desc">The matrix aggregates relay hops by organization unit. It shows whether the behavior stayed local or crossed system boundaries inside the company.</p>
+        <div class="head"><h2>系统概览 A：部门传播矩阵</h2><span class="sub">从部门到部门的 relay 计数</span></div>
+        <p class="desc">矩阵按组织单元聚合 relay 跳转，展示该行为是局部停留，还是跨越公司内部系统边界传播。</p>
         <div class="svg-wrap"><svg id="deptmatrix" width="100%" height="420"></svg></div>
       </section>
 
       <section class="panel core" id="p-flow">
-        <div class="head"><h2>System Overview B: Department Flow Ribbons</h2><span class="sub">top relay directions between departments</span></div>
-        <p class="desc">This alluvial-style view shows the strongest department-to-department relay directions for the selected incident. Width encodes hop count; low-count flows are omitted to avoid clutter.</p>
+        <div class="head"><h2>系统概览 B：部门流向带</h2><span class="sub">部门之间的主要 relay 方向</span></div>
+        <p class="desc">这个类桑基/冲积图展示所选事件中最强的部门到部门传播方向。宽度编码跳转次数，低频流向被省略以避免拥挤。</p>
         <div class="svg-wrap"><svg id="deptflow" width="100%" height="380"></svg></div>
       </section>
 
       <section class="panel core" id="p-sys">
-        <div class="head"><h2>System Overview C: System Boundary Context</h2><span class="sub">source document to payload to relay to public post</span></div>
-        <p class="desc">This node-link flow separates internal operations from the external publishing boundary. The public boundary is where the harm becomes irreversible.</p>
+        <div class="head"><h2>系统概览 C：系统边界背景</h2><span class="sub">源文档到 payload、relay、公开发帖</span></div>
+        <p class="desc">节点连接流程把内部操作与外部发布边界分开。公开发布边界是损害开始不可逆的位置。</p>
         <div class="svg-wrap"><svg id="syschart" width="100%" height="330"></svg></div>
         <div id="sysflow"></div>
       </section>
 
-      <div class="footer">Timezone: challenge-local UTC-7. Event ids match the original <code>MC2 data.json</code>.</div>
+      <div class="footer">时区：挑战本地 UTC-7。Event id 与原始 <code>MC2 data.json</code> 一致。</div>
     </main>
   </div>
 </div>
@@ -138,5 +138,8 @@
 <script src="./assets/i18n_zh.js"></script>
 </body>
 </html>
+
+
+
 
 

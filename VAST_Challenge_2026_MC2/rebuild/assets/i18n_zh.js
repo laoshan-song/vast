@@ -860,6 +860,7 @@
     applyStaticOverrides();
     translateNodeText(document.body);
     translateAttrs(document.body);
+    window.setupFigureEvidenceLinks?.();
   }
 
   function scheduleTranslate() {

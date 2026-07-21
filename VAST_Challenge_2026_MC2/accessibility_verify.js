@@ -6,10 +6,15 @@ const root = path.resolve(process.argv[2] || __dirname);
 const answerPage = fs.existsSync(path.join(root, "index.htm")) ? "index.htm" : "final_report_0709.html";
 const pages = [
   answerPage,
+  ...(fs.existsSync(path.join(root, "index_zh.htm")) ? ["index_zh.htm"] : []),
   "rebuild/overview.html",
   "rebuild/q1.html",
   "rebuild/q2.html",
   "rebuild/q3.html",
+  "rebuild/overview_zh.html",
+  "rebuild/q1_zh.html",
+  "rebuild/q2_zh.html",
+  "rebuild/q3_zh.html",
 ];
 
 (async () => {

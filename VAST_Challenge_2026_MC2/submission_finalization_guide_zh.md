@@ -27,7 +27,7 @@
     }
   ],
   "student_team": "YES",
-  "tools_used": "Python data extraction, JavaScript, HTML/CSS/SVG, browser-based visual analytics, GitHub Pages, browser screenshot verification",
+  "tools_used": "Python data extraction from MC2 data.json and org_chart.json; HTML/CSS/vanilla JavaScript with custom SVG; PNG statistical EDA figure generation; Playwright/Microsoft Edge screenshot and interaction verification; Git/GitHub Pages. The final rebuild does not require Tableau, Vega-Lite, or a D3 runtime.",
   "total_hours": "120",
   "video_link": "https://example.com/your-mc2-video.mp4",
   "public_repository_permission": "YES"
@@ -41,6 +41,15 @@ node .\apply_team_metadata.js
 ```
 
 脚本会拒绝空值、示例占位符、无主联系人和明显错误的邮箱格式。填写成功后保留本地 JSON 备份即可，它已被 `.gitignore` 排除。
+
+也可以先复制模板再改：
+
+```powershell
+copy .\team_metadata.example.json .\team_metadata.json
+notepad .\team_metadata.json
+```
+
+注意：模板里的姓名、邮箱、视频链接、总工时和公开许可必须改成真实值。
 
 ## 3. 重新生成与验证分析数据
 
@@ -61,7 +70,7 @@ python -m json.tool .\rebuild\mc2_viz_data.json > $null
 npm install
 ```
 
-然后可以在仓库根目录运行完整浏览器验证：
+然后可以在仓库根目录运行完整浏览器验证。该命令会同时检查英文入口、中文入口、Overview、Q1、Q2、Q3 及其中文镜像页的可访问性和响应式布局：
 
 ```powershell
 npm run verify
@@ -80,6 +89,8 @@ node .\responsive_verify.js
 ```text
 PASS: package-level checks found no blocking issues.
 ```
+
+该检查器还会检查 `index.htm` 和 `index_zh.htm` 的本地链接、图片引用、工具清单、每张正式配图是否链接到对应交互证据视图，以及 Q1、Q2、Q3 是否各有且仅有 6 张正式配图。若这里失败，先修入口页，不要直接打包。
 
 ## 5. 构建 ZIP
 

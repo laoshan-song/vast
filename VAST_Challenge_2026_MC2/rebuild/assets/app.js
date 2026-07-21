@@ -241,4 +241,213 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") MC2.hideTip(true); });
   document.addEventListener("click", (ev) => { if (!ev.target.closest(".tooltip-mark")) MC2.hideTip(true); });
   MC2.setState(MC2.state());
+  setupFigureLightbox();
+  setupFigureExplorer();
+  setupFigureEvidenceLinks();
 });
+
+function setupFigureLightbox() {
+  const figures = [...document.querySelectorAll(".eda-figure")];
+  if (!figures.length) return;
+
+  const modal = document.createElement("div");
+  const isZh = document.documentElement.lang === "zh-CN" || /_zh\.html$/i.test(location.pathname);
+  const closeText = isZh ? "关闭" : "Close";
+  modal.className = "figure-lightbox";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-label", isZh ? "放大的图表视图" : "Expanded figure view");
+  modal.innerHTML = `<div class="figure-lightbox-inner">
+    <div class="figure-lightbox-head">
+      <div class="figure-lightbox-title"></div>
+      <button type="button" class="figure-lightbox-close" aria-label="${closeText}">${closeText}</button>
+    </div>
+    <div class="figure-lightbox-stage"><img alt=""></div>
+    <div class="figure-lightbox-caption"></div>
+  </div>`;
+  document.body.appendChild(modal);
+
+  const title = modal.querySelector(".figure-lightbox-title");
+  const img = modal.querySelector("img");
+  const caption = modal.querySelector(".figure-lightbox-caption");
+  const closeButton = modal.querySelector(".figure-lightbox-close");
+  let lastFocus = null;
+
+  function openFrom(sourceImg) {
+    lastFocus = document.activeElement;
+    const fig = sourceImg.closest(".eda-figure");
+    const cap = fig?.querySelector("figcaption");
+    const kicker = cap?.querySelector(".figure-kicker")?.textContent?.trim() || sourceImg.alt || "Figure";
+    title.textContent = kicker;
+    img.src = sourceImg.currentSrc || sourceImg.src;
+    img.alt = sourceImg.alt || kicker;
+    caption.innerHTML = cap ? cap.innerHTML : "";
+    modal.classList.add("open");
+    document.body.style.overflow = "hidden";
+    closeButton.focus();
+  }
+
+  function close() {
+    modal.classList.remove("open");
+    document.body.style.overflow = "";
+    img.removeAttribute("src");
+    if (lastFocus && typeof lastFocus.focus === "function") lastFocus.focus();
+  }
+
+  figures.forEach((fig) => {
+    const sourceImg = fig.querySelector("img");
+    if (!sourceImg) return;
+    sourceImg.setAttribute("tabindex", "0");
+    sourceImg.setAttribute("role", "button");
+    sourceImg.setAttribute("aria-label", `${sourceImg.alt || "Figure"} - open large view`);
+    sourceImg.addEventListener("click", () => openFrom(sourceImg));
+    sourceImg.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" || ev.key === " ") {
+        ev.preventDefault();
+        openFrom(sourceImg);
+      }
+    });
+  });
+
+  closeButton.addEventListener("click", close);
+  modal.addEventListener("click", (ev) => {
+    if (ev.target === modal) close();
+  });
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape" && modal.classList.contains("open")) close();
+  });
+}
+
+function setupFigureExplorer() {
+  const grids = [...document.querySelectorAll(".figure-grid")].filter((grid) => grid.querySelectorAll(".eda-figure").length >= 2);
+  if (!grids.length) return;
+
+  const isZh = document.documentElement.lang === "zh-CN" || /_zh\.html$/i.test(location.pathname);
+  const labels = isZh
+    ? { title: "证据图导航", search: "按关键词过滤图表", all: "全部显示", prev: "上一张", next: "下一张", count: "张可见图" }
+    : { title: "Evidence Figure Navigator", search: "Filter figures by keyword", all: "Show all", prev: "Previous", next: "Next", count: "visible figures" };
+
+  grids.forEach((grid, gridIndex) => {
+    if (grid.dataset.figureExplorer === "ready") return;
+    grid.dataset.figureExplorer = "ready";
+    const figures = [...grid.querySelectorAll(".eda-figure")];
+    let selected = -1;
+
+    const toolbar = document.createElement("div");
+    toolbar.className = "figure-explorer";
+    toolbar.innerHTML = `<div class="figure-explorer-title">${labels.title}</div>
+      <div class="figure-explorer-controls">
+        <input type="search" aria-label="${labels.search}" placeholder="${labels.search}">
+        <button type="button" data-action="all">${labels.all}</button>
+        <button type="button" data-action="prev">${labels.prev}</button>
+        <button type="button" data-action="next">${labels.next}</button>
+        <span class="figure-explorer-count" aria-live="polite"></span>
+      </div>`;
+    grid.parentNode.insertBefore(toolbar, grid);
+
+    const input = toolbar.querySelector("input");
+    const count = toolbar.querySelector(".figure-explorer-count");
+    const buttons = toolbar.querySelectorAll("button");
+
+    function textOf(fig) {
+      return `${fig.querySelector("img")?.alt || ""} ${fig.querySelector("figcaption")?.textContent || ""}`.toLowerCase();
+    }
+
+    function visibleFigures() {
+      return figures.filter((fig) => !fig.hidden);
+    }
+
+    function updateCount() {
+      const visible = visibleFigures().length;
+      count.textContent = `${visible}/${figures.length} ${labels.count}`;
+      buttons.forEach((button) => {
+        if (button.dataset.action !== "all") button.disabled = visible === 0;
+      });
+    }
+
+    function selectFigure(nextIndex, shouldScroll = true) {
+      const visible = visibleFigures();
+      figures.forEach((fig) => fig.classList.remove("selected"));
+      if (!visible.length) {
+        selected = -1;
+        updateCount();
+        return;
+      }
+      selected = ((nextIndex % visible.length) + visible.length) % visible.length;
+      const fig = visible[selected];
+      fig.classList.add("selected");
+      fig.setAttribute("aria-current", "true");
+      figures.filter((other) => other !== fig).forEach((other) => other.removeAttribute("aria-current"));
+      updateCount();
+      if (shouldScroll) fig.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function applyFilter() {
+      const q = input.value.trim().toLowerCase();
+      figures.forEach((fig) => {
+        const show = !q || textOf(fig).includes(q);
+        fig.hidden = !show;
+        fig.classList.toggle("filtered-out", !show);
+      });
+      selectFigure(0, false);
+    }
+
+    input.addEventListener("input", applyFilter);
+    toolbar.querySelector("[data-action='all']").addEventListener("click", () => {
+      input.value = "";
+      figures.forEach((fig) => {
+        fig.hidden = false;
+        fig.classList.remove("filtered-out");
+      });
+      selectFigure(0);
+    });
+    toolbar.querySelector("[data-action='prev']").addEventListener("click", () => selectFigure(selected - 1));
+    toolbar.querySelector("[data-action='next']").addEventListener("click", () => selectFigure(selected + 1));
+
+    figures.forEach((fig, index) => {
+      fig.setAttribute("tabindex", "0");
+      fig.setAttribute("aria-label", `${labels.title} ${index + 1}`);
+      fig.addEventListener("focus", () => selectFigure(visibleFigures().indexOf(fig), false));
+      fig.addEventListener("click", (ev) => {
+        if (ev.target.closest("img")) return;
+        selectFigure(visibleFigures().indexOf(fig), false);
+      });
+    });
+
+    selectFigure(gridIndex === 0 ? 0 : -1, false);
+  });
+}
+
+function setupFigureEvidenceLinks() {
+  const figures = [...document.querySelectorAll(".eda-figure[data-target-panel]")];
+  if (!figures.length) return;
+  const isZh = document.documentElement.lang === "zh-CN" || /_zh\.html$/i.test(location.pathname);
+  const label = isZh ? "查看对应证据视图" : "Open linked evidence view";
+
+  figures.forEach((fig) => {
+    const targetId = fig.dataset.targetPanel;
+    const target = document.getElementById(targetId);
+    const caption = fig.querySelector("figcaption");
+    if (!target || !caption || caption.querySelector(".figure-jump")) return;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "figure-jump";
+    button.textContent = label;
+    button.setAttribute("aria-label", `${label}: ${target.querySelector("h2")?.textContent?.trim() || targetId}`);
+    button.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (target.classList.contains("explore-only") || target.querySelector(".explore-only")) {
+        MC2.setState({ mode: "explore" });
+      }
+      document.querySelectorAll(".panel.evidence-focus").forEach((node) => node.classList.remove("evidence-focus"));
+      target.classList.add("evidence-focus");
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      try { history.replaceState(null, "", `${location.pathname}${location.search}#${targetId}`); } catch (_) { /* ignore */ }
+      window.setTimeout(() => target.classList.remove("evidence-focus"), 2400);
+    });
+    caption.appendChild(button);
+  });
+}
+
+window.setupFigureEvidenceLinks = setupFigureEvidenceLinks;

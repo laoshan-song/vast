@@ -90,6 +90,147 @@ const pages = ["overview", "q1", "q2", "q3"];
   }), interactionErrors.length ? "ERR:" + interactionErrors.join("|") : "");
   await interaction.close();
 
+  const lightbox = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const lightboxErrors = [];
+  lightbox.on("console", m => { if (/error/i.test(m.type())) lightboxErrors.push(m.text()); });
+  lightbox.on("pageerror", e => lightboxErrors.push("PAGEERR: " + e.message));
+  await lightbox.goto(`file://${path.resolve(__dirname, "q2.html")}?mode=review`, { waitUntil: "load" });
+  await lightbox.waitForTimeout(500);
+  await lightbox.locator(".eda-figure img").first().click();
+  await lightbox.waitForTimeout(250);
+  const lightboxOpen = await lightbox.evaluate(() => ({
+    open: document.querySelector(".figure-lightbox")?.classList.contains("open"),
+    visible: getComputedStyle(document.querySelector(".figure-lightbox")).display !== "none",
+    hasImage: Boolean(document.querySelector(".figure-lightbox-stage img")?.getAttribute("src")),
+    hasCaption: Boolean(document.querySelector(".figure-lightbox-caption")?.textContent?.trim()),
+    closeText: document.querySelector(".figure-lightbox-close")?.textContent?.trim(),
+  }));
+  await lightbox.keyboard.press("Escape");
+  await lightbox.waitForTimeout(250);
+  const lightboxClosed = await lightbox.evaluate(() => ({
+    open: document.querySelector(".figure-lightbox")?.classList.contains("open"),
+    overflow: document.body.style.overflow,
+  }));
+  const lightboxOk = lightboxErrors.length === 0
+    && lightboxOpen.open && lightboxOpen.visible && lightboxOpen.hasImage && lightboxOpen.hasCaption
+    && lightboxOpen.closeText === "Close"
+    && !lightboxClosed.open && lightboxClosed.overflow === "";
+  bad ||= !lightboxOk;
+  console.log(`${lightboxOk ? "OK " : "FAIL"} figure lightbox`, JSON.stringify({
+    lightboxOpen, lightboxClosed,
+  }), lightboxErrors.length ? "ERR:" + lightboxErrors.join("|") : "");
+  await lightbox.close();
+
+  const explorer = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const explorerErrors = [];
+  explorer.on("console", m => { if (/error/i.test(m.type())) explorerErrors.push(m.text()); });
+  explorer.on("pageerror", e => explorerErrors.push("PAGEERR: " + e.message));
+  await explorer.goto(`file://${path.resolve(__dirname, "q3.html")}?mode=review`, { waitUntil: "load" });
+  await explorer.waitForTimeout(500);
+  const explorerInitial = await explorer.evaluate(() => ({
+    controls: document.querySelectorAll(".figure-explorer").length,
+    visibleFigures: [...document.querySelectorAll(".figure-grid .eda-figure")]
+      .filter((fig) => !fig.hidden && getComputedStyle(fig).display !== "none").length,
+    selected: document.querySelectorAll(".figure-grid .eda-figure.selected").length,
+  }));
+  await explorer.locator(".figure-explorer input").first().fill("gate");
+  await explorer.waitForTimeout(150);
+  const explorerFiltered = await explorer.evaluate(() => ({
+    visibleFigures: [...document.querySelectorAll(".figure-grid .eda-figure")]
+      .filter((fig) => !fig.hidden && getComputedStyle(fig).display !== "none").length,
+    countText: document.querySelector(".figure-explorer-count")?.textContent?.trim(),
+  }));
+  await explorer.locator(".figure-explorer [data-action='next']").first().click();
+  const explorerNext = await explorer.evaluate(() => ({
+    selectedText: document.querySelector(".figure-grid .eda-figure.selected figcaption")?.textContent || "",
+  }));
+  await explorer.locator(".figure-explorer [data-action='all']").first().click();
+  await explorer.waitForTimeout(150);
+  const explorerReset = await explorer.evaluate(() => ({
+    visibleFigures: [...document.querySelectorAll(".figure-grid .eda-figure")]
+      .filter((fig) => !fig.hidden && getComputedStyle(fig).display !== "none").length,
+    countText: document.querySelector(".figure-explorer-count")?.textContent?.trim(),
+  }));
+  const explorerOk = explorerErrors.length === 0
+    && explorerInitial.controls >= 1 && explorerInitial.visibleFigures === 6 && explorerInitial.selected >= 1
+    && explorerFiltered.visibleFigures > 0 && explorerFiltered.visibleFigures < 6
+    && /gate/i.test(explorerNext.selectedText)
+    && explorerReset.visibleFigures === 6;
+  bad ||= !explorerOk;
+  console.log(`${explorerOk ? "OK " : "FAIL"} figure explorer`, JSON.stringify({
+    explorerInitial, explorerFiltered, explorerNext, explorerReset,
+  }), explorerErrors.length ? "ERR:" + explorerErrors.join("|") : "");
+  await explorer.close();
+
+  const linkPages = ["q1.html", "q2.html", "q3.html", "q1_zh.html", "q2_zh.html", "q3_zh.html"];
+  const linkResults = [];
+  const figureLinkErrors = [];
+  for (const linkPageName of linkPages) {
+    const figureLink = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    figureLink.on("console", m => { if (/error/i.test(m.type())) figureLinkErrors.push(`${linkPageName}: ${m.text()}`); });
+    figureLink.on("pageerror", e => figureLinkErrors.push(`${linkPageName}: PAGEERR: ${e.message}`));
+    await figureLink.goto(`file://${path.resolve(__dirname, linkPageName)}?mode=review`, { waitUntil: "load" });
+    await figureLink.waitForTimeout(850);
+    const linkInitial = await figureLink.evaluate(() => ({
+      lang: document.documentElement.lang,
+      targetFigures: document.querySelectorAll(".eda-figure[data-target-panel]").length,
+      jumpButtons: document.querySelectorAll(".eda-figure[data-target-panel] .figure-jump").length,
+      firstTarget: document.querySelector(".eda-figure[data-target-panel]")?.dataset.targetPanel,
+      firstText: document.querySelector(".eda-figure[data-target-panel] .figure-jump")?.textContent?.trim() || "",
+    }));
+    await figureLink.locator(".eda-figure[data-target-panel] .figure-jump").first().click();
+    await figureLink.waitForTimeout(350);
+    const linkAfter = await figureLink.evaluate(() => ({
+      hash: location.hash,
+      focused: document.querySelector(".panel.evidence-focus")?.id || "",
+      mode: document.body.dataset.mode,
+    }));
+    linkResults.push({ page: linkPageName, linkInitial, linkAfter });
+    await figureLink.close();
+  }
+  const figureLinkOk = figureLinkErrors.length === 0 && linkResults.every(({ page, linkInitial, linkAfter }) => {
+    const shouldBeZh = /_zh\.html$/i.test(page);
+    return linkInitial.targetFigures === 6
+      && linkInitial.jumpButtons === 6
+      && linkAfter.hash === `#${linkInitial.firstTarget}`
+      && linkAfter.focused === linkInitial.firstTarget
+      && linkAfter.mode === "review"
+      && (shouldBeZh ? linkInitial.firstText === "查看对应证据视图" : linkInitial.firstText === "Open linked evidence view");
+  });
+  bad ||= !figureLinkOk;
+  console.log(`${figureLinkOk ? "OK " : "FAIL"} figure evidence links`, JSON.stringify(linkResults),
+    figureLinkErrors.length ? "ERR:" + figureLinkErrors.join("|") : "");
+
+  const zhLightbox = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const zhLightboxErrors = [];
+  zhLightbox.on("console", m => { if (/error/i.test(m.type())) zhLightboxErrors.push(m.text()); });
+  zhLightbox.on("pageerror", e => zhLightboxErrors.push("PAGEERR: " + e.message));
+  await zhLightbox.goto(`file://${path.resolve(__dirname, "q2_zh.html")}?mode=review`, { waitUntil: "load" });
+  await zhLightbox.waitForTimeout(500);
+  await zhLightbox.locator(".eda-figure img").first().click();
+  await zhLightbox.waitForTimeout(250);
+  const zhLightboxOpen = await zhLightbox.evaluate(() => ({
+    lang: document.documentElement.lang,
+    open: document.querySelector(".figure-lightbox")?.classList.contains("open"),
+    hasImage: Boolean(document.querySelector(".figure-lightbox-stage img")?.getAttribute("src")),
+    hasCaption: Boolean(document.querySelector(".figure-lightbox-caption")?.textContent?.trim()),
+    closeText: document.querySelector(".figure-lightbox-close")?.textContent?.trim(),
+  }));
+  await zhLightbox.keyboard.press("Escape");
+  await zhLightbox.waitForTimeout(250);
+  const zhLightboxClosed = await zhLightbox.evaluate(() => ({
+    open: document.querySelector(".figure-lightbox")?.classList.contains("open"),
+  }));
+  const zhLightboxOk = zhLightboxErrors.length === 0
+    && zhLightboxOpen.lang === "zh-CN" && zhLightboxOpen.open
+    && zhLightboxOpen.hasImage && zhLightboxOpen.hasCaption
+    && zhLightboxOpen.closeText === "关闭" && !zhLightboxClosed.open;
+  bad ||= !zhLightboxOk;
+  console.log(`${zhLightboxOk ? "OK " : "FAIL"} zh figure lightbox`, JSON.stringify({
+    zhLightboxOpen, zhLightboxClosed,
+  }), zhLightboxErrors.length ? "ERR:" + zhLightboxErrors.join("|") : "");
+  await zhLightbox.close();
+
   await browser.close();
   process.exit(bad ? 1 : 0);
 })();

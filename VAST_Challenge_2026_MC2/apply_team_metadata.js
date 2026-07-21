@@ -73,7 +73,7 @@ if (!["YES", "NO"].includes(studentTeam)) {
 }
 
 const toolsUsed = requireString(
-  metadata.tools_used || "Python data extraction, JavaScript, HTML/CSS/SVG, browser-based visual analytics, GitHub Pages, browser screenshot verification",
+  metadata.tools_used || "Python data extraction from MC2 data.json and org_chart.json; HTML/CSS/vanilla JavaScript with custom SVG; PNG statistical EDA figure generation; Playwright/Microsoft Edge screenshot and interaction verification; Git/GitHub Pages. The final rebuild does not require Tableau, Vega-Lite, or a D3 runtime.",
   "tools_used"
 );
 

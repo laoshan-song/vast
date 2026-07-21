@@ -59,6 +59,7 @@
     figure { margin: 14px 0 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; }
     figure img { width: 100%; display: block; }
     figcaption { padding: 10px 12px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+    figcaption a.evidence-link { display: inline-block; margin-top: 6px; font-weight: 750; }
     .figure-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 12px; margin-top: 12px; }
     .figure-grid figure { margin: 0; }
     table { width: 100%; border-collapse: collapse; margin-top: 12px; }
@@ -91,12 +92,14 @@
   <section>
     <h2>使用工具</h2>
     <ul>
-      <li>Python 3：事件抽取、聚合和派生可视化数据生成。</li>
-      <li>HTML、CSS、原生 JavaScript 和 inline SVG：构建交互式可视分析系统。</li>
-      <li>Playwright / Microsoft Edge：截图质量检查、交互验证和布局验证。</li>
+      <li>Python 3 和 <code>rebuild/extract_data.py</code>：事件抽取、聚合和派生可视化数据生成。</li>
+      <li>HTML、CSS、原生 JavaScript 和自定义 SVG 渲染：构建交互式可视分析系统。</li>
+      <li>PNG 统计图库：为 Overview 和 Q1-Q3 提供 EDA 型描述性统计图。</li>
+      <li>Playwright / <code>playwright-core</code> 与 Microsoft Edge：截图质量检查、交互验证、布局验证和统计图放大测试。</li>
       <li>Git 和 GitHub Pages：版本控制与网页发布。</li>
       <li>OpenAI Codex / ChatGPT：辅助编码、审阅和文字校对；所有分析结论均约束在官方日志和派生数据证据内。</li>
     </ul>
+    <p class="muted">最终 <code>rebuild/</code> 页面是自包含静态网页，不需要 Tableau、Vega-Lite 或 D3 运行时。旧 D3 文件只是开发原型，不是正式评审路径。</p>
   </section>
 
   <section>
@@ -106,28 +109,28 @@
     <p><a href="rebuild/q1_zh.html">打开 Q1 交互页面</a></p>
     <div class="figure-grid">
       <figure>
-        <img src="rebuild/figure_gallery_statistical/06_overview_saidit_source_stacked.png" alt="SaidIt source-field composition">
-        <figcaption><b>Q1 图 1。</b>SaidIt 基线：普通帖子使用 <code>content</code>，异常分支使用 <code>content_source</code>。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/06_overview_saidit_source_stacked.png" alt="SaidIt 来源字段组成图">
+        <figcaption><b>Q1 图 1。</b>SaidIt 基线：普通帖子使用 <code>content</code>，异常分支使用 <code>content_source</code>。<a class="evidence-link" href="rebuild/q1_zh.html?mode=review#p-investigation">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/09_q1_task_targeting_funnel.png" alt="Task-driven targeting funnel">
-        <figcaption><b>Q1 图 2。</b>题目线索把搜索范围从全量事件缩小到 John/SaidIt 目标事件。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/09_q1_task_targeting_funnel.png" alt="任务线索定位漏斗图">
+        <figcaption><b>Q1 图 2。</b>题目线索把搜索范围从全量事件缩小到 John/SaidIt 目标事件。<a class="evidence-link" href="rebuild/q1_zh.html?mode=review#p-investigation">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/10_q1_incident_metric_dotplot.png" alt="Incident metric dot plot">
-        <figcaption><b>Q1 图 3。</b>SwiftWren 在 hops、Agent、部门和 John arrivals 等指标上规模最大。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/10_q1_incident_metric_dotplot.png" alt="事件指标点图">
+        <figcaption><b>Q1 图 3。</b>SwiftWren 在 hops、Agent、部门和 John arrivals 等指标上规模最大。<a class="evidence-link" href="rebuild/q1_zh.html?mode=review#p-walk">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/18_q1_terminal_recipe_timeline.png" alt="Terminal recipe timeline">
-        <figcaption><b>Q1 图 4。</b>终端序列：relay 到达、SaidIt 检查、文件源发帖、清理删除。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/18_q1_terminal_recipe_timeline.png" alt="终端操作序列时间线">
+        <figcaption><b>Q1 图 4。</b>终端序列：relay 到达、SaidIt 检查、文件源发帖、清理删除。<a class="evidence-link" href="rebuild/q1_zh.html?mode=review#p-recipe">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/15_q1_swiftwren_receiver_rank.png" alt="SwiftWren receiver rank">
-        <figcaption><b>Q1 图 5。</b>SwiftWren relay 中的重要 Agent 终点，包括多次到达 John。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/15_q1_swiftwren_receiver_rank.png" alt="SwiftWren 接收者排序图">
+        <figcaption><b>Q1 图 5。</b>SwiftWren relay 中的重要 Agent 终点，包括多次到达 John。<a class="evidence-link" href="rebuild/q1_zh.html?mode=review#p-walk">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/17_q1_department_flow_heatmap.png" alt="SwiftWren department flow heatmap">
-        <figcaption><b>Q1 图 6。</b>部门间 relay 计数将目标链放入组织系统背景中解释。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/17_q1_department_flow_heatmap.png" alt="SwiftWren 部门流向热力图">
+        <figcaption><b>Q1 图 6。</b>部门间 relay 计数将目标链放入组织系统背景中解释。<a class="evidence-link" href="rebuild/q1_zh.html?mode=review#p-dept">查看证据视图</a></figcaption>
       </figure>
     </div>
   </section>
@@ -140,28 +143,28 @@
     <p><a href="rebuild/q2_zh.html">打开 Q2 交互页面</a></p>
     <div class="figure-grid">
       <figure>
-        <img src="rebuild/figure_gallery_statistical/19_q2_provenance_completeness_heatmap.png" alt="Provenance completeness heatmap">
-        <figcaption><b>Q2 图 1。</b>完整性矩阵区分可观察来源链接和缺失的上游证据。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/19_q2_provenance_completeness_heatmap.png" alt="溯源证据完整性热力图">
+        <figcaption><b>Q2 图 1。</b>完整性矩阵区分可观察来源链接和缺失的上游证据。<a class="evidence-link" href="rebuild/q2_zh.html?mode=review#p-confidence">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/24_q2_post_source_field_composition.png" alt="Post source field composition">
-        <figcaption><b>Q2 图 2。</b>SaidIt 字段分布说明异常帖子是文件源事件，不是普通论坛文本。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/24_q2_post_source_field_composition.png" alt="帖子来源字段组成图">
+        <figcaption><b>Q2 图 2。</b>SaidIt 字段分布说明异常帖子是文件源事件，不是普通论坛文本。<a class="evidence-link" href="rebuild/q2_zh.html?mode=review#p-reasoning">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/21_q2_source_to_post_lag_bar.png" alt="Source to post lag">
-        <figcaption><b>Q2 图 3。</b>source-to-post 时间差将上游文档行为与下游公开发帖联系起来。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/21_q2_source_to_post_lag_bar.png" alt="来源到发帖时间差图">
+        <figcaption><b>Q2 图 3。</b>source-to-post 时间差将上游文档行为与下游公开发帖联系起来。<a class="evidence-link" href="rebuild/q2_zh.html?mode=review#p-provenance">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/22_q2_evidence_certainty_stacked.png" alt="Evidence certainty stacked bar">
-        <figcaption><b>Q2 图 4。</b>证据确定性计数避免过度声称 exact text、动机或缺失来源。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/22_q2_evidence_certainty_stacked.png" alt="证据确定性堆叠条形图">
+        <figcaption><b>Q2 图 4。</b>证据确定性计数避免过度声称 exact text、动机或缺失来源。<a class="evidence-link" href="rebuild/q2_zh.html?mode=review#p-confidence">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/26_q2_claim_boundary_matrix.png" alt="Claim boundary matrix">
-        <figcaption><b>Q2 图 5。</b>claim boundary matrix 标注哪些解释是 observed、inferred 或 unknown。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/26_q2_claim_boundary_matrix.png" alt="结论边界矩阵">
+        <figcaption><b>Q2 图 5。</b>claim boundary matrix 标注哪些解释是 observed、inferred 或 unknown。<a class="evidence-link" href="rebuild/q2_zh.html?mode=review#p-boundary">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/27_q2_source_actor_department_bar.png" alt="Source actor department bar">
-        <figcaption><b>Q2 图 6。</b>来源人员与部门为可见 payload 的可能主题提供上下文支持。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/27_q2_source_actor_department_bar.png" alt="来源人员与部门条形图">
+        <figcaption><b>Q2 图 6。</b>来源人员与部门为可见 payload 的可能主题提供上下文支持。<a class="evidence-link" href="rebuild/q2_zh.html?mode=review#p-provenance">查看证据视图</a></figcaption>
       </figure>
     </div>
   </section>
@@ -173,28 +176,28 @@
     <p><a href="rebuild/q3_zh.html">打开 Q3 交互页面</a></p>
     <div class="figure-grid">
       <figure>
-        <img src="rebuild/figure_gallery_statistical/28_q3_recurrence_post_timeline.png" alt="Recurrence post timeline">
-        <figcaption><b>Q3 图 1。</b>三条文件源 SaidIt 帖子说明这是重复机制，不是一次性故障。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/28_q3_recurrence_post_timeline.png" alt="复发发帖时间线">
+        <figcaption><b>Q3 图 1。</b>三条文件源 SaidIt 帖子说明这是重复机制，不是一次性故障。<a class="evidence-link" href="rebuild/q3_zh.html?mode=review#p-prior">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/29_q3_incident_scale_dotplot.png" alt="Incident scale dot plot">
-        <figcaption><b>Q3 图 2。</b>事件规模对比显示 SwiftWren 是范围最大的复现。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/29_q3_incident_scale_dotplot.png" alt="事件规模点图">
+        <figcaption><b>Q3 图 2。</b>事件规模对比显示 SwiftWren 是范围最大的复现。<a class="evidence-link" href="rebuild/q3_zh.html?mode=review#p-scale">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/31_q3_intervention_scatter.png" alt="Intervention scatter">
-        <figcaption><b>Q3 图 3。</b>候选干预按 false positives 和 affected records 进行比较。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/30_q3_anomaly_ratio_bar.png" alt="异常比例条形图">
+        <figcaption><b>Q3 图 3。</b>文件源发帖在 SaidIt 基线中很少见，因此连续出现三次具有运维意义。<a class="evidence-link" href="rebuild/q3_zh.html?mode=review#p-base">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/33_q3_gate_confusion_matrix.png" alt="Gate confusion matrix">
-        <figcaption><b>Q3 图 4。</b>SaidIt content-source gate 捕获所有已观测异常帖子，且普通帖观测误伤为 0。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/33_q3_gate_confusion_matrix.png" alt="边界规则混淆矩阵">
+        <figcaption><b>Q3 图 4。</b>SaidIt content-source gate 捕获所有已观测异常帖子，且普通帖观测误伤为 0。<a class="evidence-link" href="rebuild/q3_zh.html?mode=review#p-fix">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/34_q3_rule_tradeoff_matrix.png" alt="Rule tradeoff matrix">
-        <figcaption><b>Q3 图 5。</b>tradeoff matrix 解释为什么边界 gate 是推荐的唯一干预。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/32_q3_affected_records_log_bar.png" alt="受影响记录对数条形图">
+        <figcaption><b>Q3 图 5。</b>宽泛拦截 relay 会影响更多正常记录，因此不如 SaidIt 边界规则稳妥。<a class="evidence-link" href="rebuild/q3_zh.html?mode=review#p-parallel">查看证据视图</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/36_q3_shared_agent_intersections.png" alt="Shared agent intersections">
-        <figcaption><b>Q3 图 6。</b>Shared-Agent intersections 展示三起事件中的重复参与模式。</figcaption>
+        <img src="rebuild/figure_gallery_statistical/34_q3_rule_tradeoff_matrix.png" alt="规则权衡矩阵">
+        <figcaption><b>Q3 图 6。</b>规则权衡矩阵解释为什么边界 gate 是推荐的唯一干预。<a class="evidence-link" href="rebuild/q3_zh.html?mode=review#p-fix">查看证据视图</a></figcaption>
       </figure>
     </div>
   </section>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -51,30 +51,30 @@
       <section class="panel core" id="p-eda">
         <div class="head"><h2>EDA Answer Path: six figures for Q1</h2><span class="sub">baseline -> anomaly signature -> exact chain -> system context</span></div>
         <p class="desc">These figures answer the two required Q1 views separately: the first two contextualize the message chain in the overall system, and the last four focus on the target SwiftWren chain.</p>
-        <div class="figure-grid">
-          <figure class="eda-figure">
+        <div class="figure-grid figure-stack">
+          <figure class="eda-figure" data-target-panel="p-investigation">
             <img src="./figure_gallery_statistical/06_overview_saidit_source_stacked.png" alt="SaidIt source-field composition">
-            <figcaption><b>1. SaidIt baseline.</b> Normal posts overwhelmingly use ordinary <code>content</code>; the rare <code>content_source</code> branch defines the mechanism to inspect.</figcaption>
+            <figcaption><span class="figure-kicker">Figure 1 / Baseline</span><span class="figure-takeaway">The target is unusual because SaidIt normally receives ordinary <code>content</code>, not file-backed <code>content_source</code>.</span><span class="figure-evidence">Data basis: all 108 SaidIt posts; 105 human content posts versus 3 Agent file-source posts.</span></figcaption>
           </figure>
-          <figure class="eda-figure">
+          <figure class="eda-figure" data-target-panel="p-investigation">
             <img src="./figure_gallery_statistical/09_q1_task_targeting_funnel.png" alt="Task-driven targeting funnel">
-            <figcaption><b>2. Task-driven targeting.</b> We start from SaidIt because the official clue names SaidIt, John Windward, and the May 17 04:21 target time.</figcaption>
+            <figcaption><span class="figure-kicker">Figure 2 / Filter Path</span><span class="figure-takeaway">The investigation starts from SaidIt because the prompt names the platform, actor, and time; the funnel shows how the target subset is isolated.</span><span class="figure-evidence">Data basis: event type, actor type, timestamp, and `details.content_source` fields.</span></figcaption>
           </figure>
-          <figure class="eda-figure">
+          <figure class="eda-figure" data-target-panel="p-walk">
             <img src="./figure_gallery_statistical/10_q1_incident_metric_dotplot.png" alt="Incident metric dot plot">
-            <figcaption><b>3. System context.</b> SwiftWren is largest across relay hops, cross-department hops, and John arrivals.</figcaption>
+            <figcaption><span class="figure-kicker">Figure 3 / System Context</span><span class="figure-takeaway">SwiftWren is not just the target by prompt; it is also the largest observed file-source chain.</span><span class="figure-evidence">Data basis: per-incident hop count, distinct Agents, departments, cross-department hops, and John arrivals.</span></figcaption>
           </figure>
-          <figure class="eda-figure">
+          <figure class="eda-figure" data-target-panel="p-recipe">
             <img src="./figure_gallery_statistical/18_q1_terminal_recipe_timeline.png" alt="Terminal recipe timeline">
-            <figcaption><b>4. Exact terminal chain.</b> John Agent receives the relay, checks SaidIt, posts the file source, and deletes both files.</figcaption>
+            <figcaption><span class="figure-kicker">Figure 4 / Exact Chain</span><span class="figure-takeaway">The last seconds form a five-step terminal recipe: relay arrival, post check, file-source post, instruction delete, payload delete.</span><span class="figure-evidence">Data basis: event ids around the May 17 04:21 target post.</span></figcaption>
           </figure>
-          <figure class="eda-figure">
+          <figure class="eda-figure" data-target-panel="p-walk">
             <img src="./figure_gallery_statistical/15_q1_swiftwren_receiver_rank.png" alt="SwiftWren receiver rank bar chart">
-            <figcaption><b>5. Important people/Agents.</b> Receiver counts highlight repeated relay endpoints and John as the terminal posting endpoint.</figcaption>
+            <figcaption><span class="figure-kicker">Figure 5 / Important Agents</span><span class="figure-takeaway">Receiver counts summarize the 186-hop swimlane and identify repeated relay endpoints without forcing the reader to inspect every hop.</span><span class="figure-evidence">Data basis: `queue_subordinate_task` sender/receiver pairs carrying `SwiftWren_further_instructions.md`.</span></figcaption>
           </figure>
-          <figure class="eda-figure">
+          <figure class="eda-figure" data-target-panel="p-dept">
             <img src="./figure_gallery_statistical/17_q1_department_flow_heatmap.png" alt="SwiftWren department flow heatmap">
-            <figcaption><b>6. Important system interactions.</b> Department-to-department flow shows the relay crossing organizational boundaries before SaidIt publication.</figcaption>
+            <figcaption><span class="figure-kicker">Figure 6 / System Interactions</span><span class="figure-takeaway">The chain crosses organizational boundaries, so the event is better described as a system relay failure than as a single-person posting action.</span><span class="figure-evidence">Data basis: `org_chart.json` department mapping joined to relay sender and receiver Agents.</span></figcaption>
           </figure>
         </div>
       </section>
@@ -137,3 +137,6 @@
 <script src="./assets/q1.js"></script>
 </body>
 </html>
+
+
+

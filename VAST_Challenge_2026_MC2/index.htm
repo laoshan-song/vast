@@ -78,6 +78,7 @@
     }
     figure img { width: 100%; display: block; }
     figcaption { padding: 10px 12px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+    figcaption a.evidence-link { display: inline-block; margin-top: 6px; font-weight: 750; }
     .figure-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
@@ -115,12 +116,14 @@
   <section>
     <h2>Tools Used</h2>
     <ul>
-      <li>Python 3 for event extraction, aggregation, and derived MC2 visualization data.</li>
-      <li>HTML, CSS, and vanilla JavaScript with inline SVG for the interactive visual analytics system.</li>
-      <li>Playwright / Microsoft Edge for screenshot QA, interaction checks, and layout verification.</li>
+      <li>Python 3 and <code>rebuild/extract_data.py</code> for event extraction, aggregation, and derived MC2 visualization data.</li>
+      <li>HTML, CSS, vanilla JavaScript, and custom SVG rendering for the interactive visual analytics system.</li>
+      <li>PNG statistical figure gallery for EDA-style descriptive charts embedded in Overview and Q1-Q3.</li>
+      <li>Playwright / <code>playwright-core</code> with Microsoft Edge for screenshot QA, interaction checks, layout verification, and figure lightbox tests.</li>
       <li>Git and GitHub Pages for version control and web publication.</li>
       <li>OpenAI Codex / ChatGPT for coding assistance, review, and wording checks; analytical claims were constrained to the provided logs and derived data.</li>
     </ul>
+    <p class="muted">The final <code>rebuild/</code> pages are self-contained and do not require Tableau, Vega-Lite, or a D3 runtime. Older D3 prototypes are development artifacts, not the canonical review path.</p>
   </section>
 
   <section>
@@ -131,27 +134,27 @@
     <div class="figure-grid">
       <figure>
         <img src="rebuild/figure_gallery_statistical/06_overview_saidit_source_stacked.png" alt="SaidIt source-field composition">
-        <figcaption><b>Q1 Figure 1.</b> SaidIt baseline: ordinary posts use <code>content</code>; the anomalous branch uses <code>content_source</code>.</figcaption>
+        <figcaption><b>Q1 Figure 1.</b> SaidIt baseline: ordinary posts use <code>content</code>; the anomalous branch uses <code>content_source</code>. <a class="evidence-link" href="rebuild/q1.html?mode=review#p-investigation">Open evidence view</a></figcaption>
       </figure>
       <figure>
         <img src="rebuild/figure_gallery_statistical/09_q1_task_targeting_funnel.png" alt="Task-driven targeting funnel">
-        <figcaption><b>Q1 Figure 2.</b> The prompt clue narrows the search from all events to the John/SaidIt target event.</figcaption>
+        <figcaption><b>Q1 Figure 2.</b> The prompt clue narrows the search from all events to the John/SaidIt target event. <a class="evidence-link" href="rebuild/q1.html?mode=review#p-investigation">Open evidence view</a></figcaption>
       </figure>
       <figure>
         <img src="rebuild/figure_gallery_statistical/10_q1_incident_metric_dotplot.png" alt="Incident metric dot plot">
-        <figcaption><b>Q1 Figure 3.</b> SwiftWren is the largest file-source incident by relay hops, Agents, departments, and John arrivals.</figcaption>
+        <figcaption><b>Q1 Figure 3.</b> SwiftWren is the largest file-source incident by relay hops, Agents, departments, and John arrivals. <a class="evidence-link" href="rebuild/q1.html?mode=review#p-walk">Open evidence view</a></figcaption>
       </figure>
       <figure>
         <img src="rebuild/figure_gallery_statistical/18_q1_terminal_recipe_timeline.png" alt="Terminal recipe timeline">
-        <figcaption><b>Q1 Figure 4.</b> Terminal sequence: relay arrival, SaidIt check, file-source post, and cleanup deletes.</figcaption>
+        <figcaption><b>Q1 Figure 4.</b> Terminal sequence: relay arrival, SaidIt check, file-source post, and cleanup deletes. <a class="evidence-link" href="rebuild/q1.html?mode=review#p-recipe">Open evidence view</a></figcaption>
       </figure>
       <figure>
         <img src="rebuild/figure_gallery_statistical/15_q1_swiftwren_receiver_rank.png" alt="SwiftWren receiver rank">
-        <figcaption><b>Q1 Figure 5.</b> Important Agent endpoints in the SwiftWren relay, including repeated arrivals at John.</figcaption>
+        <figcaption><b>Q1 Figure 5.</b> Important Agent endpoints in the SwiftWren relay, including repeated arrivals at John. <a class="evidence-link" href="rebuild/q1.html?mode=review#p-walk">Open evidence view</a></figcaption>
       </figure>
       <figure>
         <img src="rebuild/figure_gallery_statistical/17_q1_department_flow_heatmap.png" alt="SwiftWren department flow heatmap">
-        <figcaption><b>Q1 Figure 6.</b> Department-to-department relay counts contextualize the chain inside the broader system.</figcaption>
+        <figcaption><b>Q1 Figure 6.</b> Department-to-department relay counts contextualize the chain inside the broader system. <a class="evidence-link" href="rebuild/q1.html?mode=review#p-dept">Open evidence view</a></figcaption>
       </figure>
     </div>
   </section>
@@ -165,27 +168,27 @@
     <div class="figure-grid">
       <figure>
         <img src="rebuild/figure_gallery_statistical/19_q2_provenance_completeness_heatmap.png" alt="Provenance completeness heatmap">
-        <figcaption><b>Q2 Figure 1.</b> Completeness matrix separates observed source links from missing upstream evidence.</figcaption>
+        <figcaption><b>Q2 Figure 1.</b> Completeness matrix separates observed source links from missing upstream evidence. <a class="evidence-link" href="rebuild/q2.html?mode=review#p-confidence">Open evidence view</a></figcaption>
       </figure>
       <figure>
         <img src="rebuild/figure_gallery_statistical/24_q2_post_source_field_composition.png" alt="Post source field composition">
-        <figcaption><b>Q2 Figure 2.</b> SaidIt post fields show why the anomalous posts are file-source events, not normal forum text.</figcaption>
+        <figcaption><b>Q2 Figure 2.</b> SaidIt post fields show why the anomalous posts are file-source events, not normal forum text. <a class="evidence-link" href="rebuild/q2.html?mode=review#p-reasoning">Open evidence view</a></figcaption>
       </figure>
       <figure>
         <img src="rebuild/figure_gallery_statistical/21_q2_source_to_post_lag_bar.png" alt="Source to post lag">
-        <figcaption><b>Q2 Figure 3.</b> Source-to-post lag links upstream document activity to downstream public posts when evidence exists.</figcaption>
+        <figcaption><b>Q2 Figure 3.</b> Source-to-post lag links upstream document activity to downstream public posts when evidence exists. <a class="evidence-link" href="rebuild/q2.html?mode=review#p-provenance">Open evidence view</a></figcaption>
       </figure>
       <figure>
         <img src="rebuild/figure_gallery_statistical/22_q2_evidence_certainty_stacked.png" alt="Evidence certainty stacked bar">
-        <figcaption><b>Q2 Figure 4.</b> Evidence certainty counts prevent overclaiming exact text, motive, or missing source documents.</figcaption>
+        <figcaption><b>Q2 Figure 4.</b> Evidence certainty counts prevent overclaiming exact text, motive, or missing source documents. <a class="evidence-link" href="rebuild/q2.html?mode=review#p-confidence">Open evidence view</a></figcaption>
       </figure>
       <figure>
         <img src="rebuild/figure_gallery_statistical/26_q2_claim_boundary_matrix.png" alt="Claim boundary matrix">
-        <figcaption><b>Q2 Figure 5.</b> Claim boundary matrix marks which interpretations are observed, inferred, or unknown.</figcaption>
+        <figcaption><b>Q2 Figure 5.</b> Claim boundary matrix marks which interpretations are observed, inferred, or unknown. <a class="evidence-link" href="rebuild/q2.html?mode=review#p-boundary">Open evidence view</a></figcaption>
       </figure>
       <figure>
         <img src="rebuild/figure_gallery_statistical/27_q2_source_actor_department_bar.png" alt="Source actor department bar">
-        <figcaption><b>Q2 Figure 6.</b> Source actors and departments support the probable content themes for visible payload origins.</figcaption>
+        <figcaption><b>Q2 Figure 6.</b> Source actors and departments support the probable content themes for visible payload origins. <a class="evidence-link" href="rebuild/q2.html?mode=review#p-provenance">Open evidence view</a></figcaption>
       </figure>
     </div>
   </section>
@@ -198,27 +201,27 @@
     <div class="figure-grid">
       <figure>
         <img src="rebuild/figure_gallery_statistical/28_q3_recurrence_post_timeline.png" alt="Recurrence post timeline">
-        <figcaption><b>Q3 Figure 1.</b> Three file-source SaidIt posts show recurrence rather than a one-off failure.</figcaption>
+        <figcaption><b>Q3 Figure 1.</b> Three file-source SaidIt posts show recurrence rather than a one-off failure. <a class="evidence-link" href="rebuild/q3.html?mode=review#p-prior">Open evidence view</a></figcaption>
       </figure>
       <figure>
         <img src="rebuild/figure_gallery_statistical/29_q3_incident_scale_dotplot.png" alt="Incident scale dot plot">
-        <figcaption><b>Q3 Figure 2.</b> Incident scale comparison shows SwiftWren as the broadest recurrence of the pattern.</figcaption>
+        <figcaption><b>Q3 Figure 2.</b> Incident scale comparison shows SwiftWren as the broadest recurrence of the pattern. <a class="evidence-link" href="rebuild/q3.html?mode=review#p-scale">Open evidence view</a></figcaption>
       </figure>
       <figure>
-        <img src="rebuild/figure_gallery_statistical/31_q3_intervention_scatter.png" alt="Intervention scatter">
-        <figcaption><b>Q3 Figure 3.</b> Candidate interventions are compared by false positives and affected records.</figcaption>
+        <img src="rebuild/figure_gallery_statistical/30_q3_anomaly_ratio_bar.png" alt="Anomaly ratio bar">
+        <figcaption><b>Q3 Figure 3.</b> File-source posts are rare in the SaidIt baseline, making three repeated cases operationally meaningful. <a class="evidence-link" href="rebuild/q3.html?mode=review#p-base">Open evidence view</a></figcaption>
       </figure>
       <figure>
         <img src="rebuild/figure_gallery_statistical/33_q3_gate_confusion_matrix.png" alt="Gate confusion matrix">
-        <figcaption><b>Q3 Figure 4.</b> SaidIt content-source gate catches all observed anomalous posts with zero observed normal-post hits.</figcaption>
+        <figcaption><b>Q3 Figure 4.</b> SaidIt content-source gate catches all observed anomalous posts with zero observed normal-post hits. <a class="evidence-link" href="rebuild/q3.html?mode=review#p-fix">Open evidence view</a></figcaption>
+      </figure>
+      <figure>
+        <img src="rebuild/figure_gallery_statistical/32_q3_affected_records_log_bar.png" alt="Affected records log bar">
+        <figcaption><b>Q3 Figure 5.</b> Broad relay controls touch far more records than the SaidIt boundary gate. <a class="evidence-link" href="rebuild/q3.html?mode=review#p-parallel">Open evidence view</a></figcaption>
       </figure>
       <figure>
         <img src="rebuild/figure_gallery_statistical/34_q3_rule_tradeoff_matrix.png" alt="Rule tradeoff matrix">
-        <figcaption><b>Q3 Figure 5.</b> Tradeoff matrix explains why the boundary gate is the recommended single intervention.</figcaption>
-      </figure>
-      <figure>
-        <img src="rebuild/figure_gallery_statistical/36_q3_shared_agent_intersections.png" alt="Shared agent intersections">
-        <figcaption><b>Q3 Figure 6.</b> Shared-Agent intersections show repeated involvement patterns across incidents.</figcaption>
+        <figcaption><b>Q3 Figure 6.</b> Tradeoff matrix explains why the boundary gate is the recommended single intervention. <a class="evidence-link" href="rebuild/q3.html?mode=review#p-fix">Open evidence view</a></figcaption>
       </figure>
     </div>
   </section>

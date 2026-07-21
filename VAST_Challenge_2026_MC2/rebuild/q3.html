@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -34,6 +34,37 @@
         <div class="head"><h2>Official Answer Draft</h2><span class="sub">concise Q3 response supported by Figures A-F</span></div>
         <p class="desc">This behavior has already repeated. Before the May 17 SwiftWren target event, two prior file-source SaidIt incidents appear in the logs: HiddenOrca on May 10 at 05:45:42 and MellowOtter on May 10 at 17:56:04. All three incidents share the same terminal mechanism: a relay reaches John Windward's Agent, the Agent performs <code>saidit_post_check</code>, posts to SaidIt with <code>details.content_source</code>, and immediately deletes the instruction and payload files. Their upstream paths differ in scale and visibility, so the issue is not a single filename or a single source document.</p>
         <p class="desc">The strongest single intervention is a SaidIt boundary gate: block or require approval for Agent-initiated <code>saidit_post</code> events that include <code>details.content_source</code>. In the observed data this covers all three file-source anomalies and creates zero observed false positives among the 105 normal human <code>content</code> posts. Broader relay blocking affects many normal automation records, filename rules are easy to bypass, John-only permission removal is endpoint-specific, and delete-file alerts arrive after public exposure.</p>
+      </section>
+
+      <section class="panel core" id="p-stat-evidence">
+        <div class="head"><h2>A0: Recurrence and Intervention Statistics</h2><span class="sub">descriptive evidence before the decision table</span></div>
+        <p class="desc">These six figures make the Q3 answer auditable: first prove recurrence with prior posts and scale comparison, then prove the selected boundary rule with anomaly ratio, affected-record counts, confusion matrix, and rule tradeoffs.</p>
+        <div class="figure-grid figure-stack">
+          <figure class="eda-figure" data-target-panel="p-prior">
+            <img src="./figure_gallery_statistical/28_q3_recurrence_post_timeline.png" alt="Recurrence post timeline">
+            <figcaption><span class="figure-kicker">Figure 1 / Prior Issues</span><span class="figure-takeaway">HiddenOrca and MellowOtter occur before SwiftWren, so the May 17 target is the latest instance of a repeated pattern.</span><span class="figure-evidence">Data basis: all three `saidit_post` events with `details.content_source`.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-scale">
+            <img src="./figure_gallery_statistical/29_q3_incident_scale_dotplot.png" alt="Incident scale dot plot">
+            <figcaption><span class="figure-kicker">Figure 2 / Scale Contrast</span><span class="figure-takeaway">The three incidents share a terminal mechanism but differ in scale; SwiftWren is the largest relay chain.</span><span class="figure-evidence">Data basis: relay hops, distinct Agents, departments touched, cross-department hops, and John arrivals.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-base">
+            <img src="./figure_gallery_statistical/30_q3_anomaly_ratio_bar.png" alt="Anomaly ratio bar">
+            <figcaption><span class="figure-kicker">Figure 3 / Rarity</span><span class="figure-takeaway">File-source posts are rare in the SaidIt baseline, which is why the repeated 3-post pattern is operationally meaningful.</span><span class="figure-evidence">Data basis: 3 Agent `content_source` posts out of 108 total SaidIt posts.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-fix">
+            <img src="./figure_gallery_statistical/33_q3_gate_confusion_matrix.png" alt="Gate confusion matrix">
+            <figcaption><span class="figure-kicker">Figure 4 / Selected Rule</span><span class="figure-takeaway">The SaidIt boundary gate covers 3/3 observed anomalies and has 0/105 observed false positives among normal human posts.</span><span class="figure-evidence">Data basis: actor type and `saidit_post.details.content_source` across all SaidIt posts.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-parallel">
+            <img src="./figure_gallery_statistical/32_q3_affected_records_log_bar.png" alt="Affected records log bar">
+            <figcaption><span class="figure-kicker">Figure 5 / Operational Cost</span><span class="figure-takeaway">Broad relay controls touch far more records than the boundary gate, making them less defensible as the single intervention.</span><span class="figure-evidence">Data basis: derived affected-record counts for candidate rules; log scale avoids hiding small but important counts.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-fix">
+            <img src="./figure_gallery_statistical/34_q3_rule_tradeoff_matrix.png" alt="Rule tradeoff matrix">
+            <figcaption><span class="figure-kicker">Figure 6 / Decision Tradeoff</span><span class="figure-takeaway">The recommended rule is the strongest single point because it combines full observed coverage, zero observed human-post false positives, and pre-publication timing.</span><span class="figure-evidence">Data basis: coverage, false positives, affected records, and timing for five candidate intervention rules.</span></figcaption>
+          </figure>
+        </div>
       </section>
 
       <section class="panel core" id="p-base">
@@ -96,3 +127,6 @@
 <script src="./assets/q3.js"></script>
 </body>
 </html>
+
+
+
