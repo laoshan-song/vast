@@ -179,14 +179,14 @@
         `${r.observed} obs / ${r.inferred} inf / ${r.unknown} unk`);
     });
 
-    const x2 = ml + barW + 178;
+    const x2 = ml + barW + 190;
     const chartW = W - x2 - mr;
     const metrics = [
       { key: "size", label: "payload bytes", color: "var(--purple)", max: Math.max(...certRows.map((r) => r.size), 1), fmt: (v) => v ? v.toLocaleString() : "unknown" },
       { key: "hops", label: "relay hops", color: "var(--info)", max: Math.max(...certRows.map((r) => r.hops), 1), fmt: (v) => v.toLocaleString() },
       { key: "john", label: "John arrivals", color: "var(--anom)", max: Math.max(...certRows.map((r) => r.john), 1), fmt: (v) => v.toLocaleString() },
     ];
-    add(svg, "text", { x: x2, y: mt - 22, "font-size": 12.5, "font-weight": 900 }, "Numeric scale checks");
+    add(svg, "text", { x: x2, y: mt - 22, "font-size": 12.5, "font-weight": 900 }, "Scale checks");
     metrics.forEach((m, mi) => {
       const y0 = mt + 20 + mi * 112;
       add(svg, "text", { x: x2, y: y0 - 14, "font-size": 11.8, "font-weight": 900, fill: m.color }, m.label);
@@ -205,7 +205,7 @@
       });
     });
     add(svg, "text", { x: 34, y: H - 16, "font-size": 11.5, fill: "#526174" },
-      "Reading: Q2 has enough observed evidence to identify two sources, but one incident still has numeric unknowns; the chart prevents overclaiming.");
+      "Reading: two sources are supported; HiddenOrca still has numeric unknowns.");
   }
 
   function drawSourceFieldScan() {
@@ -226,7 +226,7 @@
     const targetText = target
       ? `Prompt clue -> SaidIt post id ${target.id} / John Windward Agent / ${target.when_local} / ${target.file}`
       : "Prompt clue -> SaidIt post not found in compact index";
-    add(svg, "text", { x: 38, y: 62, "font-size": 11.7, "font-weight": 800, fill: target ? "var(--anom)" : "var(--dim)" }, targetText);
+    add(svg, "text", { x: 38, y: 62, "font-size": 11.7, "font-weight": 800, fill: target ? "var(--anom)" : "var(--dim)" }, shortText(targetText, 60));
     add(svg, "text", { x: 38, y: 78, "font-size": 10.9, fill: "#526174" },
       "Only after locating the target event do we compare its body field against all SaidIt posts.");
 
@@ -275,7 +275,7 @@
       });
     });
     add(svg, "text", { x: 24, y: H - 14, "font-size": 11.3, fill: "#526174" },
-      "Result: the target belongs to the only Agent + content_source cluster, so Q2 traces payload files instead of treating the text as normal content.");
+      "Result: the target is the only Agent + content_source cluster; Q2 traces payload files.");
   }
 
   function drawPayloadBacktrace() {
@@ -393,7 +393,7 @@
           fill: "none", stroke: "var(--warn)", "stroke-width": 1.8 });
         add(svg, "text", { x: (sx + cx) / 2, y: y - 45, "text-anchor": "middle",
           "font-size": 10.8, "font-weight": 850, fill: "var(--warn)" }, `${delta}s gap`);
-        const sourceLabel = `${name(I.source_doc.read_by).split(" ")[0]} / ${I.source_doc.name}`;
+        const sourceLabel = `${name(I.source_doc.read_by).split(" ")[0]} / source`;
         const createLabel = `${code}.txt`;
         add(svg, "text", { x: sx, y: y + 26, "text-anchor": "middle", "font-size": 9.8,
           "font-weight": 800, fill: "#526174" }, shortText(sourceLabel, 21));
@@ -412,9 +412,9 @@
       ["observed internal event", "var(--ok)"],
       ["public post", "var(--anom)"],
       ["cleanup", "var(--info)"],
-      ["missing from window", "var(--dim)"],
+      ["missing", "var(--dim)"],
     ].forEach(([lab, col], i) => {
-      const lx = ml + i * 175;
+      const lx = ml + i * 155;
       add(svg, "circle", { cx: lx, cy: H - 22, r: 5, fill: col, opacity: lab.startsWith("missing") ? .45 : 1 });
       add(svg, "text", { x: lx + 10, y: H - 18, "font-size": 11.4, fill: "#526174" }, lab);
     });
@@ -530,7 +530,7 @@
           fill: "none", stroke: unavailable ? "var(--dim)" : isInference ? "var(--warn)" : "#4b9ad8",
           "stroke-width": unavailable ? 1.7 : 2.5, "stroke-dasharray": unavailable || isInference ? "6 5" : "none",
           opacity: unavailable ? .55 : .78 });
-        add(svg, "text", { x: (x1 + x2) / 2, y: isInference ? y - 30 : y - 12, "text-anchor": "middle", "font-size": 10.3,
+        add(svg, "text", { x: (x1 + x2) / 2, y: isInference ? y - 36 : y - 22, "text-anchor": "middle", "font-size": 10.3,
           fill: unavailable ? "var(--dim)" : isInference ? "var(--warn)" : "#526174" },
           unavailable ? "not visible" : isInference ? "inferred" : "logged link");
       }
@@ -590,7 +590,7 @@
     const rh = 52;
     add(svg, "text", { x: ml, y: 24, "font-size": 13, "font-weight": 800 }, "Evidence confidence by incident");
     add(svg, "text", { x: ml, y: 43, "font-size": 11.5, fill: "#526174" },
-      "Click a cell to inspect the supporting event evidence; gray cells are deliberately not filled with speculation.");
+      "Click a cell to inspect evidence; gray cells remain deliberately unknown.");
     cols.forEach((col, i) => {
       const x = ml + i * cw + cw / 2;
       add(svg, "text", { x, y: mt - 15, "text-anchor": "middle", "font-size": 10.6, fill: "#526174" }, col);
@@ -696,7 +696,7 @@
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     add(svg, "text", { x: 36, y: 24, "font-size": 13.5, "font-weight": 900 }, "Claim support DAG");
     add(svg, "text", { x: 36, y: 45, "font-size": 11.8, fill: "#526174" },
-      "Left nodes are observed log facts. Right nodes are Q2 conclusions. Dashed links mark inference rather than direct observation.");
+      "Observed facts support Q2 claims; dashed links mark inference.");
 
     const evidenceNodes = [
       { key: "field", label: "3/108 posts use content_source", sub: "observed SaidIt field scan", x: W * .18, y: mt + 18, status: "observed" },
@@ -918,16 +918,43 @@
     guardrailRows.forEach((row) => grouped[row[3]].push(row));
     lanes.forEach((lane) => {
       grouped[lane.key].forEach(([kind, claim, reason], i) => {
-        const y = mt + 18 + i * 66;
-        const rect = add(svg, "rect", { x: lane.x + 10, y, width: laneW - 20, height: 54, rx: 7,
+        const y = mt + 18 + i * 94;
+        const cardH = 86;
+        const rect = add(svg, "rect", { x: lane.x + 10, y, width: laneW - 20, height: cardH, rx: 7,
           fill: "#fff", stroke: lane.color, "stroke-width": lane.key === "unknown" ? 1.2 : 1.7,
           "stroke-dasharray": lane.key === "unknown" ? "5 4" : "none" });
         rect.addEventListener("mousemove", (ev) => showTip(`<div class="tt-h">${esc(kind)}</div><div class="tt-r">${esc(claim)}</div><div class="tt-r">${esc(reason)}</div>`, ev));
         rect.addEventListener("mouseleave", hideTip);
-        add(svg, "text", { x: lane.x + 22, y: y + 20, "font-size": 10.8,
-          "font-weight": 900, fill: lane.color }, shortText(claim, 36));
-        add(svg, "text", { x: lane.x + 22, y: y + 39, "font-size": 9.7,
-          fill: "#63748a" }, shortText(reason, 44));
+        // SVG text does not wrap by itself. Split long claims into measured
+        // character lines so every label stays inside its evidence card.
+        const wrapLines = (value, maxChars) => {
+          const raw = String(value || "");
+          if (raw.length <= maxChars) return [raw];
+          const lines = [];
+          let rest = raw;
+          while (rest.length > maxChars) {
+            let cut = rest.lastIndexOf(" ", maxChars);
+            if (cut < Math.floor(maxChars * .55)) cut = maxChars;
+            lines.push(rest.slice(0, cut).trim());
+            rest = rest.slice(cut).trim();
+          }
+          if (rest) lines.push(rest);
+          return lines;
+        };
+        const addLines = (lines, y0, attrs, lineHeight) => {
+          const text = add(svg, "text", { x: lane.x + 22, y: y0, ...attrs });
+          lines.forEach((line, lineIndex) => {
+            add(text, "tspan", { x: lane.x + 22, dy: lineIndex ? lineHeight : 0 }, line);
+          });
+          return text;
+        };
+        const titleChars = Math.max(18, Math.floor((laneW - 54) / 6.1));
+        const reasonChars = Math.max(22, Math.floor((laneW - 42) / 5.25));
+        const titleLines = wrapLines(claim, titleChars);
+        const reasonLines = wrapLines(reason, reasonChars);
+        addLines(titleLines, y + 19, { "font-size": 10.4, "font-weight": 900, fill: lane.color }, 13);
+        const reasonY = y + 19 + titleLines.length * 13 + 7;
+        addLines(reasonLines, reasonY, { "font-size": 9.4, fill: "#63748a" }, 11.5);
       });
     });
     add(svg, "text", { x: 34, y: H - 14, "font-size": 11.5, fill: "#526174" },
@@ -946,7 +973,7 @@
     const counts = postFieldCounts();
     add(svg, "text", { x: 36, y: 24, "font-size": 13.5, "font-weight": 900 }, "Meaning model: what gibberish means in the logs");
     add(svg, "text", { x: 36, y: 45, "font-size": 11.8, fill: "#526174" },
-      "The evidence supports a field/source mismatch: ordinary posts contain text, while the anomalous posts submit file payloads as the post body.");
+      "Ordinary posts contain text; anomalous posts submit file payloads as the body.");
 
     const normalX = W * .25, anomX = W * .72;
     function fieldBox(cx, cy, title, rows, stroke, fill = "#f8fafc") {
@@ -1018,7 +1045,7 @@
       });
     });
     add(svg, "text", { x: 36, y: H - 18, "font-size": 11.5, fill: "#526174" },
-      "Interpretation: the posts mean internal files were posted through a file-source field; exact wording, encryption, and motive remain unsupported.");
+      "Interpretation: internal files use a file-source field; wording and motive remain unsupported.");
   }
 
   document.getElementById("gibberish").innerHTML = `

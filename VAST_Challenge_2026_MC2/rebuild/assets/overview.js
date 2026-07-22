@@ -156,8 +156,11 @@
         fill: isSaidIt ? "#172033" : "#526174", "font-weight": isSaidIt ? 700 : 400 }, k);
       const bar = add(svg, "rect", { x: ml, y: y + 2, width: Math.max(1, x(v) - ml), height: bh - 5,
         rx: 3, fill: col, opacity: isSaidIt ? 0.96 : 0.55 });
-      add(svg, "text", { x: Math.min(x(v) + 8, W - mr + 74), y: y + bh / 2 + 4, "font-size": 11.5, fill: "#526174",
-        "font-family": "var(--mono)" }, v.toLocaleString());
+      const value = v.toLocaleString();
+      const nearRight = x(v) + 8 + value.length * 7.2 > W - mr;
+      add(svg, "text", { x: nearRight ? W - mr - 2 : x(v) + 8, y: y + bh / 2 + 4,
+        "text-anchor": nearRight ? "end" : "start", "font-size": 11.5, fill: "#526174",
+        "font-family": "var(--mono)" }, value);
       bindTooltip(bar, `${k}: ${v.toLocaleString()} events`, `<div class="tt-h">${k}</div><div class="tt-r">${v.toLocaleString()} events</div>`);
     });
 
@@ -234,7 +237,8 @@
       const col = k.toLowerCase().includes("agent") ? "var(--warn)" : k === "person" ? "var(--ok)" : "var(--info)";
       add(svg, "text", { x: ml - 10, y: y + bh / 2 + 4, "text-anchor": "end", "font-size": 11.5, fill: "#526174" }, k);
       const bar = add(svg, "rect", { x: ml, y: y + 5, width: Math.max(1, x(v) - ml), height: bh - 10, rx: 4, fill: col, opacity: .78 });
-      add(svg, "text", { x: x(v) + 7, y: y + bh / 2 + 4, "font-size": 10.8, fill: "#526174", "font-family": "var(--mono)" }, v.toLocaleString());
+      add(svg, "text", { x: W - mr - 2, y: y + bh / 2 + 4, "text-anchor": "end",
+        "font-size": 10.8, fill: "#526174", "font-family": "var(--mono)" }, v.toLocaleString());
       bindTooltip(bar, `${k}: ${v}`, `<div class="tt-h">${k}</div><div class="tt-r">${v.toLocaleString()} appearances</div><div class="tt-r">${(v / total * 100).toFixed(2)}% of party appearances</div>`);
     });
   }
@@ -359,7 +363,7 @@
       });
     });
     add(svg, "text", { x: ml, y: H - 12, "font-size": 11.5, fill: "#526174" },
-      "Reading: content_source explains body origin; actor, post_check, cleanup, and file name corroborate the pattern.");
+      "Reading: content_source explains body origin; adjacent fields corroborate the pattern.");
   }
 
   function drawFileBars(svgId, title, entries, opts = {}) {
@@ -498,7 +502,8 @@
       add(svg, "line", { x1: xx, y1: mt, x2: xx, y2: H - mb + 5, stroke: "#d8e1ec", "stroke-width": .8 });
       if (daySeen.size % 6 === 1) {
         const nearRight = xx > W - mr - 36;
-        add(svg, "text", { x: nearRight ? xx - 3 : xx + 3, y: H - 28,
+        const labelY = H - 42 + (daySeen.size % 12 === 1 ? 0 : 14);
+        add(svg, "text", { x: nearRight ? xx - 3 : xx + 3, y: labelY,
           "text-anchor": nearRight ? "end" : "start", "font-size": 10.5, fill: "#63748a" }, day.slice(5));
       }
     });

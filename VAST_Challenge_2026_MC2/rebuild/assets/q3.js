@@ -80,15 +80,15 @@
     svg.setAttribute("height", H);
 
     const funnel = [
-      { label: "All SaidIt posts", value: b.total, sub: "observed posts", color: "var(--muted)" },
-      { label: "content_source posts", value: b.with_content_source, sub: "file-backed", color: "var(--anom)" },
-      { label: "John Agent endpoints", value: b.by_agent, sub: "same terminal poster", color: "var(--anom)" },
-      { label: "recurrence incidents", value: CODES.length, sub: "HiddenOrca, MellowOtter, SwiftWren", color: "var(--anom)" },
+      { label: "All SaidIt posts", displayLabel: "All SaidIt posts", value: b.total, sub: "observed posts", displaySub: "observed posts", color: "var(--muted)" },
+      { label: "content_source posts", displayLabel: "content_source", value: b.with_content_source, sub: "file-backed posts", displaySub: "file-backed posts", color: "var(--anom)" },
+      { label: "John Agent endpoints", displayLabel: "John Agent", value: b.by_agent, sub: "same terminal poster", displaySub: "terminal endpoints", color: "var(--anom)" },
+      { label: "recurrence incidents", displayLabel: "recurrence", value: CODES.length, sub: "HiddenOrca, MellowOtter, SwiftWren", displaySub: "3 codes", color: "var(--anom)" },
     ];
     const fw = (W - 76 - 76) / funnel.length;
     add(svg, "text", { x: 76, y: 24, "font-size": 13.5, "font-weight": 800 }, "Discovery path from prompt to recurrence");
     add(svg, "text", { x: 76, y: 44, "font-size": 11.8, fill: "#526174" },
-      "Start from the official SaidIt clue, scan post fields, isolate content_source posts, then test whether the terminal mechanism repeats.");
+      "Scan SaidIt fields, isolate content_source posts, then test whether the terminal mechanism repeats.");
     funnel.forEach((step, i) => {
       const x = 76 + i * fw;
       const y = 74;
@@ -103,8 +103,8 @@
       add(svg, "text", { x: x + 12, y: y + 24, "font-size": 11.5, "font-weight": 800, fill: "#526174" }, `step ${i + 1}`);
       add(svg, "text", { x: x + 12, y: y + 56, "font-size": 24, "font-weight": 900, fill: step.color,
         "font-family": "var(--mono)" }, step.value.toLocaleString());
-      add(svg, "text", { x: x + 12, y: y + 76, "font-size": 12, "font-weight": 800, fill: "#172033" }, step.label);
-      add(svg, "text", { x: x + 12, y: y + 92, "font-size": 10.5, fill: "#63748a" }, step.sub);
+      add(svg, "text", { x: x + 12, y: y + 76, "font-size": 12, "font-weight": 800, fill: "#172033" }, step.displayLabel || step.label);
+      add(svg, "text", { x: x + 12, y: y + 92, "font-size": 10.5, fill: "#63748a" }, step.displaySub || step.sub);
       if (i < funnel.length - 1) {
         const ax = x + boxW + 7;
         const ay = y + 48;
@@ -121,7 +121,7 @@
     const x = (v) => ml + (v / max) * (W - ml - mr);
     add(svg, "text", { x: ml, y: 192, "font-size": 13.5, "font-weight": 800 }, "Denominator-safe baseline comparison");
     add(svg, "text", { x: ml, y: 211, "font-size": 11.8, fill: "#526174" },
-      "Rows 1-2 use 108 SaidIt posts; row 3 uses 71 post_check events.");
+      "Rows 1-2 use 108 SaidIt posts; row 3 uses 71 checks.");
     rows.forEach((r, i) => {
       const y = mt + i * rowH + 22;
       add(svg, "text", { x: ml - 14, y: y + 13, "text-anchor": "end", "font-size": 12,
@@ -144,7 +144,7 @@
       });
     });
     add(svg, "text", { x: ml, y: H - 24, "font-size": 11.5, fill: "#526174" },
-      `${b.with_content_source}/${b.total} SaidIt posts use content_source; these are the three observed recurrence incidents.`);
+      `${b.with_content_source}/${b.total} SaidIt posts use content_source; all three are recurrence incidents.`);
   }
   document.getElementById("baseline").innerHTML = `
     <div class="cards3">
@@ -224,11 +224,11 @@
     svg.setAttribute("height", H);
     add(svg, "text", { x: ml, y: 24, "font-size": 13.5, "font-weight": 800 }, "Repeated terminal recipe evidence");
     add(svg, "text", { x: ml, y: 44, "font-size": 11.8, fill: "#526174" },
-      "Each row uses the observed terminal event records. Same five-step recipe across incidents is the recurrence proof.");
+      "Observed terminal recipe for each incident; the same five stages recur.");
     const steps = [
       { action: "queue_subordinate_task", label: "relay arrives", color: "var(--purple)" },
       { action: "saidit_post_check", label: "post check", color: "var(--warn)" },
-      { action: "saidit_post", label: "content_source post", color: "var(--anom)" },
+      { action: "saidit_post", label: "source post", color: "var(--anom)" },
       { action: "delete_file", label: "delete instruction", color: "#7a8797", nth: 0 },
       { action: "delete_file", label: "delete payload", color: "#7a8797", nth: 1 },
     ];
@@ -263,7 +263,7 @@
       });
     });
     add(svg, "text", { x: ml, y: H - 22, "font-size": 11.5, fill: "#526174" },
-      "Different upstream relay sizes, same terminal recipe: this is why Q3 treats the issue as repeatable system behavior.");
+      "Same terminal recipe across three incidents; upstream relay scale differs.");
   }
   drawTerminalRecipes();
 
@@ -393,7 +393,7 @@
       add(svg, "text", { x: x + 18, y: H - 18, "font-size": 11.5, fill: "#526174" }, code);
     });
     add(svg, "text", { x: 34, y: H - 82, "font-size": 11.3, fill: "#526174" },
-      "Interpretation: the repeated mechanism is shared, but SwiftWren is much larger by hop count, cross-department movement, John arrivals, and duration.");
+      "Interpretation: the mechanism repeats, while SwiftWren is largest by relay scale.");
   }
 
   function drawUpSet() {
@@ -568,9 +568,9 @@
         "font-weight": 700, fill: c.value === 0 ? "#63748a" : "#fff" }, c.label);
     });
     add(svg, "text", { x: ml, y: H - 34, "font-size": 11.5, fill: "#526174" },
-      `Observed SaidIt denominator: ${b.total} posts = ${b.with_content_source} content_source anomalies + ${b.with_content_topic} normal human content posts.`);
+      `Observed: ${b.total} posts = ${b.with_content_source} file-source + ${b.with_content_topic} normal.`);
     add(svg, "text", { x: ml, y: H - 14, "font-size": 11.2, fill: "#526174" },
-      "The matrix is not a guarantee against future variants; it validates the selected rule against the observed dataset.");
+      "Validates the selected rule on observed data; future variants may differ.");
   }
 
   function drawParallel() {
@@ -586,7 +586,7 @@
       { key: "fp", label: "blast radius", min: 0, max: Math.max(...candidates.map((c) => c.fp), 1), goodHigh: false, get: (c) => c.fp, fmt: (v) => Math.round(v).toLocaleString() },
       { key: "affected", label: "records affected", min: 0, max: Math.max(...candidates.map((c) => c.affected), 1), goodHigh: false, get: (c) => c.affected, fmt: (v) => Math.round(v).toLocaleString() },
       { key: "cost", label: "analyst cost", min: 1, max: 5, goodHigh: false, get: (c) => c.cost, fmt: (v) => v.toFixed(0) },
-      { key: "timing", label: "prevention timing", min: 0, max: 2, goodHigh: true, get: (c) => c.timing === "pre-publication" ? 2 : c.timing === "post-exposure" ? 0 : 1, fmt: (v) => v === 2 ? "pre" : v === 1 ? "during" : "post" },
+      { key: "timing", label: "timing", min: 0, max: 2, goodHigh: true, get: (c) => c.timing === "pre-publication" ? 2 : c.timing === "post-exposure" ? 0 : 1, fmt: (v) => v === 2 ? "pre" : v === 1 ? "during" : "post" },
     ];
     const x = (i) => ml + i * ((W - ml - mr) / (axes.length - 1));
     const y = (a, v) => {
@@ -596,11 +596,13 @@
     };
     add(svg, "text", { x: ml, y: 24, "font-size": 13, "font-weight": 800 }, "Intervention tradeoff parallel coordinates");
     add(svg, "text", { x: ml, y: 43, "font-size": 11.5, fill: "#526174" },
-      "Higher is better after orientation. Coverage, hits, records, and timing are derived counts; cost is analyst-scored 1-5.");
+      "Higher is better after orientation; counts are derived, cost is analyst-scored 1-5.");
     axes.forEach((a, i) => {
       const xx = x(i);
       add(svg, "line", { x1: xx, y1: mt, x2: xx, y2: H - mb, stroke: "#bdc9d8" });
-      add(svg, "text", { x: xx, y: H - 34, "text-anchor": "middle", "font-size": 11.2, "font-weight": 800, fill: "#526174" }, a.label);
+      add(svg, "text", { x: i === axes.length - 1 ? xx - 4 : xx, y: H - 34,
+        "text-anchor": i === axes.length - 1 ? "end" : "middle", "font-size": 11.2,
+        "font-weight": 800, fill: "#526174" }, a.label);
       add(svg, "text", { x: xx, y: mt - 8, "text-anchor": "middle", "font-size": 10.2, fill: "#63748a" }, a.goodHigh ? a.fmt(a.max) : a.fmt(a.min));
       add(svg, "text", { x: xx, y: H - mb + 16, "text-anchor": "middle", "font-size": 10.2, fill: "#63748a" }, a.goodHigh ? a.fmt(a.min) : a.fmt(a.max));
     });
@@ -621,7 +623,7 @@
       line.addEventListener("mousemove", (e) => showTip(`<div class="tt-h">${c.name}</div><div class="tt-r">${c.verdict}</div><div class="tt-r">coverage ${c.coverage}/3, analyst cost ${c.cost}</div>`, e));
       line.addEventListener("mouseleave", hideTip);
       if (rec) {
-        add(svg, "text", { x: pts[0][0] + 8, y: pts[0][1] - 8, "font-size": 11.5, "font-weight": 800, fill: "var(--ok)" }, "recommended");
+        add(svg, "text", { x: pts[0][0] + 8, y: pts[0][1] + 24, "font-size": 11.5, "font-weight": 800, fill: "var(--ok)" }, "recommended");
       }
     });
     [["recommended", "var(--ok)"], ["forensics only", "var(--warn)"], ["rejected", "#7a8797"]].forEach(([lab, col], i) => {

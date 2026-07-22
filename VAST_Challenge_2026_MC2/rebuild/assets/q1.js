@@ -486,11 +486,17 @@
     const box = clearSvg("investigationViz", 520); if (!box) return;
     const { svg, W } = box;
     const root = { x: W / 2, y: 60, title: "Agent-mediated file-source SaidIt post", sub: "final Q1 mechanism", c: "var(--anom)" };
+    // Keep a visible gutter between sibling nodes so a later SVG rectangle
+    // cannot paint over the previous node's label at compact widths.
+    const treeMargin = Math.max(28, W * .04);
+    const branchSlot = (W - treeMargin * 2) / 4;
+    const branchWidth = Math.min(204, branchSlot - 18);
+    const branchX = (i) => treeMargin + branchSlot * (i + .5);
     const branches = [
-      { x: W * .19, y: 178, title: "Target", sub: "John + SaidIt + time", c: "var(--dim)" },
-      { x: W * .39, y: 178, title: "Signature", sub: "Agent + file source", c: "var(--warn)" },
-      { x: W * .59, y: 178, title: "Payload", sub: "notes -> SwiftWren", c: "var(--purple)" },
-      { x: W * .77, y: 178, title: "Relay", sub: "186 hops / 18 Agents", c: "var(--info)" },
+      { x: branchX(0), y: 178, title: "Target", sub: "John + SaidIt + time", c: "var(--dim)" },
+      { x: branchX(1), y: 178, title: "Signature", sub: "Agent + file source", c: "var(--warn)" },
+      { x: branchX(2), y: 178, title: "Payload", sub: "notes -> SwiftWren", c: "var(--purple)" },
+      { x: branchX(3), y: 178, title: "Relay", sub: "186 hops / 18 Agents", c: "var(--info)" },
     ];
     const leaves = [
       { parent: 0, title: "prompt clues", sub: "task-driven search", y: 310 },
@@ -507,13 +513,13 @@
     evidenceNode(root, 330, 70);
     branches.forEach((b, i) => {
       add(svg, "path", { d: `M${root.x},${root.y + 36} C${root.x},${root.y + 82} ${b.x},${b.y - 76} ${b.x},${b.y - 36}`, fill: "none", stroke: "#bdc9d8", "stroke-width": 2 });
-      evidenceNode(b, 220, 64);
+      evidenceNode(b, branchWidth, 64);
     });
     leaves.forEach((l) => {
       const p = branches[l.parent];
-      const x = l.parent === 3 && l.y > 350 ? p.x + 52 : p.x;
+      const x = p.x;
       add(svg, "path", { d: `M${p.x},${p.y + 34} C${p.x},${p.y + 72} ${x},${l.y - 72} ${x},${l.y - 30}`, fill: "none", stroke: "#d8e1ec", "stroke-width": 1.7 });
-      evidenceNode({ x, y: l.y, title: l.title, sub: l.sub, c: p.c }, 190, 58);
+      evidenceNode({ x, y: l.y, title: l.title, sub: l.sub, c: p.c }, Math.min(184, branchSlot - 14), 58);
     });
     const detail = clearSvg("investigationDetail", 300); if (!detail) return;
     const s = detail.svg;
@@ -807,7 +813,7 @@
     add(svg, "rect", { x: lx, y: ly + 24, width: 12, height: 12, rx: 2, fill: "rgba(37,111,184,.62)" });
     add(svg, "text", { x: lx + 18, y: ly + 34, "font-size": 11.5, fill: "#526174" }, "within-dept flow");
     add(svg, "text", { x: ml, y: H - 14, "font-size": 11.5, fill: "#526174" },
-      "This aggregation complements the hop path: the path explains order; the matrix explains organizational spread.");
+      "The hop path explains order; the matrix explains department spread.");
   }
 
   function drawDeptFlow(I) {
@@ -829,7 +835,7 @@
     const x1 = ml, x2 = W - mr;
     add(svg, "text", { x: ml, y: 24, "font-size": 13, "font-weight": 800 }, `${cur}: strongest department relay directions`);
     add(svg, "text", { x: ml, y: 43, "font-size": 11.5, fill: "#526174" },
-      "Curved ribbons show top aggregated directions only. Width encodes hop count; omitted low-count flows remain in the matrix.");
+      "Top relay directions only; ribbon width encodes hop count.");
     depts.forEach((dp) => {
       const y = yOf[dp];
       add(svg, "circle", { cx: x1, cy: y, r: 5, fill: deptColor(dp) });
@@ -855,7 +861,7 @@
       }
     });
     add(svg, "text", { x: ml, y: H - 14, "font-size": 11.5, fill: "#526174" },
-      "This view uses aggregation to avoid a force-directed hairball while still showing directional structure.");
+      "The hop path explains order; this matrix explains organizational concentration.");
   }
 
   function drawSys(I) {
@@ -875,7 +881,7 @@
         { key: "relay", title: "Agent relay", value: `${I.hop_count} read_file hops`, sub: `${I.distinct_agent_count} Agents / ${I.cross_dept_hops} cross-dept hops`, status: "observed", color: "var(--purple)" },
         { key: "post", title: "Public boundary", value: "saidit_post(content_source)", sub: "John Agent -> SaidIt -> cleanup", status: "observed", color: "var(--anom)" },
       ];
-      const x = (i) => 70 + i * ((W - 140) / (nodes.length - 1));
+      const x = (i) => 108 + i * ((W - 216) / (nodes.length - 1));
       const y = 150;
       add(svg, "text", { x: 42, y: 26, "font-size": 13.5, "font-weight": 800 }, "Boundary-crossing system flow");
       add(svg, "text", { x: 42, y: 46, "font-size": 11.8, fill: "#526174" },

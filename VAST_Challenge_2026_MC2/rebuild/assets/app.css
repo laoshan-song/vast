@@ -173,7 +173,7 @@ body[data-mode="explore"] .review-note{display:none}
   place-items:center;font-size:12px;font-weight:800;flex:none}
 .method-step b{display:block;font-size:13px}
 .method-step span{display:block;color:var(--muted);font-size:12px;line-height:1.4;margin-top:2px}
-.viz-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.viz-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,560px),1fr));gap:16px}
 .investigation-layout{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start}
 .investigation-steps{display:flex;flex-direction:column;gap:8px}
 .investigation-steps button{border:1px solid var(--border);background:#f8fafc;border-radius:var(--r2);
@@ -280,6 +280,12 @@ body[data-mode="explore"] .review-note{display:none}
   .figure-lightbox{padding:10px}
   .figure-lightbox-inner{width:98vw;max-height:96vh}
   .figure-lightbox-stage{padding:8px}
+  /* Dense SVGs stay legible; the chart scrolls inside its own panel. */
+  .svg-wrap{overflow-x:auto;padding-bottom:4px;scrollbar-color:var(--border2) transparent}
+  .svg-wrap > svg{min-width:500px;max-width:none}
+  #priortable,#rulematrix,#alts{overflow-x:auto;padding-bottom:4px;scrollbar-color:var(--border2) transparent}
+  #priortable table{min-width:600px}
+  #rulematrix table,#alts table{min-width:680px}
 }
 
 /* ---- generic table ---- */
@@ -339,4 +345,3 @@ button.btn:disabled{opacity:.4;cursor:not-allowed}
   margin-top:30px;padding-top:16px}
 .footer code{color:var(--muted)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
-
