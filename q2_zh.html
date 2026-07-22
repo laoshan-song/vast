@@ -1,0 +1,154 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Q2 - 含义与来源 - MC2</title>
+<link rel="stylesheet" href="./assets/app.css">
+</head>
+<body>
+<div id="nav" data-active="q2.html"></div>
+<div class="wrap">
+  <header class="hero">
+    <div class="tag">问题 2 / 这些帖子是什么意思？内容来自哪里？</div>
+    <h1>Q2：溯源、含义与证据边界</h1>
+    <p class="lead">这是一个内容溯源问题，不是动机判断问题。日志能显示文档读取、payload 文件创建、任务转发和文件源 SaidIt 发帖，但不保存完整 payload 正文。</p>
+    <p class="lead" style="margin-top:8px"><b>证据规则：</b>绿色 = 日志中直接观测；黄色 = 由连接记录推断；灰色 = 现有数据无法确定。</p>
+  </header>
+
+  <div class="layout">
+    <aside class="side">
+      <div class="card answer">
+        <h2>直接答案</h2>
+        <div class="a-body">这些帖子应解释为文件源发帖事件，而不是普通人类手写的 SaidIt 文本。SwiftWren 连接到 Emma Harbor 的 <code>meeting_notes.doc</code>，MellowOtter 连接到 Noah Mariner 的 <code>strategic_directions.doc</code>，HiddenOrca 共享相同终端文件源发帖机制，但没有可见的上游源文档。</div>
+        <div class="note" style="margin-top:12px"><b>边界：</b>我们只能根据文件名、角色和事件连接推断可能主题，不声称知道精确泄露文字或人类动机。</div>
+      </div>
+      <div class="card">
+        <h3>选择溯源事件</h3>
+        <div class="steps" id="strength"></div>
+      </div>
+      <div class="card">
+        <h3>证据图例</h3>
+        <div class="legend">
+          <span class="badge obs">observed</span>
+          <span class="badge inf">inferred</span>
+          <span class="badge unk">unknown</span>
+        </div>
+        <div class="note" style="margin-top:10px">Observed = 日志直接记录；inferred = 由关联记录推断；unknown = 现有日志无法支持。</div>
+      </div>
+    </aside>
+
+    <main>
+      <section class="panel answer" id="p-answer">
+        <div class="head"><h2>官方答案草稿</h2><span class="sub">配合图 A-F 使用</span></div>
+        <p class="desc">异常帖应解释为文件源发帖事件，而不是普通人类撰写的论坛文本。SaidIt 基线中有 105 条普通人类 <code>content</code> 帖，只有 3 条 <code>content_source</code> 帖；三条文件源帖都由 John Windward 的 Agent 发出。因此最稳妥的解释是机制层面的：payload 文件被作为帖子正文提交给 SaidIt，而 SaidIt 原本预期的是普通论坛文本。</p>
+        <p class="desc">三条 payload 中有两条来源可见。SwiftWren 连接到 Emma Harbor 读取 <code>meeting_notes.doc</code>、创建 <code>SwiftWren.txt</code>，以及之后 John Agent 使用 <code>content_source=SwiftWren.txt</code> 发帖。MellowOtter 类似地连接到 Noah Mariner 读取 <code>strategic_directions.doc</code>、创建 <code>MellowOtter.txt</code>，以及 John Agent 使用该 payload 发帖。HiddenOrca 终端发帖模式相同，但在可用日志中看不到它的上游源文档和 payload 创建记录。</p>
+        <p class="desc">因此，SwiftWren 的可能内容主题是会议记录，MellowOtter 的可能内容主题是战略方向材料，而 HiddenOrca 的主题保持未知。现有数据无法恢复精确正文、具体机密句子、加密状态或人类动机。</p>
+        <div id="q2caseboard" class="case-board"></div>
+      </section>
+
+      <section class="panel core" id="p-numeric">
+        <div class="head"><h2>A0：数值证据摘要</h2><span class="sub">解释前先看计数、payload 大小和 relay 规模</span></div>
+        <p class="desc">这个描述性统计面板在解释“含义”之前，先把 Q2 证据转化为数字。它展示每条溯源链中有多少是已观测、推断或未知，并比较 payload 大小和 relay 规模。</p>
+        <div class="svg-wrap"><svg id="q2numeric" width="100%" height="470"></svg></div>
+      </section>
+
+      <section class="panel core" id="p-eda">
+        <div class="head"><h2>A1：溯源描述性统计</h2><span class="sub">解释内容来源前的六张 EDA 图</span></div>
+        <p class="desc">这些图把 Q2 的推理转化为可检查的统计证据。在判断帖子含义之前，先比较证据完整性、文件大小、来源到发帖的时间差、来源可见性、清理行为和结论边界。</p>
+        <div class="figure-grid figure-stack">
+          <figure class="eda-figure" data-target-panel="p-confidence">
+            <img src="./figure_gallery_statistical/19_q2_provenance_completeness_heatmap.png" alt="溯源证据完整性热力图">
+            <figcaption><span class="figure-kicker">图 1 / 完整性</span><span class="figure-takeaway">SwiftWren 和 MellowOtter 有可见的 source-to-payload 链条；HiddenOrca 证据较弱，因为上游来源不可见。</span><span class="figure-evidence">数据依据：每个事件中观测到的 source read、payload create、relay、SaidIt post 和 cleanup 事件。</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-reasoning">
+            <img src="./figure_gallery_statistical/24_q2_post_source_field_composition.png" alt="帖子来源字段组成图">
+            <figcaption><span class="figure-kicker">图 2 / 来源字段</span><span class="figure-takeaway">SaidIt 字段分布说明异常帖子是文件源事件，不是普通论坛文本。</span><span class="figure-evidence">数据依据：全部 SaidIt posts 按普通 <code>content</code> 与 <code>content_source</code> 分组。</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-provenance">
+            <img src="./figure_gallery_statistical/21_q2_source_to_post_lag_bar.png" alt="来源到发帖时间差条形图">
+            <figcaption><span class="figure-kicker">图 3 / 时间溯源</span><span class="figure-takeaway">source-to-post 时间差将上游文档行为与下游公开发帖联系起来。</span><span class="figure-evidence">数据依据：source read 或 payload creation 时间与最终 SaidIt post 时间的比较。</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-confidence">
+            <img src="./figure_gallery_statistical/22_q2_evidence_certainty_stacked.png" alt="证据确定性堆叠条形图">
+            <figcaption><span class="figure-kicker">图 4 / 证据边界</span><span class="figure-takeaway">证据确定性计数避免过度声称 exact text、动机或缺失来源。</span><span class="figure-evidence">数据依据：Q2 溯源看板中为每个事件标注的证据等级。</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-boundary">
+            <img src="./figure_gallery_statistical/26_q2_claim_boundary_matrix.png" alt="结论边界矩阵">
+            <figcaption><span class="figure-kicker">图 5 / 结论边界</span><span class="figure-takeaway">claim boundary matrix 标注哪些解释是 observed、inferred 或 unknown。</span><span class="figure-evidence">数据依据：Q2 结论中的支持、推断和不支持类别。</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-provenance">
+            <img src="./figure_gallery_statistical/27_q2_source_actor_department_bar.png" alt="来源人员与部门条形图">
+            <figcaption><span class="figure-kicker">图 6 / 来源背景</span><span class="figure-takeaway">来源人员与部门为可见 payload 的可能主题提供上下文支持。</span><span class="figure-evidence">数据依据：来源人员、组织角色、源文档和可见 payload 创建记录。</span></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="panel core" id="p-reasoning">
+        <div class="head"><h2>A：EDA 推理路径</h2><span class="sub">从题目线索到 payload 回溯</span></div>
+        <p class="desc">这些图展示调查路径：先定位题目给出的 John/SaidIt 目标事件，再把帖子正文字段与 SaidIt 基线比较，然后反向搜索 payload 文件名，并检查支持或限制来源结论的局部事件窗口。</p>
+        <div class="viz-two">
+          <div class="svg-wrap"><svg id="sourcefieldscan" width="100%" height="430"></svg></div>
+          <div class="svg-wrap"><svg id="payloadbacktrace" width="100%" height="330"></svg></div>
+        </div>
+        <div class="svg-wrap" style="margin-top:16px"><svg id="localwindows" width="100%" height="500"></svg></div>
+      </section>
+
+      <section class="panel core" id="p-provenance">
+        <div class="head"><h2>B：内容溯源图</h2><span class="sub">源文档到 payload 文件再到 SaidIt 帖子</span></div>
+        <p class="desc">这个节点连接溯源图把文件实体、日志事件和推断主题分开显示。缺失的来源背景标为 unknown，而不是用猜测补齐。</p>
+        <div class="svg-wrap"><svg id="provenancegraph" width="100%" height="520"></svg></div>
+        <div id="prov" class="explore-only"></div>
+        <p class="review-note">切换到探索模式，可查看所选事件的原始事件记录和 JSON 证据。</p>
+        <div id="evidence" class="evidence-box explore-only"></div>
+      </section>
+
+      <section class="panel core" id="p-claim">
+        <div class="head"><h2>C：结论支持 DAG</h2><span class="sub">哪些证据支持哪些 Q2 结论</span></div>
+        <p class="desc">该图把已观测日志事实连接到最终解释性结论。它不是社交网络图，重点是证据支持关系，而不是装饰性的连接密度。</p>
+        <div class="svg-wrap"><svg id="provflow" width="100%" height="390"></svg></div>
+      </section>
+
+      <section class="panel core" id="p-confidence">
+        <div class="head"><h2>D：溯源置信矩阵</h2><span class="sub">事件 × 证据类型</span></div>
+        <p class="desc">这个矩阵把确定性边界可视化，说明每个结论中的哪些部分是日志直接记录、哪些是推断、哪些在数据中不可得。</p>
+        <div class="svg-wrap"><svg id="confidence" width="100%" height="310"></svg></div>
+      </section>
+
+      <section class="panel core" id="p-meaning">
+        <div class="head"><h2>E：含义模型</h2><span class="sub">普通文本发帖与文件源发帖对比</span></div>
+        <p class="desc">日志支持的是机制层面的解释：系统把文件内容交给了原本预期接收普通论坛文本的 SaidIt。日志不支持逐字恢复明文。</p>
+        <div class="svg-wrap"><svg id="meaningmodel" width="100%" height="470"></svg></div>
+        <div id="gibberish" class="explore-only"></div>
+      </section>
+
+      <section class="panel core" id="p-boundary">
+        <div class="head"><h2>F：结论边界</h2><span class="sub">答案可以声称什么、不能声称什么</span></div>
+        <p class="desc">这个边界图用于防止过度声称，把有证据支持的结论与现有日志无法证明的说法分开。</p>
+        <div class="svg-wrap"><svg id="boundaryviz" width="100%" height="430"></svg></div>
+        <div id="boundary" class="explore-only"></div>
+      </section>
+
+      <section class="panel explore-only">
+        <div class="head"><h2>附录：其他证据视图</h2><span class="sub">仅在探索模式显示</span></div>
+        <p class="desc">这些视图有助于交互式探索，但不是简洁官方 Q2 答案的必要部分。</p>
+        <div class="svg-wrap"><svg id="glyphgrid" width="100%" height="310"></svg></div>
+        <div class="svg-wrap" style="margin-top:16px"><svg id="payloadscale" width="100%" height="320"></svg></div>
+        <div class="svg-wrap" style="margin-top:16px"><svg id="sourcetimeline" width="100%" height="360"></svg></div>
+      </section>
+
+      <div class="footer">本页只使用 <code>read_file</code>、<code>create_file</code> 和 <code>saidit_post</code> 事件证据，不推断攻击者身份或个人动机。</div>
+    </main>
+  </div>
+</div>
+<script src="./mc2_viz_data.js"></script>
+<script src="./assets/app.js"></script>
+<script src="./assets/q2.js"></script>
+<script src="./assets/i18n_zh.js"></script>
+</body>
+</html>
+
+
+
+
+

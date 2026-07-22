@@ -1,0 +1,216 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MC2 总览 - SaidIt 异常发帖调查</title>
+<link rel="stylesheet" href="./assets/app.css">
+</head>
+<body>
+<div id="nav" data-active="overview.html"></div>
+<div class="wrap">
+  <header class="hero">
+    <div class="tag">VAST Challenge 2026 / Mini-Challenge 2 / 系统总览</div>
+    <h1>一个文件源 Agent 流程如何越界发布到 SaidIt</h1>
+    <p class="lead">本页先建立正常行为基线，再隔离目标异常：John Windward 的 Agent 在 <b>2046 年 5 月 17 日 04:21 UTC-7</b> 向 SaidIt 发布了一条文件源消息。页面使用来自 <code>MC2 data.json</code> 和 <code>org_chart.json</code> 的计数、比例和可追溯证据。</p>
+    <p class="lead" style="margin-top:8px"><b>结论：</b>一个内部文档被打包为代号文本文件，作为 Agent <code>read_file</code> 任务传播，通过 <code>saidit_post(content_source)</code> 发布，随后被清理。相同机制共出现三次。</p>
+    <p class="lead" style="margin-top:8px"><a href="../index_zh.htm">中文阅读版</a>用于本地讲解和组内讨论；正式提交仍以英文页面和英文答案为准。</p>
+  </header>
+
+  <div class="layout">
+    <aside class="side">
+      <div class="card answer">
+        <h2>调查发现</h2>
+        <div class="a-body">异常不是普通人类论坛发帖，而是罕见组合：<code>Agent actor</code> + <code>saidit_post</code> + <code>details.content_source</code>。该组合在数据中只出现在三条 SaidIt posts 中。</div>
+      </div>
+      <div class="card">
+        <h3>可审计数字</h3>
+        <div class="stats" id="keystats"></div>
+      </div>
+      <div class="card">
+        <h3>建议阅读顺序</h3>
+        <div class="steps">
+          <a class="pill" data-page="q1.html" href="q1_zh.html" style="justify-content:flex-start">Q1：产生机制与精确链条</a>
+          <a class="pill" data-page="q2.html" href="q2_zh.html" style="justify-content:flex-start">Q2：帖子含义与内容来源</a>
+          <a class="pill" data-page="q3.html" href="q3_zh.html" style="justify-content:flex-start">Q3：复发证据与单点干预</a>
+        </div>
+      </div>
+      <div class="card">
+        <h3>使用的可视化方法</h3>
+        <ul class="reviewer-list">
+          <li><b>先建基线</b> 用条形图和比例条先定义正常行为，再判断异常。</li>
+          <li><b>时间背景</b> 用小时密度把异常帖放进全量事件流和病毒诱饵窗口中比较。</li>
+          <li><b>矩阵聚合</b> 用部门矩阵概括组织传播，避免把密集网络画成毛线球。</li>
+          <li><b>按需查看细节</b> 点击图中标记可查看 event id、timestamp、actor、target 和 raw JSON。</li>
+          <li><b>联动推理</b> 同一事件选择会联动终端序列、传播路径、来源和复发视图。</li>
+          <li><b>避免误导</b> 精确比较主要使用长度和位置，不用 3D、彩虹色或面积误导数量判断。</li>
+        </ul>
+      </div>
+    </aside>
+
+    <main>
+      <section class="panel core">
+        <div class="head"><h2>答案地图</h2><span class="sub">把官方问题映射到证据视图</span></div>
+        <div id="qmap"></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>数据层融合</h2><span class="sub">原始数据源 -> 派生证据对象 -> 官方答案</span></div>
+        <p class="desc">这个视图让分析流程可审计：在形成结论之前，先区分原始日志、文件操作、Agent 转发、组织背景、公开 SaidIt 记录和不确定性标签。</p>
+        <div class="svg-wrap"><svg id="layerfusion" width="1180" height="360"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>统计型 EDA 图谱</h2><span class="sub">先做描述性统计，再进入叙事性答案</span></div>
+        <p class="desc">这一组图对应课程中的常见探索式可视化方法。它先给出事件分布、主体组成、时间密度、矩阵结构、SaidIt 字段审计和诱饵事件基线，再进入 Q1-Q3 的链路解释。</p>
+        <div class="figure-grid figure-stack">
+          <figure class="eda-figure">
+            <img src="./figure_gallery_statistical/01_overview_event_type_rank_bar.png" alt="事件类型排序条形图">
+            <figcaption><span class="figure-kicker">总览图 1 / 条形图</span><span class="figure-takeaway">全量日志主要由常规系统操作构成，所以 SaidIt 发帖虽然数量少，但需要作为关键子集单独检查。</span><span class="figure-evidence">数据依据：185,147 条日志按 action 类型分组计数。</span></figcaption>
+          </figure>
+          <figure class="eda-figure">
+            <img src="./figure_gallery_statistical/02_overview_party_type_bar.png" alt="参与主体类型组成条形图">
+            <figcaption><span class="figure-kicker">总览图 2 / 组成比较</span><span class="figure-takeaway">数据中同时存在人、Agent、文件系统和平台对象，因此区分 actor 类型是必要的 EDA 步骤，不是主观假设。</span><span class="figure-evidence">数据依据：事件日志中的 subject 与 target party type。</span></figcaption>
+          </figure>
+          <figure class="eda-figure">
+            <img src="./figure_gallery_statistical/04_overview_hourly_volume_histogram.png" alt="小时级事件量直方图">
+            <figcaption><span class="figure-kicker">总览图 3 / 直方图</span><span class="figure-takeaway">按小时聚合能看到系统运行节律，避免把某个异常时间点脱离整体时间背景来解释。</span><span class="figure-evidence">数据依据：按挑战本地 UTC-7 时间对事件 timestamp 进行小时分箱。</span></figcaption>
+          </figure>
+          <figure class="eda-figure">
+            <img src="./figure_gallery_statistical/05_overview_day_hour_heatmap.png" alt="日期-小时活动热力图">
+            <figcaption><span class="figure-kicker">总览图 4 / 热力图</span><span class="figure-takeaway">日期-小时矩阵比单条长时间线更适合同时显示高密度诱饵时段和稀疏异常时段。</span><span class="figure-evidence">数据依据：全量事件按日期和小时交叉计数。</span></figcaption>
+          </figure>
+          <figure class="eda-figure">
+            <img src="./figure_gallery_statistical/06_overview_saidit_source_stacked.png" alt="SaidIt 来源字段堆叠条形图">
+            <figcaption><span class="figure-kicker">总览图 5 / 堆叠条形图</span><span class="figure-takeaway">SaidIt 发帖绝大多数是普通 content，只有三条使用 content_source，这正是 Q1-Q3 追踪的字段级异常。</span><span class="figure-evidence">数据依据：108 条 SaidIt posts 按 ordinary content 与 content_source 分类。</span></figcaption>
+          </figure>
+          <figure class="eda-figure">
+            <img src="./figure_gallery_statistical/09_overview_virus_action_distribution.png" alt="病毒事件动作分布图">
+            <figcaption><span class="figure-kicker">总览图 6 / 分布检查</span><span class="figure-takeaway">病毒/诱饵事件是高频背景行为，但它与三条文件源 SaidIt 帖子的机制链条应分开分析。</span><span class="figure-evidence">数据依据：virus 标记事件及其 action 分布。</span></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>基线 A：系统事件构成</h2><span class="sub">按事件数量排序的条形图</span></div>
+        <p class="desc">这个视图展示系统规模。SaidIt 发帖只是全系统中的小子集，因此异常必须放在正常运维背景下判断。</p>
+        <div class="svg-wrap"><svg id="typebars" width="1180" height="470"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>EDA 基线：主体与稀有性</h2><span class="sub">主体构成 + 异常分母</span></div>
+        <p class="desc">这一组图遵循探索式数据分析的习惯：先检查数据中有哪些主体，再用不同分母衡量目标模式到底有多少见。</p>
+        <div class="viz-two">
+          <div class="svg-wrap"><svg id="partybaseline" width="560" height="320"></svg></div>
+          <div class="svg-wrap"><svg id="raritybars" width="560" height="320"></svg></div>
+        </div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>基线 B：全局时间密度</h2><span class="sub">小时级活动、诱饵窗口与异常帖子</span></div>
+        <p class="desc">这个压缩时间视图把三条文件源帖子放进全量日志窗口中比较。总活动量使用对数尺度，以便既看见病毒爆发，也不压平低活动时段。</p>
+        <div class="svg-wrap"><svg id="timeheat" width="1180" height="330"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>EDA 基线：部门活动矩阵</h2><span class="sub">按事件、转发、文件和代号信号统计部门</span></div>
+        <p class="desc">目标链条会跨部门传播，因此总览先建立普通活动、文件操作和转发行为在组织中的集中位置。</p>
+        <div class="svg-wrap"><svg id="deptmatrix" width="1180" height="420"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>流程对比</h2><span class="sub">正常发帖与异常发帖的直接后继模型</span></div>
+        <p class="desc">这个紧凑的过程挖掘视图对比普通人类发帖路径和重复出现的五阶段 Agent 发帖路径。</p>
+        <div class="svg-wrap"><svg id="processflow" width="1180" height="330"></svg></div>
+      </section>
+
+      <section class="panel explore-only">
+        <div class="head"><h2>基线 C：日期-小时活动热力图</h2><span class="sub">日历式密度矩阵</span></div>
+        <p class="desc">该热力图以日期为行、小时为列，在不绘制每一条事件的情况下展示日节律、病毒爆发和稀疏异常小时。</p>
+        <div class="svg-wrap"><svg id="calendarheat" width="1180" height="560"></svg></div>
+      </section>
+
+      <section class="panel explore-only">
+        <div class="head"><h2>基线 D：事件流构成</h2><span class="sub">堆叠时间构成</span></div>
+        <p class="desc">堆叠流把背景活动量与相关任务、代号活动、病毒事件和 SaidIt 发帖分开，并按日聚合以保持可读性。</p>
+        <div class="svg-wrap"><svg id="eventstream" width="1180" height="340"></svg></div>
+      </section>
+
+      <section class="panel explore-only">
+        <div class="head"><h2>基线 E：信号小多图</h2><span class="sub">任务、病毒、代号和 SaidIt 信号的每日趋势</span></div>
+        <p class="desc">小多图让每个信号使用自己的尺度，避免罕见 SaidIt 事件被更大的病毒和任务量淹没。</p>
+        <div class="svg-wrap"><svg id="signalsmall" width="1180" height="460"></svg></div>
+      </section>
+
+      <section class="panel explore-only">
+        <div class="head"><h2>基线 F：SaidIt 签名</h2><span class="sub">按主体、字段和发帖检查结果拆分的小多图</span></div>
+        <p class="desc">异常签名被清楚地从正常发帖中分离出来：由 Agent 发起、且带有 <code>content_source</code> 的帖子。图中使用共享分母和明确计数，避免比例误导。</p>
+        <div class="svg-wrap"><svg id="sigbars" width="1180" height="310"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>EDA 基线：SaidIt 字段审计</h2><span class="sub">正常与异常帖子的字段存在矩阵</span></div>
+        <p class="desc">这个矩阵解释为什么 <code>content_source</code> 是合理切入口：它不是被孤立挑出的字段，而是在比较 108 条 SaidIt 帖子的观测字段和相邻行为后识别出的差异。</p>
+        <div class="svg-wrap"><svg id="fieldaudit" width="1180" height="360"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>SaidIt 规则空间</h2><span class="sub">按主体、来源字段、检查和清理拆分全部 108 条帖子</span></div>
+        <p class="desc">每个标记代表一条 SaidIt 帖子。三条 Agent 文件源帖子构成清晰的规则签名，而不是主观标出的异常簇。</p>
+        <div class="svg-wrap"><svg id="rulespace" width="1180" height="360"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>EDA 基线：文件操作</h2><span class="sub">文件证据的动作和扩展名分布</span></div>
+        <p class="desc">由于异常帖子由文件支撑，该基线先展示文件读取、创建、删除和扩展名的常见程度，再聚焦代号 payload。</p>
+        <div class="viz-two">
+          <div class="svg-wrap"><svg id="fileops" width="560" height="330"></svg></div>
+          <div class="svg-wrap"><svg id="fileexts" width="560" height="330"></svg></div>
+        </div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>EDA 基线：事件规模对比</h2><span class="sub">三起文件源事件的小多图条形对比</span></div>
+        <p class="desc">这个总览层面对比连接 Q1 和 Q3：目标 SwiftWren 与历史事件机制相同，但 relay 规模和跨部门传播更大。</p>
+        <div class="svg-wrap"><svg id="incidentscaleoverview" width="1180" height="430"></svg></div>
+      </section>
+
+      <section class="panel explore-only">
+        <div class="head"><h2>基线 G：转发任务与主体活动</h2><span class="sub">任务构成 + 具名主体活动</span></div>
+        <p class="desc">这些补充基线使用了更多官方数据，说明代号转发位于更大的任务系统中，且 John 按原始活动量并不是全局异常主体。</p>
+        <div class="viz-two">
+          <div class="svg-wrap"><svg id="qstbars" width="560" height="300"></svg></div>
+          <div class="svg-wrap"><svg id="actorbars" width="560" height="300"></svg></div>
+        </div>
+      </section>
+
+      <section class="panel explore-only">
+        <div class="head"><h2>方法流程</h2><span class="sub">看板如何支持分析</span></div>
+        <div id="pipeline"></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>工具与可复现性</h2><span class="sub">构建和验证该可视分析系统所用工具</span></div>
+        <p class="desc">最终 rebuild 是一个自包含的浏览器端可视分析系统。提交页不依赖 Tableau、Vega-Lite 或 D3 运行时；旧的 D3 原型只作为开发过程文件保留，不是正式评审路径。</p>
+        <div class="cards3">
+          <div class="card qcard"><h3>界面实现</h3><p>HTML、CSS、原生 JavaScript 和自定义 SVG 渲染，用于联动视图、tooltip、筛选、图片放大和 URL 状态保持。</p></div>
+          <div class="card qcard ok"><h3>数据管线</h3><p>Python <code>rebuild/extract_data.py</code> 解析官方 <code>MC2 data.json</code> 与 <code>org_chart.json</code>，导出 <code>mc2_viz_data.json</code> 和 <code>.js</code>。</p></div>
+          <div class="card qcard anom"><h3>质量检查</h3><p>Playwright / <code>playwright-core</code> 和 Microsoft Edge 用于截图、交互验证、布局检查和统计图放大测试。</p></div>
+        </div>
+        <p class="review-note">正式表格中的 Tools Used 可写：HTML/CSS/JavaScript、custom SVG、Python data extraction、PNG statistical figure generation、Playwright/Microsoft Edge verification、Git/GitHub Pages hosting。</p>
+      </section>
+
+      <div class="footer">数据：<code>MC2 data.json</code> + <code>org_chart.json</code>。管线：<code>rebuild/extract_data.py</code> 生成 <code>rebuild/mc2_viz_data.json</code>。时区：挑战本地 UTC-7。</div>
+    </main>
+  </div>
+</div>
+<script src="./mc2_viz_data.js"></script>
+<script src="./assets/app.js"></script>
+<script src="./assets/overview.js"></script>
+<script src="./assets/i18n_zh.js"></script>
+</body>
+</html>
+
+
+
+

@@ -1,77 +1,206 @@
-<!DOCTYPE html>
-<html lang="zh">
+﻿<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MC2 总览 — Anomalous SaidIt Post</title>
+<title>MC2 Overview - Anomalous SaidIt Post</title>
 <link rel="stylesheet" href="./assets/app.css">
 </head>
 <body>
 <div id="nav" data-active="overview.html"></div>
 <div class="wrap">
   <header class="hero">
-    <div class="tag">VAST Challenge 2026 · Mini-Challenge 2 · System Overview</div>
-    <h1>一条乱码帖，如何从内部文档走到公开论坛</h1>
-    <p class="lead">任务定位（题面原文）：先<b>摸清多智能体系统的整体运行</b>、建立正常基准，再对标目标异常帖，
-      最后提出<b>一处</b>整改。全部结论只用原始数据 <code>MC2 data.json</code>（185,147 事件）+ <code>org_chart.json</code>，
-      时间统一按<b>挑战本地时区 UTC-7</b>（对齐题面 “John Windward, May 17 04:21am”）。</p>
+    <div class="tag">VAST Challenge 2026 / Mini-Challenge 2 / System Overview</div>
+    <h1>How a file-backed Agent workflow escaped to SaidIt</h1>
+    <p class="lead">This overview establishes normal behavior before isolating the target anomaly: John Windward's Agent posted a file-backed message to SaidIt on <b>May 17, 2046 04:21 UTC-7</b>. The page uses counts, ratios, and linked evidence from <code>MC2 data.json</code> and <code>org_chart.json</code>.</p>
+    <p class="lead" style="margin-top:8px"><b>Conclusion:</b> an internal document was packaged as a codename text file, relayed as an Agent <code>read_file</code> task, posted through <code>saidit_post(content_source)</code>, then cleaned up. The same mechanism appears three times.</p>
+    <p class="lead" style="margin-top:8px"><a href="../index_zh.htm">Chinese reading version</a> mirrors the final answers for local discussion; the English pages remain the official-facing version.</p>
   </header>
 
   <div class="layout">
     <aside class="side">
       <div class="card answer">
-        <h2>一句话结论</h2>
-        <div class="a-body">
-          异常帖是一个<b>寄生在 Agent 任务队列里的 prompt-injection 蠕虫</b>：一份内部文档被打包成
-          <code>&lt;代号&gt;.txt</code>，其 <code>_further_instructions.md</code> 通过
-          <code>queue_subordinate_task(task=read_file)</code> 在 Agent 间<b>盲转发随机游走</b>，
-          直到抵达全公司唯一有公开发帖权的 <b>John Windward Agent</b>，由它执行
-          <code>check → saidit_post(content_source) → delete×2</code>。共发生 <b>3 次</b>。
-        </div>
+        <h2>Investigation Finding</h2>
+        <div class="a-body">The anomaly is not a normal human forum post. It is the rare combination <code>Agent actor</code> + <code>saidit_post</code> + <code>details.content_source</code>, which occurs in exactly three SaidIt posts in this data.</div>
       </div>
       <div class="card">
-        <h3>关键数字（全部可核）</h3>
+        <h3>Auditable Numbers</h3>
         <div class="stats" id="keystats"></div>
       </div>
       <div class="card">
-        <h3>阅读顺序</h3>
+        <h3>Read In This Order</h3>
         <div class="steps">
-          <a class="pill" href="q1.html" style="justify-content:flex-start">Q1 · 异常帖如何产生（链路 + 系统图）</a>
-          <a class="pill" href="q2.html" style="justify-content:flex-start">Q2 · 帖子含义与内容来源</a>
-          <a class="pill" href="q3.html" style="justify-content:flex-start">Q3 · 会否复发 + 单点干预</a>
+          <a class="pill" data-page="q1.html" href="q1.html" style="justify-content:flex-start">Q1: mechanism and exact chain</a>
+          <a class="pill" data-page="q2.html" href="q2.html" style="justify-content:flex-start">Q2: meaning and content origin</a>
+          <a class="pill" data-page="q3.html" href="q3.html" style="justify-content:flex-start">Q3: recurrence and one intervention</a>
         </div>
+      </div>
+      <div class="card">
+        <h3>Visual Methods Used</h3>
+        <ul class="reviewer-list">
+          <li><b>Baseline first</b> Bar charts and ratio bars define normal behavior before anomaly claims.</li>
+          <li><b>Temporal context</b> Hourly density places anomalies against the full event stream and virus decoy burst.</li>
+          <li><b>Matrix aggregation</b> Department flows summarize organizational spread without a hairball graph.</li>
+          <li><b>Details on demand</b> Clickable marks reveal event ids, timestamps, actors, and raw JSON.</li>
+          <li><b>Linked reasoning</b> The same incident selection drives recipe, route, source, and recurrence views.</li>
+          <li><b>Anti-deception</b> Counts use length and position, not 3D, rainbow color, or area for exact comparison.</li>
+        </ul>
       </div>
     </aside>
 
     <main>
-      <section class="panel">
-        <div class="head"><h2>MC2 官方三问 · 答案地图</h2>
-          <span class="sub">how it was made / what it means / could it repeat + one fix</span></div>
+      <section class="panel core">
+        <div class="head"><h2>Answer Map</h2><span class="sub">official questions mapped to evidence views</span></div>
         <div id="qmap"></div>
       </section>
 
-      <section class="panel">
-        <div class="head"><h2>系统基线 A：全系统在做什么</h2>
-          <span class="sub">24 种动作类型，人机各半的活动</span></div>
-        <p class="desc">建立“正常”的第一步是看系统整体行为分布。绝大多数是邮件、任务派发、文件读写等常规运营；
-          真正的外发帖（<code>saidit_post</code>）只有 108 条，其中异常帖仅 3 条。</p>
+      <section class="panel core">
+        <div class="head"><h2>Data Layer Fusion</h2><span class="sub">raw data sources -> derived evidence objects -> official answers</span></div>
+        <p class="desc">This view makes the analysis pipeline auditable. It separates original logs, file operations, Agent relays, organization context, public SaidIt records, and uncertainty labels before any final claim is made.</p>
+        <div class="svg-wrap"><svg id="layerfusion" width="1180" height="360"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>Statistical EDA Atlas</h2><span class="sub">course-style descriptive charts before the narrative answers</span></div>
+        <p class="desc">This atlas uses standard descriptive visualization methods before any causal story is told. It gives the reviewer the same starting point as an exploratory data analysis notebook: event distribution, actor composition, temporal density, matrix structure, platform-field audit, and decoy-event baseline.</p>
+        <div class="figure-grid figure-stack">
+          <figure class="eda-figure">
+            <img src="./figure_gallery_statistical/01_overview_event_type_rank_bar.png" alt="Event type rank bar chart">
+            <figcaption><span class="figure-kicker">Overview Figure 1 / Bar Chart</span><span class="figure-takeaway">The full log is dominated by routine system actions, so SaidIt activity must be investigated as a small but consequential subset.</span><span class="figure-evidence">Data basis: all 185,147 logged events grouped by action type.</span></figcaption>
+          </figure>
+          <figure class="eda-figure">
+            <img src="./figure_gallery_statistical/02_overview_party_type_bar.png" alt="Party type composition bar chart">
+            <figcaption><span class="figure-kicker">Overview Figure 2 / Composition</span><span class="figure-takeaway">The dataset mixes people, Agents, file systems, and platforms; separating actor type is therefore a necessary EDA step, not an arbitrary assumption.</span><span class="figure-evidence">Data basis: subject and target party types across the event log.</span></figcaption>
+          </figure>
+          <figure class="eda-figure">
+            <img src="./figure_gallery_statistical/04_overview_hourly_volume_histogram.png" alt="Hourly event volume histogram">
+            <figcaption><span class="figure-kicker">Overview Figure 3 / Histogram</span><span class="figure-takeaway">Hourly aggregation shows the operational rhythm and prevents isolated anomaly timestamps from being interpreted without temporal context.</span><span class="figure-evidence">Data basis: event timestamps binned by hour in challenge-local UTC-7 time.</span></figcaption>
+          </figure>
+          <figure class="eda-figure">
+            <img src="./figure_gallery_statistical/05_overview_day_hour_heatmap.png" alt="Date-hour activity heatmap">
+            <figcaption><span class="figure-kicker">Overview Figure 4 / Heatmap</span><span class="figure-takeaway">The date-hour matrix reveals dense decoy periods and sparse anomaly windows more clearly than a long one-dimensional timeline.</span><span class="figure-evidence">Data basis: date by hour counts from the full event stream.</span></figcaption>
+          </figure>
+          <figure class="eda-figure">
+            <img src="./figure_gallery_statistical/06_overview_saidit_source_stacked.png" alt="SaidIt source-field stacked bar">
+            <figcaption><span class="figure-kicker">Overview Figure 5 / Stacked Bar</span><span class="figure-takeaway">SaidIt posts are overwhelmingly ordinary content posts; the three file-source posts form the field-level anomaly used by Q1-Q3.</span><span class="figure-evidence">Data basis: all 108 SaidIt posts classified by ordinary content versus content_source.</span></figcaption>
+          </figure>
+          <figure class="eda-figure">
+            <img src="./figure_gallery_statistical/09_overview_virus_action_distribution.png" alt="Virus event action distribution">
+            <figcaption><span class="figure-kicker">Overview Figure 6 / Distribution Check</span><span class="figure-takeaway">Virus/decoy activity is high-volume background behavior, but it is analytically separate from the three file-source SaidIt posts.</span><span class="figure-evidence">Data basis: virus-labeled events and their action distribution.</span></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>Baseline A: System Event Mix</h2><span class="sub">bar chart sorted by event count</span></div>
+        <p class="desc">This view shows scale. SaidIt posting is a small part of the full system, so the anomaly must be judged against the normal operational background.</p>
         <div class="svg-wrap"><svg id="typebars" width="1180" height="470"></svg></div>
       </section>
 
-      <section class="panel">
-        <div class="head"><h2>系统基线 B：异常帖的“签名”</h2>
-          <span class="sub">正常 vs 异常，一眼可分</span></div>
-        <p class="desc">正常 SaidIt 帖由<b>人</b>发出、正文是一句工作主题（<code>content</code>）；
-          3 条异常帖由 <b>Agent</b> 发出、正文是一个<b>文件</b>（<code>content_source</code>）。
-          这个字段在 185,147 条事件里只出现 3 次——它本身就是异常探针。</p>
-        <div class="svg-wrap"><svg id="sigbars" width="1180" height="260"></svg></div>
+      <section class="panel core">
+        <div class="head"><h2>EDA Baseline: Actors and Rarity</h2><span class="sub">party composition + anomaly denominators</span></div>
+        <p class="desc">This pair follows the exploratory-data-analysis habit of checking who appears in the data and how rare the target pattern is under different denominators.</p>
+        <div class="viz-two">
+          <div class="svg-wrap"><svg id="partybaseline" width="560" height="320"></svg></div>
+          <div class="svg-wrap"><svg id="raritybars" width="560" height="320"></svg></div>
+        </div>
       </section>
 
-      <div class="footer">
-        数据来源 <code>MC2 data.json</code> + <code>org_chart.json</code>；
-        提取脚本 <code>rebuild/extract_data.py</code> → <code>rebuild/mc2_viz_data.json</code>。
-        时间口径：挑战本地 UTC-7。
-      </div>
+      <section class="panel core">
+        <div class="head"><h2>Baseline B: Global Time Density</h2><span class="sub">hourly activity, decoy window, and anomaly posts</span></div>
+        <p class="desc">This compressed temporal overview places the three file-source posts inside the full log window. Total activity is log-scaled so the virus burst is visible without flattening quieter periods.</p>
+        <div class="svg-wrap"><svg id="timeheat" width="1180" height="330"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>EDA Baseline: Department Activity Matrix</h2><span class="sub">department rows by event, relay, file, and codename signals</span></div>
+        <p class="desc">The target chain crosses departments, so the overview first establishes where ordinary activity, file operations, and relays concentrate across the organization.</p>
+        <div class="svg-wrap"><svg id="deptmatrix" width="1180" height="420"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>Process Comparison</h2><span class="sub">directly-follows model for normal and anomalous posting</span></div>
+        <p class="desc">A compact process-mining view contrasts the dominant human posting path with the repeated five-stage Agent path.</p>
+        <div class="svg-wrap"><svg id="processflow" width="1180" height="330"></svg></div>
+      </section>
+
+      <section class="panel explore-only">
+        <div class="head"><h2>Baseline C: Date-Hour Activity Heatmap</h2><span class="sub">calendar-style density matrix</span></div>
+        <p class="desc">This heatmap uses date rows and hour columns to expose daily rhythm, the virus burst, and sparse anomaly hours without drawing every event.</p>
+        <div class="svg-wrap"><svg id="calendarheat" width="1180" height="560"></svg></div>
+      </section>
+
+      <section class="panel explore-only">
+        <div class="head"><h2>Baseline D: Event Stream Composition</h2><span class="sub">stacked temporal composition</span></div>
+        <p class="desc">The stacked stream separates background volume from relevant queues, codename activity, virus events, and SaidIt posts. It is aggregated by day to remain readable.</p>
+        <div class="svg-wrap"><svg id="eventstream" width="1180" height="340"></svg></div>
+      </section>
+
+      <section class="panel explore-only">
+        <div class="head"><h2>Baseline E: Signal Small Multiples</h2><span class="sub">daily trends for task, virus, codename, and SaidIt signals</span></div>
+        <p class="desc">Small multiples keep each signal on its own scale. This avoids hiding rare SaidIt events under the much larger virus and queue volumes.</p>
+        <div class="svg-wrap"><svg id="signalsmall" width="1180" height="460"></svg></div>
+      </section>
+
+      <section class="panel explore-only">
+        <div class="head"><h2>Baseline F: SaidIt Signature</h2><span class="sub">small multiples for actor, field, and post-check outcome</span></div>
+        <p class="desc">The anomalous signature is visually separated from normal posting: Agent-initiated posts with <code>content_source</code>. The chart uses shared denominators and explicit counts to avoid misleading ratios.</p>
+        <div class="svg-wrap"><svg id="sigbars" width="1180" height="310"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>EDA Baseline: SaidIt Field Audit</h2><span class="sub">field presence matrix for normal vs anomalous posts</span></div>
+        <p class="desc">This matrix answers why <code>content_source</code> is a valid starting point: it is not selected in isolation, but after comparing the observed fields and adjacent behavior of all 108 SaidIt posts.</p>
+        <div class="svg-wrap"><svg id="fieldaudit" width="1180" height="360"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>SaidIt Rule Space</h2><span class="sub">all 108 posts separated by actor, source field, check, and cleanup</span></div>
+        <p class="desc">Each mark is a SaidIt post. The three Agent file-source posts form a distinct rule signature rather than a subjective anomaly cluster.</p>
+        <div class="svg-wrap"><svg id="rulespace" width="1180" height="360"></svg></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>EDA Baseline: File Operations</h2><span class="sub">action and extension distributions for file evidence</span></div>
+        <p class="desc">Because the anomalous posts are file-backed, this baseline shows how common file reads, creates, deletes, and file extensions are before focusing on codename payloads.</p>
+        <div class="viz-two">
+          <div class="svg-wrap"><svg id="fileops" width="560" height="330"></svg></div>
+          <div class="svg-wrap"><svg id="fileexts" width="560" height="330"></svg></div>
+        </div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>EDA Baseline: Incident Scale Comparison</h2><span class="sub">small-multiple bars for the three file-source incidents</span></div>
+        <p class="desc">This overview-level comparison links Q1 and Q3: the target SwiftWren event is the same mechanism as prior incidents, but much larger in relay scale and cross-department spread.</p>
+        <div class="svg-wrap"><svg id="incidentscaleoverview" width="1180" height="430"></svg></div>
+      </section>
+
+      <section class="panel explore-only">
+        <div class="head"><h2>Baseline G: Relay Tasks and Actor Activity</h2><span class="sub">task composition + named-party activity</span></div>
+        <p class="desc">These additional baselines use more of the provided data. They show that codename relays sit inside a much larger task system, and that John is not globally unusual by raw activity count.</p>
+        <div class="viz-two">
+          <div class="svg-wrap"><svg id="qstbars" width="560" height="300"></svg></div>
+          <div class="svg-wrap"><svg id="actorbars" width="560" height="300"></svg></div>
+        </div>
+      </section>
+
+      <section class="panel explore-only">
+        <div class="head"><h2>Method Pipeline</h2><span class="sub">how the dashboard supports analysis</span></div>
+        <div id="pipeline"></div>
+      </section>
+
+      <section class="panel core">
+        <div class="head"><h2>Tools & Reproducibility</h2><span class="sub">what was used to build and verify the visual analytics system</span></div>
+        <p class="desc">The final rebuild is a self-contained browser-based visual analytics system. It does not require Tableau, Vega-Lite, or a D3 runtime for the submitted pages; older D3 prototypes remain only as development artifacts outside the canonical review path.</p>
+        <div class="cards3">
+          <div class="card qcard"><h3>Interface</h3><p>HTML, CSS, vanilla JavaScript, and custom SVG rendering for linked views, tooltips, filters, lightboxes, and URL-preserved interaction state.</p></div>
+          <div class="card qcard ok"><h3>Data Pipeline</h3><p>Python <code>rebuild/extract_data.py</code> parses the official <code>MC2 data.json</code> and <code>org_chart.json</code>, then exports <code>mc2_viz_data.json</code> and <code>.js</code>.</p></div>
+          <div class="card qcard anom"><h3>Quality Checks</h3><p>Playwright / <code>playwright-core</code> with Microsoft Edge is used for screenshots, interaction verification, layout checks, and figure lightbox testing.</p></div>
+        </div>
+        <p class="review-note">Tools used for the official answer form: HTML/CSS/JavaScript, custom SVG, Python data extraction, PNG statistical figure generation, Playwright/Microsoft Edge verification, Git/GitHub Pages hosting.</p>
+      </section>
+
+      <div class="footer">Data: <code>MC2 data.json</code> + <code>org_chart.json</code>. Pipeline: <code>rebuild/extract_data.py</code> to <code>rebuild/mc2_viz_data.json</code>. Timezone: challenge-local UTC-7.</div>
     </main>
   </div>
 </div>
@@ -80,3 +209,5 @@
 <script src="./assets/overview.js"></script>
 </body>
 </html>
+
+

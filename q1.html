@@ -1,75 +1,134 @@
-<!DOCTYPE html>
-<html lang="zh">
+﻿<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Q1 · 异常帖如何产生 — MC2</title>
+<title>Q1 - Mechanism - MC2</title>
 <link rel="stylesheet" href="./assets/app.css">
 </head>
 <body>
 <div id="nav" data-active="q1.html"></div>
 <div class="wrap">
   <header class="hero">
-    <div class="tag">Question 1 · How was the anomalous SaidIt post made?</div>
-    <h1>异常帖如何产生：精确链路 + 系统总图</h1>
-    <p class="lead">Q1 要两样东西：<b>目标帖的精确事件链</b>，以及把它<b>放回整个系统的总图</b>。
-      下面先看 John Agent 每次发帖都完全相同的 5 步“配方”，再看指令在 Agent 网络里的真实游走轨迹，最后是分层系统图。</p>
+    <div class="tag">Question 1 / How was the anomalous SaidIt post made?</div>
+    <h1>Q1: EDA path to the file-source SaidIt post</h1>
+    <p class="lead">The analysis starts with normal SaidIt behavior, isolates the rare Agent <code>content_source</code> pattern, then traces the SwiftWren relay chain to John Windward's Agent.</p>
+    <p class="lead" style="margin-top:8px"><b>Interaction:</b> use the EDA figures as the answer path; then click recipe boxes, route points, or stage filters to inspect exact event evidence.</p>
   </header>
 
   <div class="layout">
     <aside class="side">
-      <div class="card answer">
-        <h2>Q1 答案</h2>
-        <div class="a-body">
-          攻击者利用框架内置、正常业务从不使用的 <code>task=read_file</code> 传播机制，
-          把 <code>&lt;code&gt;_further_instructions.md</code> 在 Agent 间盲转发，
-          直到抵达唯一有公开发帖权的 John Windward Agent。John Agent 随后 4 秒内完成
-          <code>saidit_post_check → saidit_post(content_source) → delete×2</code>。
-          三帖 100% 同一配方。
-        </div>
-        <div class="note" style="margin-top:12px"><b>关键订正：</b>SwiftWren 并非“第一次到 John 就发”。
-          指令 <b>5 次</b>到达 John Agent，前 4 次继续转发/自环，第 5 次才发帖——说明这是<b>概率性随机游走</b>，
-          而非“到达即触发”。</div>
-      </div>
       <div class="card">
-        <h3>选择事件（incident）</h3>
+        <h3>Select Incident</h3>
         <div class="btnrow" id="incsel"></div>
         <div class="stats" id="incstats" style="margin-top:6px"></div>
       </div>
       <div class="card">
-        <h3>三段讲解</h3>
+        <h3>Focus Stage</h3>
+        <div class="btnrow" id="stagefilter"></div>
+        <div class="note">Filtering is a focus+context aid: non-matching steps remain visible but faded.</div>
+      </div>
+      <div class="card">
+        <h3>Page Guide</h3>
         <div class="steps" id="steps"></div>
       </div>
     </aside>
 
     <main>
-      <section class="panel" id="p-recipe">
-        <div class="head"><h2>A · 精确链路：终点 5 步配方</h2>
-          <span class="sub" id="recipe-sub"></span></div>
-        <p class="desc">这是 John Agent 收到 relay 任务后发生的确切事件序列（含 event id 与本地时间）。
-          三次泄露的这 5 步逐字相同，时间精确到秒。</p>
-        <div class="svg-wrap"><svg id="recipe" width="1160" height="260"></svg></div>
+      <section class="panel core" id="p-investigation">
+        <div class="head"><h2>Interactive EDA Investigation</h2><span class="sub">clue -> scan fields -> isolate signature -> trace files -> prove chain</span></div>
+        <p class="desc">This workbench shows the actual reasoning path. Each step states why the next filter or field is examined, so the conclusion is derived rather than asserted.</p>
+        <div class="investigation-layout">
+          <div class="investigation-steps" id="investigationSteps"></div>
+          <div class="investigation-main">
+            <div class="investigation-text" id="investigationText"></div>
+            <div class="svg-wrap"><svg id="investigationViz" width="100%" height="520"></svg></div>
+            <div class="svg-wrap"><svg id="investigationDetail" width="100%" height="300"></svg></div>
+          </div>
+        </div>
       </section>
 
-      <section class="panel" id="p-walk">
-        <div class="head"><h2>B · 传播链：指令的随机游走轨迹</h2>
-          <span class="sub">Agent 在纵轴，跳序在横轴 · 折线即 relay 路径</span></div>
-        <p class="desc">不用力导向“毛球图”，而是把随机游走<b>按时间展开</b>：每个点是一跳的接收者，
-          折线连起来就是指令的真实路线。你能直接看到<b>反复经过同一人</b>、<b>自环</b>、以及最后如何落到
-          <span style="color:var(--anom);font-weight:700">John（红线行）</span>。红色圆点是指令到达 John 的时刻。</p>
+      <section class="panel core" id="p-eda">
+        <div class="head"><h2>EDA Answer Path: six figures for Q1</h2><span class="sub">baseline -> anomaly signature -> exact chain -> system context</span></div>
+        <p class="desc">These figures answer the two required Q1 views separately: the first two contextualize the message chain in the overall system, and the last four focus on the target SwiftWren chain.</p>
+        <div class="figure-grid figure-stack">
+          <figure class="eda-figure" data-target-panel="p-investigation">
+            <img src="./figure_gallery_statistical/06_overview_saidit_source_stacked.png" alt="SaidIt source-field composition">
+            <figcaption><span class="figure-kicker">Figure 1 / Baseline</span><span class="figure-takeaway">The target is unusual because SaidIt normally receives ordinary <code>content</code>, not file-backed <code>content_source</code>.</span><span class="figure-evidence">Data basis: all 108 SaidIt posts; 105 human content posts versus 3 Agent file-source posts.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-investigation">
+            <img src="./figure_gallery_statistical/09_q1_task_targeting_funnel.png" alt="Task-driven targeting funnel">
+            <figcaption><span class="figure-kicker">Figure 2 / Filter Path</span><span class="figure-takeaway">The investigation starts from SaidIt because the prompt names the platform, actor, and time; the funnel shows how the target subset is isolated.</span><span class="figure-evidence">Data basis: event type, actor type, timestamp, and `details.content_source` fields.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-walk">
+            <img src="./figure_gallery_statistical/10_q1_incident_metric_dotplot.png" alt="Incident metric dot plot">
+            <figcaption><span class="figure-kicker">Figure 3 / System Context</span><span class="figure-takeaway">SwiftWren is not just the target by prompt; it is also the largest observed file-source chain.</span><span class="figure-evidence">Data basis: per-incident hop count, distinct Agents, departments, cross-department hops, and John arrivals.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-recipe">
+            <img src="./figure_gallery_statistical/18_q1_terminal_recipe_timeline.png" alt="Terminal recipe timeline">
+            <figcaption><span class="figure-kicker">Figure 4 / Exact Chain</span><span class="figure-takeaway">The last seconds form a five-step terminal recipe: relay arrival, post check, file-source post, instruction delete, payload delete.</span><span class="figure-evidence">Data basis: event ids around the May 17 04:21 target post.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-walk">
+            <img src="./figure_gallery_statistical/15_q1_swiftwren_receiver_rank.png" alt="SwiftWren receiver rank bar chart">
+            <figcaption><span class="figure-kicker">Figure 5 / Important Agents</span><span class="figure-takeaway">Receiver counts summarize the 186-hop swimlane and identify repeated relay endpoints without forcing the reader to inspect every hop.</span><span class="figure-evidence">Data basis: `queue_subordinate_task` sender/receiver pairs carrying `SwiftWren_further_instructions.md`.</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-dept">
+            <img src="./figure_gallery_statistical/17_q1_department_flow_heatmap.png" alt="SwiftWren department flow heatmap">
+            <figcaption><span class="figure-kicker">Figure 6 / System Interactions</span><span class="figure-takeaway">The chain crosses organizational boundaries, so the event is better described as a system relay failure than as a single-person posting action.</span><span class="figure-evidence">Data basis: `org_chart.json` department mapping joined to relay sender and receiver Agents.</span></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="panel core answer" id="p-answer">
+        <div class="head"><h2>Conclusion After EDA</h2><span class="sub">answer supported by the figures above</span></div>
+        <div class="a-body"><b>Main finding.</b> The anomalous post was produced by an Agent-mediated file-posting workflow, not by John manually typing a SaidIt message. The target post used <code>content_source=SwiftWren.txt</code>.</div>
+        <div class="a-body" style="margin-top:10px"><b>Detailed view.</b> Emma Harbor's Agent read <code>meeting_notes.doc</code>, created <code>SwiftWren.txt</code>, and the related <code>SwiftWren_further_instructions.md</code> task propagated through <code>queue_subordinate_task(task=read_file)</code>. The final relay reached John Windward's Agent, which executed <code>saidit_post_check</code>, <code>saidit_post(content_source)</code>, and two cleanup deletes.</div>
+        <div class="a-body" style="margin-top:10px"><b>System overview.</b> Normal SaidIt posts use human-written <code>content</code>. Only 3 of 108 SaidIt posts use Agent <code>content_source</code>, and SwiftWren is the largest observed relay chain among those incidents.</div>
+        <div class="note" style="margin-top:12px"><b>Important correction:</b> SwiftWren reached John five times. The first four arrivals did not directly produce the public post in the immediate evidence window; the fifth produced the target post. Arrival at John is necessary in the observed terminal chain, but not sufficient by itself.</div>
+      </section>
+
+      <section class="panel core" id="p-recipe">
+        <div class="head"><h2>Detailed View A: Terminal Five-Step Recipe</h2><span class="sub" id="recipe-sub"></span></div>
+        <p class="desc">This sequence is the exact terminal chain after John Agent receives the final relay task. It is shown as a timeline rather than a network hairball.</p>
+        <div class="svg-wrap"><svg id="recipe" width="100%" height="270"></svg></div>
+        <div id="evidence" class="evidence-box"></div>
+      </section>
+
+      <section class="panel core" id="p-life">
+        <div class="head"><h2>Detailed View B: File Lifecycle Timeline</h2><span class="sub">source read, payload, relay, post, and cleanup</span></div>
+        <p class="desc">This view links the macro chain to auditable event ids. Unknown source context is kept visible instead of being filled with unsupported content claims.</p>
+        <div class="svg-wrap"><svg id="lifecycle" width="100%" height="250"></svg></div>
+        <div id="johnoutcomes" style="margin-top:14px"></div>
+      </section>
+
+      <section class="panel core" id="p-walk">
+        <div class="head"><h2>Detailed View C: Agent Relay Swimlane</h2><span class="sub" id="walk-sub">switch between hop order and elapsed time</span></div>
+        <p class="desc">Each point is a relay receiver. Select an Agent to coordinate highlighting across the lane and evidence record.</p>
+        <div class="btnrow"><button class="btn" id="walk-hop" type="button">Hop order</button><button class="btn" id="walk-time" type="button">Elapsed time</button><button class="btn" id="clear-agent" type="button">Clear Agent</button></div>
         <div class="legend" id="walk-legend"></div>
-        <div class="svg-wrap"><svg id="walk" width="1160" height="520"></svg></div>
+        <div class="svg-wrap"><svg id="walk" width="100%" height="540"></svg></div>
       </section>
 
-      <section class="panel" id="p-sys">
-        <div class="head"><h2>C · 系统总图：异常链路在系统中的位置</h2>
-          <span class="sub">source doc → payload → relay → SaidIt 边界 → cleanup</span></div>
-        <p class="desc">把这条链放回系统，它横跨四个层。真正把风险从“内部”变成“外部危害”的是
-          <b>SaidIt 边界</b>那一步——这也预示了 Q3 的干预点。</p>
+      <section class="panel core" id="p-dept">
+        <div class="head"><h2>System Overview A: Department Propagation Matrix</h2><span class="sub">from-department to to-department relay counts</span></div>
+        <p class="desc">The matrix aggregates relay hops by organization unit. It shows whether the behavior stayed local or crossed system boundaries inside the company.</p>
+        <div class="svg-wrap"><svg id="deptmatrix" width="100%" height="420"></svg></div>
+      </section>
+
+      <section class="panel core" id="p-flow">
+        <div class="head"><h2>System Overview B: Department Flow Ribbons</h2><span class="sub">top relay directions between departments</span></div>
+        <p class="desc">This alluvial-style view shows the strongest department-to-department relay directions for the selected incident. Width encodes hop count; low-count flows are omitted to avoid clutter.</p>
+        <div class="svg-wrap"><svg id="deptflow" width="100%" height="380"></svg></div>
+      </section>
+
+      <section class="panel core" id="p-sys">
+        <div class="head"><h2>System Overview C: System Boundary Context</h2><span class="sub">source document to payload to relay to public post</span></div>
+        <p class="desc">This node-link flow separates internal operations from the external publishing boundary. The public boundary is where the harm becomes irreversible.</p>
+        <div class="svg-wrap"><svg id="syschart" width="100%" height="330"></svg></div>
         <div id="sysflow"></div>
       </section>
 
-      <div class="footer">时间口径：挑战本地 UTC-7。event id 与原始 <code>MC2 data.json</code> 一致。</div>
+      <div class="footer">Timezone: challenge-local UTC-7. Event ids match the original <code>MC2 data.json</code>.</div>
     </main>
   </div>
 </div>
@@ -78,3 +137,6 @@
 <script src="./assets/q1.js"></script>
 </body>
 </html>
+
+
+

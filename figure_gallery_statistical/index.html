@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MC2 Statistical Figure Gallery</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; color: #172033; background: #f6f8fb; }
+    main { max-width: 1180px; margin: 0 auto; padding: 28px 20px 48px; }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    h2 { margin: 32px 0 14px; font-size: 20px; }
+    p { margin: 0 0 18px; color: #526174; }
+    figure { margin: 0 0 22px; padding: 14px; background: white; border: 1px solid #d8e1ec; border-radius: 8px; }
+    figcaption { margin: 0 0 10px; font-weight: 700; color: #172033; }
+    img { display: block; width: 100%; height: auto; border: 1px solid #edf2f7; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>MC2 Statistical Figure Gallery</h1>
+  <p>36 PNG figures generated from <code>mc2_viz_data.json</code>. These emphasize descriptive statistics and EDA-style visual encodings.</p>
+  
+  <section>
+    <h2>Overview/Baseline</h2>
+    <div class="grid">
+      <figure><figcaption>01_overview_event_type_rank_bar.png - Event Type Rank Bar</figcaption><img src="01_overview_event_type_rank_bar.png" alt="Event Type Rank Bar"></figure>
+      <figure><figcaption>02_overview_party_type_bar.png - Actor Type Composition</figcaption><img src="02_overview_party_type_bar.png" alt="Actor Type Composition"></figure>
+      <figure><figcaption>03_overview_daily_total_area.png - Daily Total Event Trend</figcaption><img src="03_overview_daily_total_area.png" alt="Daily Total Event Trend"></figure>
+      <figure><figcaption>04_overview_hourly_volume_histogram.png - Hourly Event Volume Distribution</figcaption><img src="04_overview_hourly_volume_histogram.png" alt="Hourly Event Volume Distribution"></figure>
+      <figure><figcaption>05_overview_day_hour_heatmap.png - Day-Hour Event Heatmap</figcaption><img src="05_overview_day_hour_heatmap.png" alt="Day-Hour Event Heatmap"></figure>
+      <figure><figcaption>06_overview_saidit_source_stacked.png - SaidIt Source-Field Composition</figcaption><img src="06_overview_saidit_source_stacked.png" alt="SaidIt Source-Field Composition"></figure>
+      <figure><figcaption>07_overview_saidit_actor_rank.png - SaidIt Post Count by Actor</figcaption><img src="07_overview_saidit_actor_rank.png" alt="SaidIt Post Count by Actor"></figure>
+      <figure><figcaption>08_overview_queue_task_composition.png - Queue Task Composition</figcaption><img src="08_overview_queue_task_composition.png" alt="Queue Task Composition"></figure>
+      <figure><figcaption>09_overview_virus_action_distribution.png - Virus Action Distribution</figcaption><img src="09_overview_virus_action_distribution.png" alt="Virus Action Distribution"></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Q1 Mechanism</h2>
+    <div class="grid">
+      <figure><figcaption>09_q1_task_targeting_funnel.png - Task-Driven Targeting Funnel</figcaption><img src="09_q1_task_targeting_funnel.png" alt="Task-Driven Targeting Funnel"></figure>
+      <figure><figcaption>10_q1_incident_metric_dotplot.png - Incident Metric Dot Plot</figcaption><img src="10_q1_incident_metric_dotplot.png" alt="Incident Metric Dot Plot"></figure>
+      <figure><figcaption>11_q1_relay_hop_bar.png - Relay Hop Count Bar</figcaption><img src="11_q1_relay_hop_bar.png" alt="Relay Hop Count Bar"></figure>
+      <figure><figcaption>12_q1_relay_duration_bar.png - Relay Duration Bar</figcaption><img src="12_q1_relay_duration_bar.png" alt="Relay Duration Bar"></figure>
+      <figure><figcaption>13_q1_cross_dept_ratio_bar.png - Cross-Department Ratio</figcaption><img src="13_q1_cross_dept_ratio_bar.png" alt="Cross-Department Ratio"></figure>
+      <figure><figcaption>14_q1_john_arrivals_bar.png - John Arrival Count</figcaption><img src="14_q1_john_arrivals_bar.png" alt="John Arrival Count"></figure>
+      <figure><figcaption>15_q1_swiftwren_receiver_rank.png - SwiftWren Receiver Rank</figcaption><img src="15_q1_swiftwren_receiver_rank.png" alt="SwiftWren Receiver Rank"></figure>
+      <figure><figcaption>16_q1_hop_interval_boxplot.png - Relay Hop Interval Box Plot</figcaption><img src="16_q1_hop_interval_boxplot.png" alt="Relay Hop Interval Box Plot"></figure>
+      <figure><figcaption>17_q1_department_flow_heatmap.png - SwiftWren Department Flow Heatmap</figcaption><img src="17_q1_department_flow_heatmap.png" alt="SwiftWren Department Flow Heatmap"></figure>
+      <figure><figcaption>18_q1_terminal_recipe_timeline.png - Terminal Recipe Timeline</figcaption><img src="18_q1_terminal_recipe_timeline.png" alt="Terminal Recipe Timeline"></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Q2 Meaning/Provenance</h2>
+    <div class="grid">
+      <figure><figcaption>19_q2_provenance_completeness_heatmap.png - Provenance Completeness Heatmap</figcaption><img src="19_q2_provenance_completeness_heatmap.png" alt="Provenance Completeness Heatmap"></figure>
+      <figure><figcaption>20_q2_payload_size_bar.png - Payload Size Bar</figcaption><img src="20_q2_payload_size_bar.png" alt="Payload Size Bar"></figure>
+      <figure><figcaption>21_q2_source_to_post_lag_bar.png - Source-to-Post Lag</figcaption><img src="21_q2_source_to_post_lag_bar.png" alt="Source-to-Post Lag"></figure>
+      <figure><figcaption>22_q2_evidence_certainty_stacked.png - Evidence Certainty Counts</figcaption><img src="22_q2_evidence_certainty_stacked.png" alt="Evidence Certainty Counts"></figure>
+      <figure><figcaption>23_q2_source_visibility_bar.png - Source Visibility Bar</figcaption><img src="23_q2_source_visibility_bar.png" alt="Source Visibility Bar"></figure>
+      <figure><figcaption>24_q2_post_source_field_composition.png - Post Source-Field Composition</figcaption><img src="24_q2_post_source_field_composition.png" alt="Post Source-Field Composition"></figure>
+      <figure><figcaption>25_q2_cleanup_delete_count.png - Cleanup Delete Count</figcaption><img src="25_q2_cleanup_delete_count.png" alt="Cleanup Delete Count"></figure>
+      <figure><figcaption>26_q2_claim_boundary_matrix.png - Claim Boundary Matrix</figcaption><img src="26_q2_claim_boundary_matrix.png" alt="Claim Boundary Matrix"></figure>
+      <figure><figcaption>27_q2_source_actor_department_bar.png - Source Actor Department</figcaption><img src="27_q2_source_actor_department_bar.png" alt="Source Actor Department"></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Q3 Recurrence/Intervention</h2>
+    <div class="grid">
+      <figure><figcaption>28_q3_recurrence_post_timeline.png - Recurrence Post Timeline</figcaption><img src="28_q3_recurrence_post_timeline.png" alt="Recurrence Post Timeline"></figure>
+      <figure><figcaption>29_q3_incident_scale_dotplot.png - Incident Scale Dot Plot</figcaption><img src="29_q3_incident_scale_dotplot.png" alt="Incident Scale Dot Plot"></figure>
+      <figure><figcaption>30_q3_anomaly_ratio_bar.png - Anomaly Ratio Bar</figcaption><img src="30_q3_anomaly_ratio_bar.png" alt="Anomaly Ratio Bar"></figure>
+      <figure><figcaption>31_q3_intervention_scatter.png - False Positives vs Blast Radius</figcaption><img src="31_q3_intervention_scatter.png" alt="False Positives vs Blast Radius"></figure>
+      <figure><figcaption>32_q3_affected_records_log_bar.png - Affected Records Log Bar</figcaption><img src="32_q3_affected_records_log_bar.png" alt="Affected Records Log Bar"></figure>
+      <figure><figcaption>33_q3_gate_confusion_matrix.png - Gate Confusion Matrix</figcaption><img src="33_q3_gate_confusion_matrix.png" alt="Gate Confusion Matrix"></figure>
+      <figure><figcaption>34_q3_rule_tradeoff_matrix.png - Rule Tradeoff Matrix</figcaption><img src="34_q3_rule_tradeoff_matrix.png" alt="Rule Tradeoff Matrix"></figure>
+      <figure><figcaption>35_q3_timing_category_bar.png - Intervention Timing Category</figcaption><img src="35_q3_timing_category_bar.png" alt="Intervention Timing Category"></figure>
+      <figure><figcaption>36_q3_shared_agent_intersections.png - Shared-Agent Intersections</figcaption><img src="36_q3_shared_agent_intersections.png" alt="Shared-Agent Intersections"></figure>
+    </div>
+  </section>
+</main>
+</body>
+</html>

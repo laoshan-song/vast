@@ -1,0 +1,135 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Q3 - 复发与干预 - MC2</title>
+<link rel="stylesheet" href="./assets/app.css">
+</head>
+<body>
+<div id="nav" data-active="q3.html"></div>
+<div class="wrap">
+  <header class="hero">
+    <div class="tag">问题 3 / 会不会复发？调查历史行为并选择一个干预点</div>
+    <h1>Q3：复发模式与一个可辩护的干预方案</h1>
+    <p class="lead">这种行为可能复发，因为三个来源和规模不同的事件共享同一终端机制。干预点应放在共同的外部发布边界，而不是只针对某个人或某个文件名。</p>
+    <p class="lead" style="margin-top:8px"><b>交互方式：</b>点击时间线标记和候选干预方案，检查证据、覆盖率、误伤、影响范围和局限。</p>
+  </header>
+
+  <div class="layout">
+    <aside class="side">
+      <div class="card answer">
+        <h2>直接答案</h2>
+        <div class="a-body">只选择一个干预点：在 SaidIt 发布边界，对任何由 Agent 发起且包含 <code>details.content_source</code> 的 <code>saidit_post</code> 进行阻断或转人工审批。</div>
+        <div class="note" style="margin-top:12px">该网关覆盖 <b>3/3</b> 个观测异常，并且对正常人类 SaidIt 帖的观测误伤为 <b>0/105</b>。局限是：如果未来变体直接写入普通 <code>content</code>，还需要额外的行为检测或内容检测。</div>
+      </div>
+      <div class="card">
+        <h3>论证结构</h3>
+        <div class="steps" id="steps"></div>
+      </div>
+    </aside>
+
+    <main>
+      <section class="panel answer" id="p-answer">
+        <div class="head"><h2>官方答案草稿</h2><span class="sub">由图 A-F 支撑的简洁 Q3 回答</span></div>
+        <p class="desc">这种行为已经重复发生。在 5 月 17 日 SwiftWren 目标事件之前，日志中还有两起较早的文件源 SaidIt 事件：5 月 10 日 05:45:42 的 HiddenOrca，以及 5 月 10 日 17:56:04 的 MellowOtter。三起事件共享同一终端机制：relay 到达 John Windward 的 Agent，Agent 执行 <code>saidit_post_check</code>，使用 <code>details.content_source</code> 发帖到 SaidIt，并立即删除指令文件和 payload 文件。它们的上游路径在规模和可见性上不同，因此问题不是单一文件名或单一源文档。</p>
+        <p class="desc">最强的单点干预是 SaidIt 边界网关：阻断或审批 Agent 发起且包含 <code>details.content_source</code> 的 <code>saidit_post</code> 事件。在观测数据中，这条规则覆盖全部三起文件源异常，并且对 105 条正常人类 <code>content</code> 帖造成的观测误伤为零。更宽泛的 relay 拦截会影响大量正常自动化记录，文件名规则容易绕过，仅移除 John 权限过于端点化，而 delete-file 报警发生在公开暴露之后。</p>
+      </section>
+
+      <section class="panel core" id="p-stat-evidence">
+        <div class="head"><h2>A0：复发与干预统计</h2><span class="sub">进入决策表前的描述性证据</span></div>
+        <p class="desc">这六张图让 Q3 的答案可审计：先用历史发帖和规模对比证明复发，再用异常比例、影响记录数、混淆矩阵和规则权衡证明为什么选择 SaidIt 边界规则。</p>
+        <div class="figure-grid figure-stack">
+          <figure class="eda-figure" data-target-panel="p-prior">
+            <img src="./figure_gallery_statistical/28_q3_recurrence_post_timeline.png" alt="复发发帖时间线">
+            <figcaption><span class="figure-kicker">图 1 / 历史问题</span><span class="figure-takeaway">HiddenOrca 和 MellowOtter 都发生在 SwiftWren 之前，因此 5 月 17 日目标事件是重复模式的最新一次。</span><span class="figure-evidence">数据依据：三条带有 <code>details.content_source</code> 的 <code>saidit_post</code> 事件。</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-scale">
+            <img src="./figure_gallery_statistical/29_q3_incident_scale_dotplot.png" alt="事件规模点图">
+            <figcaption><span class="figure-kicker">图 2 / 规模对比</span><span class="figure-takeaway">三起事件共享同一终端机制，但传播规模不同；SwiftWren 是其中最大的 relay chain。</span><span class="figure-evidence">数据依据：relay hops、distinct Agents、departments touched、cross-department hops 和 John arrivals。</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-base">
+            <img src="./figure_gallery_statistical/30_q3_anomaly_ratio_bar.png" alt="异常比例条形图">
+            <figcaption><span class="figure-kicker">图 3 / 稀有性</span><span class="figure-takeaway">文件源发帖在 SaidIt 基线中非常少见，因此连续出现三次具有运维意义，不应当视为普通波动。</span><span class="figure-evidence">数据依据：108 条 SaidIt posts 中有 3 条 Agent <code>content_source</code> posts。</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-fix">
+            <img src="./figure_gallery_statistical/33_q3_gate_confusion_matrix.png" alt="边界规则混淆矩阵">
+            <figcaption><span class="figure-kicker">图 4 / 推荐规则</span><span class="figure-takeaway">SaidIt 边界网关覆盖 3/3 个观测异常，并且对 105 条正常人类发帖的观测误伤为 0。</span><span class="figure-evidence">数据依据：全部 SaidIt posts 的 actor type 与 <code>saidit_post.details.content_source</code> 字段。</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-parallel">
+            <img src="./figure_gallery_statistical/32_q3_affected_records_log_bar.png" alt="受影响记录对数条形图">
+            <figcaption><span class="figure-kicker">图 5 / 运维成本</span><span class="figure-takeaway">宽泛拦截 relay 会影响更多正常记录，因此作为唯一干预点不如 SaidIt 边界规则稳妥。</span><span class="figure-evidence">数据依据：候选规则的派生 affected-record counts；使用对数尺度避免小数值被大数值淹没。</span></figcaption>
+          </figure>
+          <figure class="eda-figure" data-target-panel="p-fix">
+            <img src="./figure_gallery_statistical/34_q3_rule_tradeoff_matrix.png" alt="规则权衡矩阵">
+            <figcaption><span class="figure-kicker">图 6 / 决策权衡</span><span class="figure-takeaway">推荐规则同时具备完整观测覆盖、零观测人类帖误伤和发帖前拦截时机，因此是最强的单点干预。</span><span class="figure-evidence">数据依据：五个候选干预规则的 coverage、false positives、affected records 和 timing。</span></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="panel core" id="p-base">
+        <div class="head"><h2>A：从 SaidIt 基线发现复发</h2><span class="sub">全部帖子 -> 文件源帖子 -> John Agent 终端模式</span></div>
+        <p class="desc">该图展示复发模式如何从数据中被发现。分母被明确标出：SaidIt 发帖计数使用 108 条 posts，发帖检查结果使用 71 条 <code>saidit_post_check</code> 事件。</p>
+        <div class="svg-wrap"><svg id="baselinechart" width="100%" height="520"></svg></div>
+        <div id="baseline"></div>
+      </section>
+
+      <section class="panel core" id="p-prior">
+        <div class="head"><h2>B：历史发生与重复终端序列</h2><span class="sub">三起事件，同一终端序列</span></div>
+        <p class="desc">历史问题不是只凭相似性推断。下方每一行都展示可观测的终端序列：relay 到达、SaidIt 检查、文件源发帖和两次清理删除。</p>
+        <div class="svg-wrap"><svg id="timeline" width="100%" height="240"></svg></div>
+        <div class="svg-wrap" style="margin-top:16px"><svg id="terminalrecipes" width="100%" height="430"></svg></div>
+        <div id="priortable" style="margin-top:16px"></div>
+      </section>
+
+      <section class="panel core" id="p-scale">
+        <div class="head"><h2>C：事件规模对比</h2><span class="sub">可比事件指标点图</span></div>
+        <p class="desc">这个视图把复发表转成便于扫描的比较图。每个指标使用自己的坐标轴，因此可以比较排序和量级，同时不混合不兼容单位。</p>
+        <div class="svg-wrap"><svg id="recurrencebars" width="100%" height="480"></svg></div>
+        <div class="svg-wrap"><svg id="scaleplot" width="100%" height="420"></svg></div>
+      </section>
+
+      <section class="panel core" id="p-upset">
+        <div class="head"><h2>D：共享 Agent UpSet 图</h2><span class="sub">三起事件之间的精确成员交集</span></div>
+        <p class="desc">这是辅助背景，不是主要复发证明。复发证明来自重复终端序列；UpSet 图展示不同 relay 路径之间有多少参与者重叠。</p>
+        <div class="svg-wrap"><svg id="upset" width="100%" height="390"></svg></div>
+      </section>
+
+      <section class="panel core" id="p-parallel">
+        <div class="head"><h2>E：干预方案平行坐标</h2><span class="sub">候选规则的多标准比较</span></div>
+        <p class="desc">每条线代表一个可能的单点干预。覆盖率、连带影响、影响记录数和时机来自派生事件计数；成本是分析者给出的有序评分，并已明确标注。</p>
+        <div class="svg-wrap"><svg id="parallel" width="100%" height="400"></svg></div>
+      </section>
+
+      <section class="panel core" id="p-fix">
+        <div class="head"><h2>F：一个干预点</h2><span class="sub">决策矩阵与覆盖率-成本视图</span></div>
+        <div id="gate"></div>
+        <div id="evidence" class="evidence-box"></div>
+        <h3 style="margin-top:20px">推荐网关混淆矩阵</h3>
+        <p class="desc">这个 2x2 矩阵展示所选规则会阻断或放行哪些观测到的 SaidIt 帖子。它把检测到的异常与正常人类帖子分开，而不是只依赖文字说明。</p>
+        <div class="svg-wrap"><svg id="confusion" width="100%" height="320"></svg></div>
+        <h3 style="margin-top:20px">规则覆盖矩阵</h3>
+        <p class="desc">行代表可能的单点干预规则，列区分异常覆盖、非异常连带影响、影响记录数和拦截时机，使推荐方案可审计。</p>
+        <div id="rulematrix"></div>
+        <div>
+          <h3 style="margin-top:20px">候选干预评估</h3>
+          <div id="alts"></div>
+          <div class="svg-wrap" style="margin-top:16px"><svg id="decision" width="100%" height="300"></svg></div>
+        </div>
+      </section>
+
+      <div class="footer">干预评估使用全量计数证据：<code>content_source</code> 规则覆盖 3/3 个观测异常，对正常人类 content 帖的观测误伤为 0/105。该规则只声称覆盖已观测到的文件源异常模式。</div>
+    </main>
+  </div>
+</div>
+<script src="./mc2_viz_data.js"></script>
+<script src="./assets/app.js"></script>
+<script src="./assets/q3.js"></script>
+<script src="./assets/i18n_zh.js"></script>
+</body>
+</html>
+
+
+
+
+

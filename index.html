@@ -1,82 +1,13 @@
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MC2 总览 — Anomalous SaidIt Post</title>
-<link rel="stylesheet" href="./assets/app.css">
-</head>
-<body>
-<div id="nav" data-active="overview.html"></div>
-<div class="wrap">
-  <header class="hero">
-    <div class="tag">VAST Challenge 2026 · Mini-Challenge 2 · System Overview</div>
-    <h1>一条乱码帖，如何从内部文档走到公开论坛</h1>
-    <p class="lead">任务定位（题面原文）：先<b>摸清多智能体系统的整体运行</b>、建立正常基准，再对标目标异常帖，
-      最后提出<b>一处</b>整改。全部结论只用原始数据 <code>MC2 data.json</code>（185,147 事件）+ <code>org_chart.json</code>，
-      时间统一按<b>挑战本地时区 UTC-7</b>（对齐题面 “John Windward, May 17 04:21am”）。</p>
-  </header>
-
-  <div class="layout">
-    <aside class="side">
-      <div class="card answer">
-        <h2>一句话结论</h2>
-        <div class="a-body">
-          异常帖是一个<b>寄生在 Agent 任务队列里的 prompt-injection 蠕虫</b>：一份内部文档被打包成
-          <code>&lt;代号&gt;.txt</code>，其 <code>_further_instructions.md</code> 通过
-          <code>queue_subordinate_task(task=read_file)</code> 在 Agent 间<b>盲转发随机游走</b>，
-          直到抵达全公司唯一有公开发帖权的 <b>John Windward Agent</b>，由它执行
-          <code>check → saidit_post(content_source) → delete×2</code>。共发生 <b>3 次</b>。
-        </div>
-      </div>
-      <div class="card">
-        <h3>关键数字（全部可核）</h3>
-        <div class="stats" id="keystats"></div>
-      </div>
-      <div class="card">
-        <h3>阅读顺序</h3>
-        <div class="steps">
-          <a class="pill" href="q1.html" style="justify-content:flex-start">Q1 · 异常帖如何产生（链路 + 系统图）</a>
-          <a class="pill" href="q2.html" style="justify-content:flex-start">Q2 · 帖子含义与内容来源</a>
-          <a class="pill" href="q3.html" style="justify-content:flex-start">Q3 · 会否复发 + 单点干预</a>
-        </div>
-      </div>
-    </aside>
-
-    <main>
-      <section class="panel">
-        <div class="head"><h2>MC2 官方三问 · 答案地图</h2>
-          <span class="sub">how it was made / what it means / could it repeat + one fix</span></div>
-        <div id="qmap"></div>
-      </section>
-
-      <section class="panel">
-        <div class="head"><h2>系统基线 A：全系统在做什么</h2>
-          <span class="sub">24 种动作类型，人机各半的活动</span></div>
-        <p class="desc">建立“正常”的第一步是看系统整体行为分布。绝大多数是邮件、任务派发、文件读写等常规运营；
-          真正的外发帖（<code>saidit_post</code>）只有 108 条，其中异常帖仅 3 条。</p>
-        <div class="svg-wrap"><svg id="typebars" width="1180" height="470"></svg></div>
-      </section>
-
-      <section class="panel">
-        <div class="head"><h2>系统基线 B：异常帖的“签名”</h2>
-          <span class="sub">正常 vs 异常，一眼可分</span></div>
-        <p class="desc">正常 SaidIt 帖由<b>人</b>发出、正文是一句工作主题（<code>content</code>）；
-          3 条异常帖由 <b>Agent</b> 发出、正文是一个<b>文件</b>（<code>content_source</code>）。
-          这个字段在 185,147 条事件里只出现 3 次——它本身就是异常探针。</p>
-        <div class="svg-wrap"><svg id="sigbars" width="1180" height="260"></svg></div>
-      </section>
-
-      <div class="footer">
-        数据来源 <code>MC2 data.json</code> + <code>org_chart.json</code>；
-        提取脚本 <code>rebuild/extract_data.py</code> → <code>rebuild/mc2_viz_data.json</code>。
-        时间口径：挑战本地 UTC-7。
-      </div>
-    </main>
-  </div>
-</div>
-<script src="./mc2_viz_data.js"></script>
-<script src="./assets/app.js"></script>
-<script src="./assets/overview.js"></script>
-</body>
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="refresh" content="0; url=overview.html">
+    <title>MC2 Rebuild</title>
+    <link rel="canonical" href="overview.html">
+  </head>
+  <body>
+    <p><a href="overview.html">Open MC2 rebuild</a></p>
+  </body>
 </html>
