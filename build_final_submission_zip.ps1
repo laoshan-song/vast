@@ -49,7 +49,8 @@ if (Test-Path -LiteralPath $outputFullPath) {
 }
 
 New-Item -ItemType Directory -Path $stagingRoot | Out-Null
-Copy-Item -LiteralPath (Join-Path $sourceRoot "final_report_0709.html") -Destination (Join-Path $stagingRoot "index.htm")
+Copy-Item -LiteralPath (Join-Path $sourceRoot "index.htm") -Destination (Join-Path $stagingRoot "index.htm")
+Copy-Item -LiteralPath (Join-Path $sourceRoot "index_zh.htm") -Destination (Join-Path $stagingRoot "index_zh.htm")
 Copy-Item -LiteralPath (Join-Path $sourceRoot "SUBMISSION_README.md") -Destination (Join-Path $stagingRoot "README.md")
 
 $rebuildSource = Join-Path $sourceRoot "rebuild"
@@ -59,9 +60,13 @@ New-Item -ItemType Directory -Path $rebuildDestination | Out-Null
 $rebuildFiles = @(
     "index.html",
     "overview.html",
+    "overview_zh.html",
     "q1.html",
+    "q1_zh.html",
     "q2.html",
+    "q2_zh.html",
     "q3.html",
+    "q3_zh.html",
     "mc2_viz_data.js",
     "mc2_viz_data.json",
     "shot-overview.png",
@@ -74,9 +79,19 @@ foreach ($file in $rebuildFiles) {
 }
 Copy-Item -LiteralPath (Join-Path $rebuildSource "assets") -Destination $rebuildDestination -Recurse
 
-$video = Get-ChildItem -LiteralPath $sourceRoot -File | Where-Object { $_.Extension -match '^\.(mp4|wmv)$' }
-foreach ($file in $video) {
-    Copy-Item -LiteralPath $file.FullName -Destination $stagingRoot
+$gallerySource = Join-Path $rebuildSource "figure_gallery_statistical"
+Copy-Item -LiteralPath $gallerySource -Destination $rebuildDestination -Recurse
+
+$sourceIndexHtml = Get-Content -LiteralPath (Join-Path $sourceRoot "index.htm") -Raw
+$videoRow = [regex]::Match($sourceIndexHtml, '(?is)<tr><td>Video(?: link)?</td><td>(.*?)</td></tr>')
+$hasExternalVideoLink = $videoRow.Success -and $videoRow.Groups[1].Value -match 'https?://'
+if ($hasExternalVideoLink) {
+    Write-Host "External video link found; local MP4/WMV files will not be bundled."
+} else {
+    $video = Get-ChildItem -LiteralPath $sourceRoot -File | Where-Object { $_.Extension -match '^\.(mp4|wmv)$' }
+    foreach ($file in $video) {
+        Copy-Item -LiteralPath $file.FullName -Destination $stagingRoot
+    }
 }
 
 $forbidden = Get-ChildItem -LiteralPath $stagingRoot -Recurse -File | Where-Object {
@@ -102,6 +117,9 @@ if ($LASTEXITCODE -ne 0) {
 Compress-Archive -Path (Join-Path $stagingRoot "*") -DestinationPath $outputFullPath -CompressionLevel Optimal
 $zipSize = (Get-Item -LiteralPath $outputFullPath).Length
 $packageFiles = (Get-ChildItem -LiteralPath $stagingRoot -Recurse -File).Count
+if ($zipSize -ge 50MB) {
+    throw ("Package is {0:N2} MB; PCS requires a ZIP smaller than 50 MB." -f ($zipSize / 1MB))
+}
 
 Write-Host "Package created: $outputFullPath"
 Write-Host "Files: $packageFiles"

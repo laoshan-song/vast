@@ -1,4 +1,4 @@
-name: Deploy MC2 rebuild
+name: Deploy MC2 submission
 
 on:
   push:
@@ -28,10 +28,20 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload rebuild site
+      - name: Prepare submission site
+        shell: bash
+        run: |
+          mkdir -p _site/VAST_Challenge_2026_MC2
+          cp .github/pages-index.html _site/index.html
+          cp VAST_Challenge_2026_MC2/index.htm _site/VAST_Challenge_2026_MC2/index.htm
+          cp VAST_Challenge_2026_MC2/index_zh.htm _site/VAST_Challenge_2026_MC2/index_zh.htm
+          cp -R VAST_Challenge_2026_MC2/rebuild _site/VAST_Challenge_2026_MC2/rebuild
+          touch _site/.nojekyll
+
+      - name: Upload submission site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: VAST_Challenge_2026_MC2/rebuild
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment

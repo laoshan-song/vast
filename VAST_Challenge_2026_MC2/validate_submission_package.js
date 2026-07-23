@@ -100,7 +100,7 @@ if (fs.existsSync(indexPath)) {
     warnings.push(`Draft placeholders retained: ${found.join(", ")}`);
   }
   const videoFiles = files.filter((file) => /\.(mp4|wmv)$/i.test(file));
-  const videoRow = index.match(/<tr><td>Video link<\/td><td>(.*?)<\/td><\/tr>/i);
+  const videoRow = index.match(/<tr><td>Video(?: link)?<\/td><td>(.*?)<\/td><\/tr>/i);
   const hasVideoUrl = videoRow && /https?:\/\/|\.mp4|\.wmv/i.test(videoRow[1])
     && !/TEAM ACTION REQUIRED/i.test(videoRow[1]);
   if (!hasVideoUrl && videoFiles.length === 0 && !allowDraft) errors.push("Missing final video URL or bundled video.");

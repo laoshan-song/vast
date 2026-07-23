@@ -15,5 +15,8 @@ MC2_interactive_dashboard.html
 # Local submission assembly and private metadata
 final_submission/
 final_submission.zip
+Renmin University of China-Chen-MC2.zip
 VAST_Challenge_2026_MC2/team_metadata.json
+VAST_Challenge_2026_MC2/*.mp4
+VAST_Challenge_2026_MC2/*.wmv
 node_modules/
