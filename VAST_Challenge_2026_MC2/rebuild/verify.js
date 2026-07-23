@@ -201,6 +201,40 @@ const pages = ["overview", "q1", "q2", "q3"];
   console.log(`${figureLinkOk ? "OK " : "FAIL"} figure evidence links`, JSON.stringify(linkResults),
     figureLinkErrors.length ? "ERR:" + figureLinkErrors.join("|") : "");
 
+  const guide = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const guideErrors = [];
+  guide.on("console", m => { if (/error/i.test(m.type())) guideErrors.push(m.text()); });
+  guide.on("pageerror", e => guideErrors.push("PAGEERR: " + e.message));
+  await guide.goto(`file://${path.resolve(__dirname, "q1.html")}?mode=review&incident=SwiftWren&walk=hop`, { waitUntil: "load" });
+  await guide.waitForTimeout(500);
+  const guideInitial = await guide.evaluate(() => ({
+    panels: document.querySelectorAll(".guided-path").length,
+    steps: document.querySelectorAll(".guided-steps button").length,
+    activeText: document.querySelector(".guided-steps button.active")?.textContent?.trim() || "",
+    mode: document.body.dataset.mode,
+  }));
+  await guide.locator(".guided-path [data-guide-next]").click();
+  await guide.locator(".guided-path [data-guide-next]").click();
+  await guide.locator(".guided-path [data-guide-next]").click();
+  await guide.waitForTimeout(350);
+  const guideAfter = await guide.evaluate(() => ({
+    mode: document.body.dataset.mode,
+    hash: location.hash,
+    target: document.querySelector(".guided-target")?.id || "",
+    contextCount: document.querySelectorAll(".guided-context").length,
+    currentTitle: document.querySelector(".guided-current h3")?.textContent?.trim() || "",
+  }));
+  const guideOk = guideErrors.length === 0
+    && guideInitial.panels === 1 && guideInitial.steps >= 5 && guideInitial.mode === "review"
+    && guideAfter.mode === "explore" && guideAfter.hash === "#p-walk"
+    && guideAfter.target === "p-walk" && guideAfter.contextCount > 0
+    && /Trace task propagation/i.test(guideAfter.currentTitle);
+  bad ||= !guideOk;
+  console.log(`${guideOk ? "OK " : "FAIL"} guided analysis path`, JSON.stringify({
+    guideInitial, guideAfter,
+  }), guideErrors.length ? "ERR:" + guideErrors.join("|") : "");
+  await guide.close();
+
   const zhLightbox = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const zhLightboxErrors = [];
   zhLightbox.on("console", m => { if (/error/i.test(m.type())) zhLightboxErrors.push(m.text()); });
