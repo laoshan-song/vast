@@ -66,26 +66,77 @@
     th, td { border-bottom: 1px solid var(--border); padding: 9px 8px; text-align: left; vertical-align: top; }
     th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
     ul { margin: 8px 0 0; padding-left: 22px; }
+    .hero { border-top: 5px solid var(--info); }
+    .finding {
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-left: 4px solid var(--anom);
+      background: #fff5f6;
+      font-weight: 700;
+    }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .metric {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 12px;
+      background: #f8fafc;
+    }
+    .metric b { display: block; font-size: 20px; line-height: 1.15; }
+    .quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 16px;
+    }
+    .quick-links a {
+      display: inline-block;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 10px;
+      background: #fff;
+    }
   </style>
 </head>
 <body>
 <main>
-  <header>
-    <p class="muted">VAST Challenge 2026 / Mini-Challenge 2 / 中文阅读版</p>
+  <header class="hero">
+    <p class="muted">VAST Challenge 2026 / Mini-Challenge 2 / Renmin University of China-Chen-MC2 / 中文阅读版</p>
     <h1>Agentic SaidIt 异常发帖调查</h1>
-    <p>本页是英文提交入口 <a href="index.htm">index.htm</a> 的中文阅读版，便于组内核对逻辑、准备展示和录制讲解。正式提交仍建议以英文页面和英文答题表为准。</p>
-    <p>交互式可视分析系统入口：<a href="rebuild/overview_zh.html">rebuild/overview_zh.html</a>。</p>
+    <p>本页是英文提交入口 <a href="index.htm">index.htm</a> 的中文阅读版，便于组内核对逻辑、准备展示和录制讲解。页面下方提供 Q1-Q3 的简明答案、配图和交互系统入口。</p>
+    <p class="finding">核心发现：异常 SaidIt 帖子不是普通人类发帖，而是 Agent 中介的文件发帖 workflow 将内部文件转化为公开 <code>content_source</code> 帖子。</p>
+    <div class="metric-grid" aria-label="关键证据指标">
+      <div class="metric"><b>185,147</b><span class="muted">条日志事件</span></div>
+      <div class="metric"><b>108</b><span class="muted">条 SaidIt 帖子</span></div>
+      <div class="metric"><b>3</b><span class="muted">条 Agent 文件源帖子</span></div>
+      <div class="metric"><b>186</b><span class="muted">次 SwiftWren relay hops</span></div>
+      <div class="metric"><b>3/3</b><span class="muted">边界规则覆盖</span></div>
+      <div class="metric"><b>0/105</b><span class="muted">观测误伤</span></div>
+    </div>
+    <div class="quick-links" aria-label="主要导航">
+      <a href="rebuild/overview_zh.html">从 Overview 开始</a>
+      <a href="rebuild/q1_zh.html">Q1 事件链</a>
+      <a href="rebuild/q2_zh.html">Q2 内容溯源</a>
+      <a href="rebuild/q3_zh.html">Q3 复发与干预</a>
+      <a href="index.htm">English submission page</a>
+    </div>
   </header>
 
-  <section class="todo">
-    <h2>正式上传前仍需补齐的信息</h2>
+  <section>
+    <h2>提交信息</h2>
     <table>
-      <tr><th>字段</th><th>当前状态</th></tr>
-      <tr><td>团队成员、单位、邮箱、主要联系人</td><td><b class="warn">待补：</b>填写真实团队信息。</td></tr>
-      <tr><td>是否学生团队</td><td><b class="warn">待补：</b>按官方表格勾选。</td></tr>
-      <tr><td>总工时</td><td><b class="warn">待补：</b>估算全队总投入时间。</td></tr>
-      <tr><td>视频链接</td><td><b class="warn">待补：</b>加入最终视频 URL 或打包视频文件名。</td></tr>
-      <tr><td>仓库 / 在线演示</td><td><a href="rebuild/overview_zh.html">本地交互演示</a>。发布后补 GitHub Pages 链接。</td></tr>
+      <tr><th>字段</th><th>内容</th></tr>
+      <tr><td>团队名称</td><td>Renmin University of China-Chen-MC2</td></tr>
+      <tr><td>团队成员</td><td>Feihan Chen，中国人民大学农业与农村发展学院，2024202845@ruc.edu.cn <b class="ok">（主要联系人）</b><br>Wentao Song，中国人民大学农业与农村发展学院，2024201470@ruc.edu.cn<br>Tao Yan，中国人民大学农业与农村发展学院，2024201434@ruc.edu.cn</td></tr>
+      <tr><td>是否学生团队</td><td>是</td></tr>
+      <tr><td>总工时</td><td>约 180 个团队工时</td></tr>
+      <tr><td>视频</td><td>最终正式提交 zip 中打包 MP4 视频文件。</td></tr>
+      <tr><td>是否允许公开</td><td>是，允许发布到 Visual Analytics Benchmark Repository。</td></tr>
+      <tr><td>仓库 / 在线演示</td><td><a href="https://laoshan-song.github.io/vast/VAST_Challenge_2026_MC2/index_zh.htm">GitHub Pages 中文入口</a> 与 <a href="rebuild/overview_zh.html">本地交互 Overview</a>。</td></tr>
     </table>
   </section>
 
@@ -94,6 +145,7 @@
     <ul>
       <li>Python 3 和 <code>rebuild/extract_data.py</code>：事件抽取、聚合和派生可视化数据生成。</li>
       <li>HTML、CSS、原生 JavaScript 和自定义 SVG 渲染：构建交互式可视分析系统。</li>
+      <li>Node.js 脚本：生成统计图库、执行自动检查和静态网页验证。</li>
       <li>PNG 统计图库：为 Overview 和 Q1-Q3 提供 EDA 型描述性统计图。</li>
       <li>Playwright / <code>playwright-core</code> 与 Microsoft Edge：截图质量检查、交互验证、布局验证和统计图放大测试。</li>
       <li>Git 和 GitHub Pages：版本控制与网页发布。</li>

@@ -90,26 +90,77 @@
     th, td { border-bottom: 1px solid var(--border); padding: 9px 8px; text-align: left; vertical-align: top; }
     th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
     ul { margin: 8px 0 0; padding-left: 22px; }
+    .hero { border-top: 5px solid var(--info); }
+    .finding {
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-left: 4px solid var(--anom);
+      background: #fff5f6;
+      font-weight: 700;
+    }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .metric {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 12px;
+      background: #f8fafc;
+    }
+    .metric b { display: block; font-size: 20px; line-height: 1.15; }
+    .quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 16px;
+    }
+    .quick-links a {
+      display: inline-block;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 10px;
+      background: #fff;
+    }
   </style>
 </head>
 <body>
 <main>
-  <header>
-    <p class="muted">VAST Challenge 2026 / Mini-Challenge 2</p>
+  <header class="hero">
+    <p class="muted">VAST Challenge 2026 / Mini-Challenge 2 / Renmin University of China-Chen-MC2</p>
     <h1>Agentic SaidIt Post Investigation</h1>
-    <p>This page is the self-contained submission entry point. It links to the interactive visual analytics system in <a href="rebuild/overview.html">rebuild/overview.html</a> and gives concise answers for Q1-Q3 with supporting figures.</p>
-    <p><a href="index_zh.htm">中文阅读版</a> is available for internal review and presentation preparation.</p>
+    <p>This self-contained submission entry point links to the interactive visual analytics system and gives concise Q1-Q3 answers with supporting figures.</p>
+    <p class="finding">Finding: the anomalous SaidIt post was caused by an Agent-mediated file-posting workflow that transformed internal files into public <code>content_source</code> posts, not by a normal human posting workflow.</p>
+    <div class="metric-grid" aria-label="Key evidence metrics">
+      <div class="metric"><b>185,147</b><span class="muted">logged events</span></div>
+      <div class="metric"><b>108</b><span class="muted">SaidIt posts</span></div>
+      <div class="metric"><b>3</b><span class="muted">Agent file-source posts</span></div>
+      <div class="metric"><b>186</b><span class="muted">SwiftWren relay hops</span></div>
+      <div class="metric"><b>3/3</b><span class="muted">gate coverage</span></div>
+      <div class="metric"><b>0/105</b><span class="muted">observed false positives</span></div>
+    </div>
+    <div class="quick-links" aria-label="Primary navigation">
+      <a href="rebuild/overview.html">Start with Overview</a>
+      <a href="rebuild/q1.html">Q1 Chain</a>
+      <a href="rebuild/q2.html">Q2 Provenance</a>
+      <a href="rebuild/q3.html">Q3 Intervention</a>
+      <a href="index_zh.htm">Chinese reading version</a>
+    </div>
   </header>
 
-  <section class="todo">
-    <h2>Required Fields To Complete Before Official Upload</h2>
+  <section>
+    <h2>Submission Information</h2>
     <table>
-      <tr><th>Field</th><th>Current status</th></tr>
-      <tr><td>Team members, affiliations, emails, primary contact</td><td><b class="warn">TODO:</b> fill with your real team information.</td></tr>
-      <tr><td>Student team</td><td><b class="warn">TODO:</b> mark yes/no according to the official form.</td></tr>
-      <tr><td>Total hours</td><td><b class="warn">TODO:</b> enter the estimated total team hours.</td></tr>
-      <tr><td>Video link</td><td><b class="warn">TODO:</b> add the final video URL or bundled video filename.</td></tr>
-      <tr><td>Repository / live demo</td><td><a href="rebuild/overview.html">Local interactive demo</a>. Add final GitHub Pages URL after publishing.</td></tr>
+      <tr><th>Field</th><th>Value</th></tr>
+      <tr><td>Entry name</td><td>Renmin University of China-Chen-MC2</td></tr>
+      <tr><td>Team members</td><td>Feihan Chen, School of Agricultural Economics and Rural Development, Renmin University of China, 2024202845@ruc.edu.cn <b class="ok">(Primary Contact)</b><br>Wentao Song, School of Agricultural Economics and Rural Development, Renmin University of China, 2024201470@ruc.edu.cn<br>Tao Yan, School of Agricultural Economics and Rural Development, Renmin University of China, 2024201434@ruc.edu.cn</td></tr>
+      <tr><td>Student team</td><td>Yes</td></tr>
+      <tr><td>Total hours</td><td>Approximately 180 team hours</td></tr>
+      <tr><td>Video</td><td>Bundled MP4 in the final official submission zip.</td></tr>
+      <tr><td>Permission to publish</td><td>Yes, permission is granted for publication in the Visual Analytics Benchmark Repository.</td></tr>
+      <tr><td>Repository / live demo</td><td><a href="https://laoshan-song.github.io/vast/VAST_Challenge_2026_MC2/index.htm">GitHub Pages entry</a> and <a href="rebuild/overview.html">local interactive overview</a>.</td></tr>
     </table>
   </section>
 
@@ -118,6 +169,7 @@
     <ul>
       <li>Python 3 and <code>rebuild/extract_data.py</code> for event extraction, aggregation, and derived MC2 visualization data.</li>
       <li>HTML, CSS, vanilla JavaScript, and custom SVG rendering for the interactive visual analytics system.</li>
+      <li>Node.js scripts for figure-gallery generation, automated checks, and static-site verification.</li>
       <li>PNG statistical figure gallery for EDA-style descriptive charts embedded in Overview and Q1-Q3.</li>
       <li>Playwright / <code>playwright-core</code> with Microsoft Edge for screenshot QA, interaction checks, layout verification, and figure lightbox tests.</li>
       <li>Git and GitHub Pages for version control and web publication.</li>
