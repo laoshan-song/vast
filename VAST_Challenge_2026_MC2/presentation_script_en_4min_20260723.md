@@ -1,64 +1,60 @@
 # VAST Challenge 2026 MC2 Presentation Script, English, Under 4 Minutes
 
-建议时长：3:30-3:55  
-展示顺序：英文首页 -> Overview -> Q1 -> Q2 -> Q3  
-英文网页入口：https://laoshan-song.github.io/vast/VAST_Challenge_2026_MC2/index.htm  
-说明：正文为英文口播稿；方括号内为中文操作提示，不需要读出来。每个页面顶部新增了 `Guided Analysis Path`，录屏时优先用它的 Next / Open current evidence 控制节奏。
+Suggested length: about 3:40-3:55  
+Demo order: `index.htm` -> Overview -> Q1 -> Q2 -> Q3  
+English site: https://laoshan-song.github.io/vast/VAST_Challenge_2026_MC2/index.htm  
+Note: read only the English narration aloud. The bracketed Chinese text is for screen operation.
 
 ## 0:00-0:25 Opening
 
-[操作提示：打开英文首页 `index.htm`，先停留 1-2 秒让老师看到这是正式入口，然后点击导航里的 `Overview`。]
+[操作提示：打开英文首页 `index.htm`。停留 1 秒，让画面显示项目标题和导航栏，然后点击 `Overview`。]
 
-Good morning. This project addresses VAST Challenge 2026 Mini-Challenge 2. The prompt gives us one clue: John Windward appeared to post gibberish on SaidIt on May 17, 2046 at 04:21. Our goal is not to guess John’s intention, but to reconstruct the logged system behavior, explain the likely content origin, check recurrence, and recommend one defensible intervention.
+Good morning. This video presents our solution for VAST Challenge 2026 Mini-Challenge 2. The case begins with one clue: John Windward appeared to post gibberish to SaidIt on May 17, 2046, at 04:21. Our task is to explain how the post was made, what it likely means, whether it happened before, and where one intervention would be most effective.
 
-## 0:25-1:05 Overview: From Baseline to Anomaly
+Our system is an interactive web-based visual analytics tool. It combines statistical EDA, event filtering, linked evidence panels, provenance views, timelines, and recurrence comparison. The goal is to move from logs to defensible answers.
 
-[操作提示：停在 `Overview` 页面顶部的 `Guided Analysis Path`。先点第 1 步，再点 `Next` 到第 2 步，页面会自动高亮对应证据面板。随后滚动到 `Statistical EDA Atlas`，任选一张图点击放大，再关闭。]
+## 0:25-1:10 Overview: Starting Point and Baseline
 
-We begin with a baseline because an anomaly only makes sense relative to normal behavior. The dataset contains 185,147 logged events. The overview figures summarize event types, actor and target composition, hourly activity, date-hour density, SaidIt post fields, and virus or decoy activity.
+[操作提示：在 `Overview` 页顶部使用 `Guided Analysis Path`。依次点击 `Next`，展示事件总览、SaidIt 字段统计和 EDA 图集。可以点击一张图放大，再关闭。]
 
-The key EDA result is the SaidIt field audit. Among 108 SaidIt posts, 105 are ordinary human posts using the `content` field. Only three are Agent posts using `content_source`, meaning the post body came from a file. This rare field-level signature becomes the investigation entry point for all three questions.
+We start from the official clue: a SaidIt post by John at a specific time. Before tracing it, we build a baseline. The dataset has 185,147 logged events, so one event only becomes meaningful relative to normal behavior.
 
-[操作提示：点击某张图下方的 `Open evidence view`，或在 `Guided Analysis Path` 中点 `Open current evidence`。这里不用细讲，只要让老师看到统计图和引导步骤都能联动到证据视图。]
+The overview page shows event types, actor and target composition, hourly activity, date-hour density, and the SaidIt post-field audit. The critical result is this: among 108 SaidIt posts, 105 are normal human posts using `content`. Only three are Agent posts using `content_source`, where the body comes from a file. This rare field signature gives us a data-driven entry point.
 
-The interface follows overview first, then details on demand: figures give the statistical route, and evidence links jump to raw event-supported views.
+Our filtering sequence is: all logs, SaidIt posts, the John-and-time target, `content_source`, `SwiftWren.txt`, `SwiftWren_further_instructions.md`, the relay chain, and then historical recurrence.
 
-## 1:05-1:55 Q1: How the Anomalous Post Was Made
+## 1:10-1:55 Q1: How the Anomalous Post Was Made
 
-[操作提示：打开 `Q1` 页面，先用顶部 `Guided Analysis Path` 点到第 2 步和第 3 步。它会自动跳到 EDA 图和 `Terminal Five-Step Recipe`。]
+[操作提示：点击 `Q1`。先展示顶部 `Guided Analysis Path`，再点击到 `Scan post fields`、`Terminal sequence` 和 `Trace relay task`。在泳道图中切换 `Hop Order` / `Elapsed Time`，并点击一个 relay 点显示详情。]
 
-Q1 asks for the exact event chain and system context. Starting from SaidIt, John Windward, and 04:21, the target event shows that John Windward’s Agent posted with `content_source=SwiftWren.txt`, not ordinary `content`. The post body was supplied from a file rather than typed as normal forum text.
+Q1 asks for the exact chain and system context. The target event shows that John Windward's Agent posted with `content_source=SwiftWren.txt`, not ordinary typed `content`. So the post was generated from a file source through the Agent system.
 
-The terminal five-step recipe shows the final seconds: relay arrival, `saidit_post_check`, `saidit_post(content_source=SwiftWren.txt)`, instruction-file deletion, and payload-file deletion.
+The final seconds form a five-step terminal sequence: relay arrival at John Windward's Agent, `saidit_post_check`, `saidit_post(content_source=SwiftWren.txt)`, deletion of the instruction file, and deletion of the payload file.
 
-[操作提示：在 Q1 的引导面板点第 4 步 `Trace task propagation`，页面会跳到 `Agent Relay Swimlane`。点击 `Hop Order` / `Elapsed Time` 切换视图；再点击一个 relay 点，展示 event details。]
+To explain how the task reached John, we trace events involving `SwiftWren_further_instructions.md`. The chain contains 186 relay hops, 18 Agents, 119 cross-department hops, and five arrivals at John. The source-side view shows Emma Harbor's Agent reading `meeting_notes.doc` and creating `SwiftWren.txt`. Therefore, the post was made by an Agent-mediated file-posting workflow, not by John manually typing gibberish.
 
-Tracing `SwiftWren_further_instructions.md` backward gives the system chain: 186 relay hops, 18 Agents, 119 cross-department hops, and five arrivals at John. The file lifecycle view links the payload to Emma Harbor’s Agent reading `meeting_notes.doc` and creating `SwiftWren.txt`. Therefore, the post came from an Agent-mediated file-posting workflow, not John manually composing a post.
+## 1:55-2:40 Q2: Meaning, Origin, and Evidence Boundary
 
-## 1:55-2:40 Q2: Meaning, Origin, and Evidence Boundaries
+[操作提示：点击 `Q2`。先指向图例，说明绿色是 observed，黄色是 inferred，灰色是 unknown。然后展示 `Content Provenance Graph`、来源矩阵和 `Claim Guardrails`。]
 
-[操作提示：打开 `Q2` 页面。先指向顶部 `Guided Analysis Path` 和证据图例：绿色 observed，黄色 inferred，灰色 unknown。这里要强调证据边界。]
+Q2 asks what the posts mean and where their contents came from. We treat this as a provenance problem. The key design decision is to separate evidence levels. Observed means directly logged. Inferred means supported by timing, file names, and linked actions. Unknown means not supported enough for a firm claim.
 
-Q2 asks what the posts mean. We treat this as a provenance question, not a motive question. The logs do not preserve full payload text, so we do not claim exact plaintext or intent.
+For SwiftWren, the observed chain is `meeting_notes.doc` to `SwiftWren.txt` to SaidIt, so the probable content is meeting-note material. For MellowOtter, `strategic_directions.doc` links to `MellowOtter.txt` and SaidIt, so the probable content is strategic-direction material. HiddenOrca has the same terminal mechanism, but its upstream source is not visible.
 
-The provenance figures separate three stages: source document, payload file, and public SaidIt post. SwiftWren links `meeting_notes.doc` to `SwiftWren.txt` to the SaidIt post. MellowOtter links `strategic_directions.doc` to `MellowOtter.txt` to SaidIt. HiddenOrca shares the terminal file-source mechanism, but its upstream source is not visible.
-
-[操作提示：在 Q2 引导面板依次点 `Link provenance rows` 和 `State guardrails`。页面会高亮 `Content Provenance Graph` 和 `Claim Guardrails`，可以点击图中的节点或矩阵格。]
-
-The bounded answer is: SwiftWren probably exposed meeting-note material, MellowOtter probably exposed strategic-direction material, and HiddenOrca’s origin remains unknown. Exact body text, motive, and missing sources are outside the evidence.
+So we can identify likely origins and meanings, but we cannot recover exact plaintext, motive, or hidden actor identity from the logs alone.
 
 ## 2:40-3:35 Q3: Recurrence and One Intervention
 
-[操作提示：打开 `Q3` 页面。用 `Guided Analysis Path` 依次点 `Prove recurrence`、`Compare candidates`、`Select one gate`。重点展示 Figure 1 复发时间线、Figure 4 混淆矩阵、Figure 6 决策权衡矩阵。]
+[操作提示：点击 `Q3`。用 `Guided Analysis Path` 依次展示复发时间线、三事件对比、混淆矩阵和干预决策矩阵。重点停留在 coverage 3/3、false positives 0/105。]
 
-Q3 asks whether this can repeat and where to intervene. HiddenOrca and MellowOtter occurred before SwiftWren. The three incidents differ in scale, but all share the same terminal mechanism: relay to John’s Agent, SaidIt post check, `saidit_post` with `content_source`, and cleanup deletes.
+Q3 asks whether the behavior could repeat and where to intervene. The historical views show two prior incidents before SwiftWren: HiddenOrca and MellowOtter. They differ in scale, but all three share the same terminal signature: Agent relay, SaidIt check, `saidit_post` with `content_source`, and cleanup deletes.
 
-We compare intervention candidates rather than choosing by intuition. Broad relay blocking would affect many normal automation records. File-name rules are easy to evade. Delete-file alerts occur after exposure. The strongest single intervention is a SaidIt boundary gate: block or require approval when an Agent-initiated `saidit_post` contains `details.content_source`.
+We compare interventions using data. Blocking broad relay behavior would affect many normal automated workflows. Blocking specific file names is fragile. Detecting delete events is too late because the post has already been published.
 
-In the observed data, this rule catches 3 out of 3 anomalous file-source posts and has 0 observed false positives among 105 ordinary human posts. It is also pre-publication, so it acts before external exposure.
+Our chosen intervention is a SaidIt boundary gate: block or require approval when an Agent-initiated `saidit_post` contains `details.content_source`. In the observed data, this catches 3 out of 3 anomalous file-source posts and produces 0 observed false positives among 105 normal human posts. It also acts before public exposure.
 
 ## 3:35-3:55 Closing
 
-[操作提示：结尾可以停在 Q3 的干预矩阵，也可以返回英文首页。推荐停在干预矩阵，因为最后一句正好讲 intervention。]
+[操作提示：最后停在 Q3 的干预决策矩阵，或者返回英文首页。建议停在干预矩阵，因为最后一句正好对应 remedy。]
 
-In summary, the anomalous post was a system workflow failure: an internal document became a payload file, the task propagated through Agents, John Windward’s Agent posted the file to SaidIt, and cleanup followed. The system answers Q1 with the exact chain, Q2 with provenance boundaries, and Q3 with recurrence evidence and a defensible boundary intervention.
+In conclusion, our system maps the baseline, traces the exact chain, separates observed evidence from inference and unknowns, identifies recurrence, and recommends one targeted boundary intervention. The core finding is that this was not ordinary human communication. It was an Agent workflow failure that transformed internal files into public SaidIt posts.
